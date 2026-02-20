@@ -148,18 +148,17 @@ model Defect {
   testCase    TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
 }
 
-// --- POST IMPLEMENTATION REVIEW (PIR) ---
 model Issue {
   id           Int      @id @default(autoincrement())
   issueId      String
-  title        String   // ✅ TAMBAHKAN INI
-  priority     String
+  title        String   // Sesuai dengan form.issue.title
+  priority     String   // Wajib diisi, tidak boleh kosong/null
   description  String   @db.Text
-  impactArea   String
-  reportedBy   String
+  impactArea   String   // Di-handle oleh backend (default: "General")
+  reportedBy   String   // Di-handle oleh frontend/backend
   reportedDate DateTime @default(now())
   status       String   @default("open")
-  projectId    String
+  projectId    String   
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 

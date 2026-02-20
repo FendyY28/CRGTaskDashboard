@@ -5,7 +5,7 @@ import { Badge } from "../ui/badge";
 import { User, Clock, ChevronDown, ChevronUp, CheckCircle2, LayoutDashboard, AlertCircle, Timer, Filter, PlusCircle, ArrowRight, Loader2, Map, ArrowLeft, FolderKanban, X, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"; // Import Dialog
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { ProjectGantt } from "./ProjectGantt";
 import type { Project, WeeklyProgress } from "../../types";
 import { API_URL, fmtDate } from "../../../lib/utils";
@@ -29,13 +29,12 @@ const getUserIdFromToken = () => {
 };
 
 // --- SUB-COMPONENT: Weekly Row ---
-// 🔥 UPDATE: Terima prop 'onRequestDeleteLog' dan 'onRequestDeleteTask'
 const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog, onRequestDeleteTask }: { 
     week: WeeklyProgress, 
     projectStatus: string, 
     onTaskToggle: () => void, 
     onRequestDeleteLog: (id: number) => void,
-    onRequestDeleteTask: (id: number) => void // Prop baru
+    onRequestDeleteTask: (id: number) => void 
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [loadingId, setLoadingId] = useState<number | null>(null);
@@ -62,7 +61,6 @@ const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog,
         <TableCell className="text-center font-bold text-[#36A39D] relative">
             <div className="flex items-center justify-center gap-3">
                 <span>{week.progress}%</span>
-                {/* Tombol Delete Log */}
                 <Button 
                     variant="ghost" size="icon" 
                     onClick={(e) => { e.stopPropagation(); onRequestDeleteLog(week.id); }} 
@@ -94,7 +92,6 @@ const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog,
                     
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className={`text-[10px] font-bold ${isDone ? 'text-[#36A39D] border-[#36A39D]/20' : 'text-gray-500'}`}>{isDone ? 'DONE' : 'WIP'}</Badge>
-                        {/* Tombol Delete Task */}
                         <Button
                             variant="ghost" size="icon"
                             onClick={(e) => { e.stopPropagation(); onRequestDeleteTask(t.id); }}
@@ -113,9 +110,9 @@ const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog,
     </>
   );
 });
+WeeklyRow.displayName = "WeeklyRow";
 
 // --- SUB-COMPONENT: Project Card ---
-// 🔥 UPDATE: Pass down delete handlers
 const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDeleteLog, onDeleteTask }: any) => {
   const { globalPct, completedPhases } = useMemo(() => {
     if (project.status === 'completed') return { globalPct: 100, completedPhases: 6 };
@@ -123,6 +120,15 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
     const progressInCurrentPhase = Number(project.overallProgress) || 0;
     return { globalPct: Math.round(((idx * 100) + progressInCurrentPhase) / 600 * 100), completedPhases: progressInCurrentPhase === 100 ? idx + 1 : idx };
   }, [project.currentPhase, project.overallProgress, project.status]);
+
+  // 🚀 OPTIMISASI 3: Membuat dictionary O(1) agar tidak perlu memanggil .find() berulang kali
+  const phaseDict = useMemo(() => {
+    const dict: Record<string, any> = {};
+    if (project.sdlcPhases) {
+      project.sdlcPhases.forEach((p: any) => dict[p.phaseName] = p);
+    }
+    return dict;
+  }, [project.sdlcPhases]);
 
   const accentColor = project.status.includes('track') || project.status === 'completed' ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
@@ -145,7 +151,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
                   <span className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full"><LayoutDashboard className="h-3.5 w-3.5 text-[#36A39D]" /> {project.currentPhase}</span>
                 </div>
               </div>
-              <Button onClick={onViewGantt} variant="outline" className="h-9 text-xs gap-2 text-[#36A39D] border-[#36A39D]/30 bg-[#36A39D]/5 hover:bg-[#36A39D] hover:text-white rounded-xl shadow-none"><Map className="h-3.5 w-3.5" /> View Gantt</Button>
+              <Button onClick={() => onViewGantt(project)} variant="outline" className="h-9 text-xs gap-2 text-[#36A39D] border-[#36A39D]/30 bg-[#36A39D]/5 hover:bg-[#36A39D] hover:text-white rounded-xl shadow-none"><Map className="h-3.5 w-3.5" /> View Gantt</Button>
             </div>
           </div>
           <div className="text-right min-w-[120px] pl-6 border-l border-gray-100 hidden md:block">
@@ -156,7 +162,6 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
         </div>
       </CardHeader>
       <CardContent className="space-y-8 pt-2 px-7 pb-8 text-left">
-        {/* ... (SDLC Table Section - No Change) ... */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold flex items-center gap-2 text-gray-500 uppercase tracking-widest"><Map className="h-4 w-4 text-[#36A39D]" /> SDLC Roadmap</h4>
           <div className="rounded-xl border border-gray-100 overflow-hidden shadow-sm bg-white overflow-x-auto">
@@ -168,7 +173,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
               </TableHeader>
               <TableBody>
                 {PHASES.map((ph, idx) => {
-                  const pData = (project.sdlcPhases || []).find((p: any) => p.phaseName === ph);
+                  const pData = phaseDict[ph]; // Pengambilan instan O(1)
                   const curIdx = PHASES.indexOf(project.currentPhase);
                   const stat = idx < curIdx ? 'completed' : (idx === curIdx ? (Number(project.overallProgress) === 100 ? 'completed' : project.status) : 'pending');
                   return (
@@ -203,6 +208,40 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
     </Card>
   );
 });
+ProjectCard.displayName = "ProjectCard";
+
+// 🚀 OPTIMISASI 1: Ekstraksi komponen Form.
+// Hal ini mencegah TaskTimeline (dan semua ProjectCard) me-render ulang setiap kali kamu mengetik karakter di Form.
+const LogActivityForm = memo(({ projects, onSuccess }: { projects: Project[], onSuccess: () => void }) => {
+  const [logForm, setLogForm] = useState({ pid: "", week: "", tasks: "" });
+  const [isLogging, setIsLogging] = useState(false);
+
+  const handleLog = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!logForm.pid || !logForm.week) return;
+    setIsLogging(true);
+    try {
+      const userId = getUserIdFromToken();
+      const res = await fetch(`${API_URL}/project/log`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: logForm.pid, weekRange: logForm.week, tasks: logForm.tasks.split('\n').filter(t => t), progress: 0, userId })
+      });
+      if (res.ok) { setLogForm({ pid: "", week: "", tasks: "" }); onSuccess(); }
+    } catch { alert("Log failed"); } 
+    finally { setIsLogging(false); }
+  };
+
+  return (
+    <form onSubmit={handleLog} className="space-y-4">
+      <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Project</Label><DashboardSelect value={logForm.pid} onChange={(e: any) => setLogForm({...logForm, pid: e.target.value})}><option value="">Select Project...</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</DashboardSelect></div>
+      <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Period (Week)</Label><DashboardInput placeholder="e.g. Sprint 1" value={logForm.week} onChange={(e: any) => setLogForm({...logForm, week: e.target.value})} /></div>
+      <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Assign Tasks</Label><DashboardTextarea value={logForm.tasks} onChange={(e: any) => setLogForm({...logForm, tasks: e.target.value})} placeholder="Enter tasks (one per line)..." className="min-h-[120px]" /></div>
+      <Button type="submit" disabled={isLogging || !logForm.pid || !logForm.week || !logForm.tasks} className="w-full font-bold text-white shadow-md h-10 rounded-xl bg-[#36A39D] hover:bg-[#2b8580]">{isLogging ? <Loader2 className="h-4 w-4 animate-spin"/> : "Save & Assign Tasks"}</Button>
+    </form>
+  );
+});
+LogActivityForm.displayName = "LogActivityForm";
+
 
 // --- MAIN COMPONENT ---
 export function TaskTimeline() {
@@ -211,11 +250,8 @@ export function TaskTimeline() {
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selProject, setSelProject] = useState<Project | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
-  const [logForm, setLogForm] = useState({ pid: "", week: "", tasks: "" });
-  const [isLogging, setIsLogging] = useState(false);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   
-  // 🔥 State untuk Dialog Konfirmasi Delete
   const [deleteConf, setDeleteConf] = useState<{ type: 'log' | 'task', id: number } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -243,23 +279,21 @@ export function TaskTimeline() {
     setTimeout(() => setHighlightId(null), 2000);
   }, []);
 
-  // --- ACTIONS ---
-  const handleLog = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!logForm.pid || !logForm.week) return;
-    setIsLogging(true);
-    try {
-      const userId = getUserIdFromToken();
-      const res = await fetch(`${API_URL}/project/log`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: logForm.pid, weekRange: logForm.week, tasks: logForm.tasks.split('\n').filter(t => t), progress: 0, userId })
-      });
-      if (res.ok) { setLogForm({ pid: "", week: "", tasks: "" }); await fetchData(); }
-    } catch { alert("Log failed"); } 
-    finally { setIsLogging(false); }
-  };
+  // 🚀 OPTIMISASI 2: Callbacks ini di-"kunci" posisinya di memori dengan useCallback.
+  // Sekarang React.memo pada ProjectCard bisa bekerja 100% sempurna.
+  const handleViewGantt = useCallback((p: Project) => {
+    setSelProject(p);
+    setView('detail');
+  }, []);
 
-  // 🔥 Fungsi Eksekusi Delete (Dipanggil saat Confirm di Dialog)
+  const handleDeleteLog = useCallback((id: number) => {
+    setDeleteConf({ type: 'log', id });
+  }, []);
+
+  const handleDeleteTask = useCallback((id: number) => {
+    setDeleteConf({ type: 'task', id });
+  }, []);
+
   const executeDelete = async () => {
     if (!deleteConf) return;
     setIsDeleting(true);
@@ -276,8 +310,8 @@ export function TaskTimeline() {
         });
 
         if (res.ok) {
-            setDeleteConf(null); // Tutup dialog
-            await fetchData();   // Refresh data
+            setDeleteConf(null); 
+            await fetchData();   
         } else {
             alert(`Failed to delete ${deleteConf.type}`);
         }
@@ -294,7 +328,6 @@ export function TaskTimeline() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      {/* Header Section */}
       <div className="flex flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{view === 'list' ? "Project Timeline & Tracking" : `Gantt View: ${selProject?.name}`}</h2>
@@ -305,7 +338,6 @@ export function TaskTimeline() {
 
       {view === 'list' ? (
         <>
-          {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {l:"On Track", s:'on-track', i:CheckCircle2, c:PROGRESS_COLORS.track}, 
@@ -319,7 +351,6 @@ export function TaskTimeline() {
 
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             <div className="xl:col-span-3 space-y-8">
-              {/* Filter Banner */}
               {filter && filter !== 'all' && (
                 <div className="bg-blue-50 text-blue-700 border border-blue-100 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm animate-in slide-in-from-left-2">
                   <Filter className="h-4 w-4"/> Filtering: <span className="uppercase tracking-wide">{filter.replace('-', ' ')}</span>
@@ -327,17 +358,16 @@ export function TaskTimeline() {
                 </div>
               )}
               
-              {/* Projects List */}
               <div className="space-y-8">
                 {filtered.length > 0 ? filtered.map(p => (
                   <div key={p.id} ref={el => refs.current[p.id] = el} className="scroll-mt-24 transition-all duration-500">
                     <ProjectCard 
                       project={p} 
                       onRefresh={fetchData} 
-                      onViewGantt={() => { setSelProject(p); setView('detail'); }} 
+                      onViewGantt={handleViewGantt} 
                       highlight={highlightId === p.id} 
-                      onDeleteLog={(id: number) => setDeleteConf({ type: 'log', id })} 
-                      onDeleteTask={(id: number) => setDeleteConf({ type: 'task', id })}
+                      onDeleteLog={handleDeleteLog} 
+                      onDeleteTask={handleDeleteTask}
                     />
                   </div>
                 )) : (
@@ -349,7 +379,6 @@ export function TaskTimeline() {
               </div>
             </div>
 
-            {/* Sidebar (Quick Nav & Log Form) */}
             <div className="space-y-6">
               <div className="sticky top-6 space-y-6">
                 <DashboardCard color="#36A39D" title="Quick Navigation" icon={Filter} className="max-h-[350px] overflow-hidden" contentClassName="space-y-2 overflow-y-auto pr-2 px-3 pb-5 h-[250px] custom-scrollbar">
@@ -362,12 +391,8 @@ export function TaskTimeline() {
                 </DashboardCard>
 
                 <DashboardCard color="#00A651" title="Log Team Activity" icon={PlusCircle} contentClassName="pt-5 px-5 pb-6 text-left">
-                  <form onSubmit={handleLog} className="space-y-4">
-                    <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Project</Label><DashboardSelect value={logForm.pid} onChange={(e: any) => setLogForm({...logForm, pid: e.target.value})}><option value="">Select Project...</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</DashboardSelect></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Period (Week)</Label><DashboardInput placeholder="e.g. Sprint 1" value={logForm.week} onChange={(e: any) => setLogForm({...logForm, week: e.target.value})} /></div>
-                    <div className="space-y-1.5"><Label className="text-[10px] font-bold text-gray-500 uppercase">Assign Tasks</Label><DashboardTextarea value={logForm.tasks} onChange={(e: any) => setLogForm({...logForm, tasks: e.target.value})} placeholder="Enter tasks (one per line)..." className="min-h-[120px]" /></div>
-                    <Button type="submit" disabled={isLogging || !logForm.pid || !logForm.week || !logForm.tasks} className="w-full font-bold text-white shadow-md h-10 rounded-xl bg-[#36A39D] hover:bg-[#2b8580]">{isLogging ? <Loader2 className="h-4 w-4 animate-spin"/> : "Save & Assign Tasks"}</Button>
-                  </form>
+                  {/* Komponen form dipisah di sini agar tidak membebani parent */}
+                  <LogActivityForm projects={projects} onSuccess={fetchData} />
                 </DashboardCard>
               </div>
             </div>
@@ -375,7 +400,6 @@ export function TaskTimeline() {
         </>
       ) : selProject && <ProjectGantt project={selProject} onBack={() => { setView('list'); setSelProject(null); }} />}
 
-      {/* 🔥 GLOBAL DELETE CONFIRMATION DIALOG */}
       <Dialog open={!!deleteConf} onOpenChange={(open) => !open && setDeleteConf(null)}>
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[400px] text-center p-8">
             <DialogHeader>

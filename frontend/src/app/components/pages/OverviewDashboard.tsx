@@ -4,7 +4,6 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "../ui/dialog";
 import { AddProjectSheet } from "./project/AddProjectSheet";
 import { EditProjectSheet } from "./project/EditProjectSheet"; 
-// Pastikan path ini benar sesuai struktur folder Anda
 import { API_URL } from "../../../lib/utils";
 import { DashboardKpiCard, StatusBadge, DashboardCard } from "../dashboard/SharedComponents";
 import { ActivityLog } from "../pages/ActivityLog"; 
@@ -17,7 +16,30 @@ const PROGRESS_COLORS: Record<string, string> = {
   pending: "#E5E7EB" 
 };
 
-// --- OPTIMIZATION: Memoize Heavy Components ---
+// --- HELPER ---
+const getUserIdFromToken = () => {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const backupEmail = localStorage.getItem('user_email');
+    const backupName = localStorage.getItem('user_name');
+
+    if (!token || token === "mock-jwt-token") return backupEmail || backupName || null;
+    
+    const parts = token.split('.');
+    if (parts.length !== 3) return backupEmail || backupName || null;
+
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    
+    const parsed = JSON.parse(jsonPayload);
+    return parsed.id || parsed.sub || parsed.userId || parsed.email || backupEmail; 
+  } catch (e) {
+    return localStorage.getItem('user_email') || null;
+  }
+};
+
 const MemoizedActivityLog = memo(ActivityLog);
 const MemoizedKpiCard = memo(DashboardKpiCard);
 
@@ -48,26 +70,64 @@ const ProjectRow = memo(({ proj, onEdit, onDelete }: any) => (
     </div>
   </div>
 ));
+ProjectRow.displayName = "ProjectRow";
+
+// 🚀 OPTIMISASI 1: Ekstraksi UI Fase ke komponen tersendiri untuk melokalisasi State.
+// Buka/tutup Dropdown sekarang HANYA me-render ulang fase ini, BUKAN seluruh dashboard.
+const PhaseBlock = memo(({ p, onEdit, onDelete }: { p: any, onEdit: any, onDelete: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="border border-gray-100 rounded-xl bg-white shadow-sm transition-all duration-300 overflow-hidden ring-1 ring-transparent hover:ring-[#36A39D]/20">
+      <div 
+        className={`flex justify-between items-center p-5 cursor-pointer select-none transition-colors ${isOpen ? 'bg-gray-50/50' : 'hover:bg-gray-50'}`} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className={`text-base font-bold transition-colors ${isOpen ? 'text-[#36A39D]' : 'text-gray-700'}`}>{p.phase}</span>
+        <div className="flex items-center gap-3">
+            <span className="text-gray-400 text-xs font-medium">{p.count} projects</span>
+            {isOpen ? <ChevronUp className="h-4 w-4 text-[#36A39D]" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+        </div>
+      </div>
+
+      <div className="px-5 pb-5">
+        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mb-1">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p.progress}%`, backgroundColor: PROGRESS_COLORS[p.status] }} />
+        </div>
+        {isOpen && (
+            <div className="mt-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            {p.projects.length > 0 ? p.projects.map((proj: any) => (
+                <ProjectRow 
+                    key={proj.id} 
+                    proj={proj} 
+                    onEdit={onEdit} 
+                    onDelete={onDelete} 
+                />
+            )) : <p className="text-xs text-gray-400 text-center italic py-4">No projects are currently in this phase.</p>}
+            </div>
+        )}
+      </div>
+    </div>
+  );
+});
+PhaseBlock.displayName = "PhaseBlock";
 
 export function OverviewDashboard() {
   const [data, setData] = useState<{ list: any[], load: boolean, err: string }>({ list: [], load: true, err: "" });
   const [edit, setEdit] = useState<any>(null);
   const [delId, setDelId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  
-  const [openPhases, setOpenPhases] = useState<Record<string, boolean>>({});
 
-  // --- LOGIC: Fetch Data with Cleanup ---
   const loadData = useCallback(async (signal?: AbortSignal) => {
     try {
-      // ✅ FIX 1: Gunakan URL eksplisit jika API_URL kosong & HAPUS HEADER AUTH
       const url = API_URL ? `${API_URL}/project` : 'http://localhost:3000/project';
+      const token = localStorage.getItem('auth_token');
       
       const res = await fetch(url, { 
         signal,
         headers: {
-            'Content-Type': 'application/json'
-            // Header Authorization dihapus agar menjadi Simple Request (CORS Friendly)
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
       
@@ -89,88 +149,91 @@ export function OverviewDashboard() {
     return () => controller.abort(); 
   }, [loadData]);
 
-  // --- LOGIC: Actions ---
-  const togglePhase = useCallback((phase: string) => {
-    setOpenPhases(prev => ({ ...prev, [phase]: !prev[phase] }));
-  }, []);
-
   const doDelete = async () => {
     if (!delId) return;
     setDeleting(true);
+
+    const realUserId = getUserIdFromToken(); 
+    const token = localStorage.getItem("auth_token");
+
     try {
-      // ✅ FIX 2: Hapus Header Auth & Pastikan URL benar saat DELETE
       const url = API_URL ? `${API_URL}/project/${delId}` : `http://localhost:3000/project/${delId}`;
 
       const res = await fetch(url, { 
           method: 'DELETE',
-          // Tidak pakai header Authorization
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          },
+          body: JSON.stringify({ userId: realUserId })
       });
       
       if (res.ok) {
         await loadData();
         setDelId(null);
       } else {
-        console.error("Gagal delete, status:", res.status);
+        const errorData = await res.json();
+        alert(`Gagal menghapus: ${errorData.message || res.statusText}`);
       }
     } catch (e) {
-      console.error("Delete failed:", e);
+      alert("Terjadi kesalahan jaringan.");
     } finally {
       setDeleting(false);
     }
   };
 
-  // --- COMPUTED: Stats & Phase Logic ---
-  const stats = useMemo(() => {
+  // 🚀 OPTIMISASI 2: Loop Consolidation. 
+  // Menggabungkan kalkulasi Stats dan Phase Breakdown ke dalam satu perulangan (O(N)).
+  const { stats, phaseBreakdown } = useMemo(() => {
     const s = { total: 0, active: 0, completed: 0, new: 0, deliveredThisMonth: 0 };
+    const map: Record<string, any[]> = {};
+    
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
     data.list.forEach(p => {
+      // 1. Kalkulasi Stats
       s.total++; 
       
       const createdDate = new Date(p.createdAt);
-      if (createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear) {
-        s.new++;
-      }
+      if (createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear) s.new++;
 
-      const isComp = p.currentPhase === 'Live' && Number(p.overallProgress) === 100;
+      const progressVal = Number(p.overallProgress) || 0; // Pastikan format number
+      const isComp = p.currentPhase === 'Live' && progressVal === 100;
       isComp ? s.completed++ : s.active++;
 
       const updatedDate = new Date(p.updatedAt);
       if (p.currentPhase === 'Live' && updatedDate.getMonth() === currentMonth && updatedDate.getFullYear() === currentYear) {
         s.deliveredThisMonth++;
       }
+
+      // 2. Pemetaan Fase untuk Breakdown
+      if (!map[p.currentPhase]) map[p.currentPhase] = [];
+      map[p.currentPhase].push(p);
     });
-    return s;
-  }, [data.list]);
 
-  const phaseBreakdown = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    data.list.forEach(p => (map[p.currentPhase] ||= []).push(p));
-
-    return PHASES.map(ph => {
+    // 3. Transformasi Map ke Array untuk Render
+    const phases = PHASES.map(ph => {
       const projects = map[ph] || [];
       const prog = projects.length 
-        ? Math.round(projects.reduce((a, b) => a + (b.overallProgress || 0), 0) / projects.length) 
+        ? Math.round(projects.reduce((a, b) => a + (Number(b.overallProgress) || 0), 0) / projects.length) 
         : 0;
       
       return { 
-        phase: ph, 
-        progress: prog, 
-        count: projects.length, 
+        phase: ph, progress: prog, count: projects.length, 
         status: projects.length ? (prog === 100 ? "completed" : "in-progress") : "pending", 
         projects 
       };
     });
+
+    return { stats: s, phaseBreakdown: phases };
   }, [data.list]);
 
-  // --- LOADING SKELETON ---
   if (data.load) return <div className="h-screen flex items-center justify-center text-[#36A39D] font-bold animate-pulse text-lg">Initializing Dashboard...</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 leading-tight">Dashboard Overview</h2>
@@ -179,50 +242,18 @@ export function OverviewDashboard() {
         <AddProjectSheet onProjectAdded={loadData} />
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MemoizedKpiCard 
-            label="Total Projects" 
-            count={stats.total} 
-            icon={FolderKanban} 
-            trend={stats.new > 0 ? `+${stats.new} this month` : ""} 
-            color="#36A39D" 
-            clickable={false} 
-        />
-        <MemoizedKpiCard 
-            label="Active Projects" 
-            count={stats.active} 
-            icon={Clock} 
-            description="Currently in progress" 
-            color="#F9AD3C" 
-            clickable={false} 
-        />
-        <MemoizedKpiCard 
-            label="Completed" 
-            count={stats.completed} 
-            icon={CheckCircle2} 
-            color="#059669" 
-            clickable={false} 
-        />
-        <MemoizedKpiCard 
-            label="Freshly Live" 
-            count={stats.deliveredThisMonth} 
-            icon={Rocket} 
-            description="Launched this month" 
-            color="#8B5CF6" 
-            clickable={false} 
-        />
+        <MemoizedKpiCard label="Total Projects" count={stats.total} icon={FolderKanban} trend={stats.new > 0 ? `+${stats.new} this month` : ""} color="#36A39D" clickable={false} />
+        <MemoizedKpiCard label="Active Projects" count={stats.active} icon={Clock} description="Currently in progress" color="#F9AD3C" clickable={false} />
+        <MemoizedKpiCard label="Completed" count={stats.completed} icon={CheckCircle2} color="#059669" clickable={false} />
+        <MemoizedKpiCard label="Freshly Live" count={stats.deliveredThisMonth} icon={Rocket} description="Launched this month" color="#8B5CF6" clickable={false} />
       </div>
 
-      {/* --- MAIN DASHBOARD GRID --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* LEFT COLUMN: SDLC Breakdown */}
         <div className="lg:col-span-2 space-y-6">
             <DashboardCard 
                 className="border-none shadow-sm ring-1 ring-gray-200" 
-                icon={LayoutDashboard} 
-                color="#36A39D" 
+                icon={LayoutDashboard} color="#36A39D" 
                 title={
                 <div className="flex flex-col text-left">
                     <span className="text-[#36A39D] text-lg font-bold uppercase tracking-wide">SDLC Phase Breakdown</span>
@@ -231,51 +262,25 @@ export function OverviewDashboard() {
                 }
                 contentClassName="space-y-4 pt-0"
             >
+                {/* 🚀 Render PhaseBlock yang sudah terisolasi */}
                 {phaseBreakdown.map(p => (
-                <div key={p.phase} className="border border-gray-100 rounded-xl bg-white shadow-sm transition-all duration-300 overflow-hidden ring-1 ring-transparent hover:ring-[#36A39D]/20">
-                    <div 
-                        className={`flex justify-between items-center p-5 cursor-pointer select-none transition-colors ${openPhases[p.phase] ? 'bg-gray-50/50' : 'hover:bg-gray-50'}`} 
-                        onClick={() => togglePhase(p.phase)}
-                    >
-                        <span className={`text-base font-bold transition-colors ${openPhases[p.phase] ? 'text-[#36A39D]' : 'text-gray-700'}`}>{p.phase}</span>
-                        <div className="flex items-center gap-3">
-                            <span className="text-gray-400 text-xs font-medium">{p.count} projects</span>
-                            {openPhases[p.phase] ? <ChevronUp className="h-4 w-4 text-[#36A39D]" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                        </div>
-                    </div>
-
-                    <div className="px-5 pb-5">
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mb-1">
-                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p.progress}%`, backgroundColor: PROGRESS_COLORS[p.status] }} />
-                    </div>
-                    {openPhases[p.phase] && (
-                        <div className="mt-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {p.projects.length > 0 ? p.projects.map((proj: any) => (
-                            <ProjectRow 
-                                key={proj.id} 
-                                proj={proj} 
-                                onEdit={setEdit} 
-                                onDelete={setDelId} 
-                            />
-                        )) : <p className="text-xs text-gray-400 text-center italic py-4">No projects are currently in this phase.</p>}
-                        </div>
-                    )}
-                    </div>
-                </div>
+                  <PhaseBlock 
+                    key={p.phase} 
+                    p={p} 
+                    onEdit={setEdit} 
+                    onDelete={setDelId} 
+                  />
                 ))}
             </DashboardCard>
         </div>
 
-        {/* RIGHT COLUMN: Activity Log */}
         <div className="lg:col-span-1">
             <div className="sticky top-6">
                 <MemoizedActivityLog />
             </div>
         </div>
-
       </div>
 
-      {/* Sheets & Dialogs */}
       <EditProjectSheet open={!!edit} onOpenChange={(v: boolean) => !v && setEdit(null)} project={edit} onProjectUpdated={loadData} />
 
       <Dialog open={!!delId} onOpenChange={(v) => !v && setDelId(null)}>
@@ -287,8 +292,7 @@ export function OverviewDashboard() {
             <div className="space-y-2 text-center">
               <DialogTitle className="text-xl font-bold text-gray-900">Delete Project?</DialogTitle>
               <DialogDescription className="text-sm text-gray-400">
-                Permanently delete <span className="font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded">{delId}</span>? 
-                Action cannot be undone.
+                Permanently delete <span className="font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded">{delId}</span>? Action cannot be undone.
               </DialogDescription>
             </div>
           </div>

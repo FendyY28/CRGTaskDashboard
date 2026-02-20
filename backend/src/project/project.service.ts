@@ -221,19 +221,19 @@ export class ProjectService {
         impactArea: data.impactArea || "General", reportedBy: data.reportedBy || "System", status: "open", projectId: data.projectId
       }
     });
-    // await this.auditService.log(userId, "CREATE_ISSUE", `Report Issue baru: ${data.title} (${data.issueId})`);
+    await this.auditService.log(userId, "CREATE_ISSUE", `Report Issue baru: ${data.title} (${data.issueId})`);
     return issue;
   }
 
   async updateIssue(id: number, data: any, userId: string) {
     const issue = await this.prisma.issue.update({ where: { id: Number(id) }, data: { status: data.status } });
-    // await this.auditService.log(userId, "UPDATE_ISSUE", `Update status Issue ${issue.issueId} menjadi ${data.status}`);
+    await this.auditService.log(userId, "UPDATE_ISSUE", `Update status Issue ${issue.issueId} menjadi ${data.status}`);
     return issue;
   }
 
   async removeIssue(id: number, userId: string) {
     const issue = await this.prisma.issue.delete({ where: { id: Number(id) } });
-    // await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue.title}`);
+    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue.title}`);
     return issue;
   }
 
@@ -241,7 +241,7 @@ export class ProjectService {
     const imp = await this.prisma.improvement.create({
       data: { noteId: data.noteId, reviewer: data.reviewer, developer: data.developer, feedback: data.feedback, recommendations: data.recommendations, priority: data.priority, projectId: data.projectId }
     });
-    // await this.auditService.log(userId, "ADD_IMPROVEMENT", `Menambah catatan improvement untuk project`);
+    await this.auditService.log(userId, "ADD_IMPROVEMENT", `Menambah catatan improvement untuk project`);
     return imp;
   }
 
@@ -256,7 +256,7 @@ export class ProjectService {
         tasks: { create: taskList.map((taskName: string, index: number) => ({ taskId: `TSK-${Date.now()}-${index}`, taskName: taskName, status: 'in-progress', completedDate: null })) }
       }
     });
-    // await this.auditService.log(userId, "ADD_WEEKLY_LOG", `Menambah Weekly Progress ${data.weekRange}`);
+    await this.auditService.log(userId, "ADD_WEEKLY_LOG", `Menambah Weekly Progress ${data.weekRange}`);
     return log;
   }
 
@@ -274,14 +274,14 @@ export class ProjectService {
     });
 
     // 3. Catat siapa yang menghapus
-    // await this.auditService.log(userId, "DELETE_WEEKLY_LOG", `Menghapus Weekly Log: ${log.weekRange}`);
+    await this.auditService.log(userId, "DELETE_WEEKLY_LOG", `Menghapus Weekly Log: ${log.weekRange}`);
     
     return deleted;
   }
 
   async updateLog(weeklyId: number, data: any, userId: string) { 
       const log = await this.prisma.weeklyProgress.update({ where: { id: Number(weeklyId) }, data: { progress: parseInt(data.progress), ...(data.weekRange && { weekRange: data.weekRange }) } }); 
-      // await this.auditService.log(userId, "UPDATE_WEEKLY_LOG", `Update Weekly Progress ID ${weeklyId}`);
+      await this.auditService.log(userId, "UPDATE_WEEKLY_LOG", `Update Weekly Progress ID ${weeklyId}`);
       return log;
   }
 
@@ -296,7 +296,7 @@ export class ProjectService {
       const completed = parentWeek.tasks.filter(t => t.status === 'completed').length;
       await this.prisma.weeklyProgress.update({ where: { id: parentWeek.id }, data: { progress: total > 0 ? Math.round((completed / total) * 100) : 0, completed: completed, total: total } });
     }
-    // await this.auditService.log(userId, "TOGGLE_TASK", `Mengubah status task ${task.taskName} menjadi ${newStatus}`);
+    await this.auditService.log(userId, "TOGGLE_TASK", `Mengubah status task ${task.taskName} menjadi ${newStatus}`);
     return { status: "updated", newStatus };
   }
 
@@ -336,7 +336,7 @@ export class ProjectService {
     }
 
     // 4. Audit Log
-    // await this.auditService.log(userId, "DELETE_TASK", `Menghapus Task: ${task.taskName}`);
+    await this.auditService.log(userId, "DELETE_TASK", `Menghapus Task: ${task.taskName}`);
     
     return { status: "deleted", taskId };
   }
@@ -368,7 +368,7 @@ export class ProjectService {
           updatedBy: userName // ✅ Set pembuat sebagai updater pertama
         } 
       }); 
-      // await this.auditService.log(userId, "CREATE_TEST_CASE", `Membuat Test Case: ${data.title}`);
+      await this.auditService.log(userId, "CREATE_TEST_CASE", `Membuat Test Case: ${data.title}`);
       return tc;
   }
   
@@ -404,7 +404,7 @@ export class ProjectService {
         await this.prisma.defect.deleteMany({ where: { testCaseId: id } }); 
     }
     
-    // await this.auditService.log(userId, "UPDATE_TEST_CASE", `Update status Test Case menjadi ${status}`);
+    await this.auditService.log(userId, "UPDATE_TEST_CASE", `Update status Test Case menjadi ${status}`);
     return tc;
   }
   
