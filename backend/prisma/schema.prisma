@@ -1,0 +1,178 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- AUTHENTICATION ---
+enum Role {
+  ADMIN
+  OFFICER
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  password          String
+  role              String    @default("OFFICER")
+  
+  isVerified        Boolean   @default(false)
+  verificationToken String?
+  
+  verificationTokenExpiresAt DateTime? 
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  auditLogs AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  details   String
+  userName  String  
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relasi ke User
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// --- PROJECT CORE ---
+model Project {
+  id               String   @id // Contoh: PRJ-001
+  name             String
+  
+  // Posisi Fase Saat Ini (Global Pointer)
+  currentPhase     String   // Requirement, Development, SIT, dll
+  
+  // Progress Global (0-100)
+  overallProgress  Int      @default(0)
+  
+  // Status Global Project (Ditampilkan di Header Card)
+  status           String   // on-track, at-risk, overdue, completed
+  
+  pic              String
+  projectStartDate DateTime
+  projectDeadline  DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  cycle            Int      @default(1)
+
+  // Relasi
+  sdlcPhases       SDLCPhase[]
+  weeklyProgress   WeeklyProgress[]
+  testCases        TestCase[]
+  issues           Issue[]
+  improvements     Improvement[]
+}
+
+// --- TIMELINE & PROGRESS (GANTT CHART DATA) ---
+model SDLCPhase {
+  id        Int       @id @default(autoincrement())
+  phaseName String    // Requirement, TF Meeting, Development, SIT, UAT, Live
+  
+  // Tanggal Spesifik per Fase
+  startDate DateTime? 
+  deadline  DateTime?
+
+  status    String    @default("not-started")
+
+  progress  Int       @default(0)
+  
+  // Penanda Fase ini milik Cycle keberapa
+  cycle     Int       @default(1)
+
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// --- WEEKLY LOGS ---
+model WeeklyProgress {
+  id        Int      @id @default(autoincrement())
+  weekRange String   // Contoh: "Week 1 (Jan 27)"
+  progress  Int      // Progress Mingguan (0-100)
+  completed Int      // Jumlah Task Selesai
+  total     Int      // Total Task
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+}
+
+model Task {
+  id               Int            @id @default(autoincrement())
+  taskId           String         // TSK-001
+  taskName         String
+  status           String         // completed, in-progress
+  completedDate    DateTime?
+  
+  weeklyProgressId Int
+  weeklyProgress   WeeklyProgress @relation(fields: [weeklyProgressId], references: [id], onDelete: Cascade)
+}
+
+model TestCase {
+  id        String   @id @default(uuid())
+  title     String
+  type      String   // "positive" | "negative"
+  status    String   @default("pending") // "pending" | "pass" | "fail"
+  notes     String?  @db.Text
+  
+  updatedBy String?  
+
+  isDeleted Boolean  @default(false)
+  deletedBy String?  // Siapa yang menghapus
+  deletedAt DateTime? // Kapan dihapus
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  defect    Defect?
+}
+
+model Defect {
+  id          Int      @id @default(autoincrement())
+  description String   @db.Text
+  severity    String   // Low, Medium, High, Critical
+  status      String   @default("open") // open, resolved
+  
+  testCaseId  String   @unique
+  testCase    TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+}
+
+// --- POST IMPLEMENTATION REVIEW (PIR) ---
+model Issue {
+  id           Int      @id @default(autoincrement())
+  issueId      String
+  title        String   // ✅ TAMBAHKAN INI
+  priority     String
+  description  String   @db.Text
+  impactArea   String
+  reportedBy   String
+  reportedDate DateTime @default(now())
+  status       String   @default("open")
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Improvement {
+  id              Int      @id @default(autoincrement())
+  noteId          String   // IMP-001
+  reviewer        String
+  developer       String
+  feedback        String   @db.Text
+  recommendations String   @db.Text
+  priority        String   // high, medium, low
+  createdDate     DateTime @default(now())
+  
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
