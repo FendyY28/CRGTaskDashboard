@@ -27,64 +27,72 @@ const getStyle = (status: string, progress: number, isDateOverdue: boolean) => {
 
 export function ProjectGantt({ project, onBack }: { project: any; onBack: () => void }) {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
-  // Default to the project's current cycle, or 1 if missing
+  // Ambil cycle terbesar (yang sedang aktif)
   const maxCycle = project?.cycle || 1;
   const [selectedCycle, setSelectedCycle] = useState<number>(maxCycle);
 
-  // Auto-sync cycle when project data updates
+  // Auto-sync cycle ketika data project berubah/refresh
   useEffect(() => {
     if (project?.cycle) setSelectedCycle(project.cycle);
   }, [project?.cycle]);
 
   const tasks: Task[] = useMemo(() => {
-    // Safety check: if no phases, return empty
     if (!project?.sdlcPhases) return [];
 
     try {
-        // Filter phases for the selected cycle
+        // Hanya ambil fase-fase yang sesuai dengan Cycle yang dipilih di Dropdown
         const phases = project.sdlcPhases.filter((p: any) => (p.cycle || 1) === selectedCycle);
         if (phases.length === 0) return [];
 
         return phases.map((p: any, i: number) => {
-            // --- CRITICAL CRASH PREVENTION ---
             const now = new Date();
-            // 1. Handle null start date: Default to Today
             const start = p.startDate ? new Date(p.startDate) : now;
-            
-            // 2. Handle null end date: Default to Start + 1 Day
             let end = p.deadline ? new Date(p.deadline) : new Date(start.getTime() + 86400000); 
 
-            // 3. Prevent Invalid Range: End cannot be before Start
+            // Prevent error if end date is before start date
             if (end <= start) {
                 end = new Date(start.getTime() + 86400000); 
             }
-            // ---------------------------------
 
-            const isActive = p.phaseName === project.currentPhase;
-            const isPast = PHASE_ORDER.indexOf(p.phaseName) < PHASE_ORDER.indexOf(project.currentPhase);
+            // Logika Status & Progress
+            // Apakah fase ini adalah fase yang BENAR-BENAR sedang berjalan SAAT INI?
+            const isActivePhase = p.phaseName === project.currentPhase && selectedCycle === maxCycle;
             
-            let effectiveStatus = p.status;
-            if (isActive) effectiveStatus = project.status;
+            // Apakah fase ini sudah lewat di Cycle yang aktif?
+            const isPastPhase = PHASE_ORDER.indexOf(p.phaseName) < PHASE_ORDER.indexOf(project.currentPhase);
+            
+            // Apakah kita sedang melihat History (Siklus masa lalu)?
+            const isHistoryCycle = selectedCycle < maxCycle;
 
-            let progress = 0;
-            if (isActive) progress = Number(project.overallProgress) || 0;
-            else if (isPast || effectiveStatus === 'completed') progress = 100;
+            let effectiveStatus = p.status;
+            let progress = p.progress || 0; 
+
+            if (isActivePhase) {
+                effectiveStatus = project.status;
+                progress = Number(project.overallProgress) || 0;
+            } else if (isHistoryCycle) {
+                // Di riwayat masa lalu, biarkan status apa adanya (misal: 'at-risk' / 'completed')
+                // Tapi progress kita paksa 100 karena fase itu pasti sudah selesai/terlewati
+                progress = 100; 
+            } else if (isPastPhase || effectiveStatus === 'completed') {
+                progress = 100;
+            }
             
             const isDateOverdue = new Date() > end;
             const style = getStyle(effectiveStatus, progress, isDateOverdue);
 
             return {
-                id: `phase-${p.id || i}_${p.phaseName}_${selectedCycle}`, // Unique ID composition
+                id: `phase-${p.id || i}_${p.phaseName}_${selectedCycle}`, 
                 name: p.phaseName || "Phase", 
                 type: 'task',
                 start, 
                 end, 
                 progress, 
-                isDisabled: true,
+                isDisabled: true, // Read-only di Gantt
                 custom_status: effectiveStatus, 
                 custom_color: style.solid,
                 styles: { 
-                    progressColor: style.bar,         
+                    progressColor: style.bar,        
                     progressSelectedColor: style.bar, 
                     backgroundColor: style.bg,        
                     backgroundSelectedColor: style.bg 
@@ -93,9 +101,9 @@ export function ProjectGantt({ project, onBack }: { project: any; onBack: () => 
         }).sort((a: any, b: any) => (PHASE_ORDER.indexOf(a.name) + 1 || 99) - (PHASE_ORDER.indexOf(b.name) + 1 || 99));
     } catch (e) {
         console.error("Gantt Chart Calculation Error:", e);
-        return []; // Return empty array instead of crashing app
+        return []; 
     }
-  }, [project, selectedCycle]);
+  }, [project, selectedCycle, maxCycle]);
 
   return (
     <Card className="border-none shadow-md ring-1 ring-gray-100 bg-white overflow-hidden mb-6">
@@ -104,18 +112,31 @@ export function ProjectGantt({ project, onBack }: { project: any; onBack: () => 
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-9 w-9 hover:bg-gray-100 rounded-full border border-gray-200"><ArrowLeft className="h-4 w-4 text-gray-600" /></Button>
             <div>
-              <div className="flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-[#36A39D]" /><CardTitle className="text-xl font-bold text-gray-800 tracking-tight">{project?.name || "Project Details"}</CardTitle></div>
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-[#36A39D]" />
+                <CardTitle className="text-xl font-bold text-gray-800 tracking-tight">{project?.name || "Project Details"}</CardTitle>
+                {selectedCycle < maxCycle && <Badge className="bg-amber-100 text-amber-700 shadow-none hover:bg-amber-200 ml-2">History Archive</Badge>}
+              </div>
               <p className="text-xs text-gray-400 font-medium ml-7 flex items-center gap-1">Gantt Timeline <span className="text-gray-300">•</span> Cycle {selectedCycle}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Navigasi / Filter Cycle */}
             <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200">
               <span className="text-[10px] font-bold text-gray-400 uppercase px-2 mr-1 flex items-center gap-1"><RefreshCw className="h-3 w-3"/> Cycle</span>
               {Array.from({ length: maxCycle }, (_, i) => i + 1).map((c) => (
-                <button key={c} onClick={() => setSelectedCycle(c)} className={`text-xs px-3 py-1 rounded-md font-bold transition-all ${selectedCycle === c ? "bg-white text-[#36A39D] shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-700 hover:bg-gray-200"}`}>{c}</button>
+                <button 
+                  key={c} 
+                  onClick={() => setSelectedCycle(c)} 
+                  className={`text-xs px-3 py-1 rounded-md font-bold transition-all ${selectedCycle === c ? "bg-white text-[#36A39D] shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-700 hover:bg-gray-200"}`}
+                >
+                  {c}
+                </button>
               ))}
             </div>
+            
             <div className="h-6 w-[1px] bg-gray-200 mx-1"></div>
+            
             <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
               <SelectTrigger className="w-[110px] h-9 text-xs font-medium bg-white border-gray-200 shadow-sm"><SelectValue placeholder="View" /></SelectTrigger>
               <SelectContent>{[ViewMode.Day, ViewMode.Week, ViewMode.Month].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>

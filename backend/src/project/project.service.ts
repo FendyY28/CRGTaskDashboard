@@ -81,7 +81,6 @@ export class ProjectService {
     await this.auditService.log(userId, "CREATE_PROJECT", `Membuat project baru: ${newProject.name}`);
     return newProject;
   }
-
   // ==========================================================
   // 3. UPDATE PROJECT
   // ==========================================================
@@ -89,52 +88,21 @@ export class ProjectService {
     const oldProject = await this.prisma.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
     if (!oldProject) throw new NotFoundException("Project not found");
     
-    const oldPhaseIndex = this.MASTER_PHASES.indexOf(oldProject.currentPhase);
-    const newPhaseIndex = this.MASTER_PHASES.indexOf(requestData.currentPhase);
     const isPhaseChanged = requestData.currentPhase && (requestData.currentPhase !== oldProject.currentPhase);
-    const isNewCycle = (oldPhaseIndex >= 4 && newPhaseIndex === 0);
+    const currentCycle = oldProject.cycle || 1; // PENTING: Hanya modifikasi cycle aktif
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
-      if (isNewCycle) {
-          const nextCycle = (oldProject.cycle || 1) + 1;
-          const today = new Date();
-          const newGlobalDeadline = new Date(today);
-          newGlobalDeadline.setMonth(newGlobalDeadline.getMonth() + 2);
-          const newReqDeadline = new Date(today);
-          newReqDeadline.setDate(newReqDeadline.getDate() + 7);
-
-          await tx.sDLCPhase.updateMany({
-            where: { projectId: id, cycle: oldProject.cycle, phaseName: oldProject.currentPhase, status: 'in-progress' },
-            data: { status: 'completed' } 
-          });
-
-          await tx.project.update({ 
-              where: { id }, 
-              data: { cycle: nextCycle, overallProgress: 0, currentPhase: 'Requirement', status: 'on-track',
-                  projectStartDate: requestData.projectStartDate ? new Date(requestData.projectStartDate) : today,
-                  projectDeadline: requestData.projectDeadline ? new Date(requestData.projectDeadline) : newGlobalDeadline
-              } 
-          });
-          
-          for (const phaseName of this.MASTER_PHASES) {
-            const isReq = phaseName === 'Requirement';
-            await tx.sDLCPhase.create({
-              data: { projectId: id, phaseName, cycle: nextCycle, status: isReq ? 'in-progress' : 'pending',
-                  startDate: isReq ? (requestData.phaseStartDate ? new Date(requestData.phaseStartDate) : today) : null, 
-                  deadline: isReq ? (requestData.phaseDeadline ? new Date(requestData.phaseDeadline) : newReqDeadline) : null 
-              }
-            });
-          }
-      } 
-      else if (isPhaseChanged) {
-          const currentCycle = oldProject.cycle || 1;
+      
+      if (isPhaseChanged) {
+          // Fase berubah. Selesaikan fase lama di cycle ini.
           let newStatusForOldPhase = oldProject.status === 'overdue' || oldProject.status === 'at-risk' ? oldProject.status : 'completed';
 
           await tx.sDLCPhase.updateMany({ 
             where: { projectId: id, phaseName: oldProject.currentPhase, cycle: currentCycle }, 
-            data: { status: newStatusForOldPhase } 
+            data: { status: newStatusForOldPhase, progress: 100 } // Set progress 100 saat selesai
           });
 
+          // Cari atau buat fase baru di cycle ini
           const targetPhase = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle } });
           const newPhaseData: any = { 
               status: requestData.phaseStatus || 'in-progress', 
@@ -146,7 +114,7 @@ export class ProjectService {
           else { await tx.sDLCPhase.create({ data: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle, ...newPhaseData } as any }); }
       } 
       else {
-          const currentCycle = oldProject.cycle || 1;
+          // Fase tidak berubah, hanya update detail fase (seperti progress/deadline)
           const phaseUpdatePayload: any = {};
           if (requestData.phaseDeadline) phaseUpdatePayload.deadline = new Date(requestData.phaseDeadline);
           if (requestData.phaseStartDate) phaseUpdatePayload.startDate = new Date(requestData.phaseStartDate);
@@ -157,18 +125,15 @@ export class ProjectService {
           }
       }
 
-      if (!isNewCycle) {
-          const projectUpdateData: Prisma.ProjectUpdateInput = {
-            name: requestData.name, pic: requestData.pic, currentPhase: requestData.currentPhase, status: requestData.status,
-            overallProgress: typeof requestData.overallProgress === 'string' ? parseInt(requestData.overallProgress) : requestData.overallProgress,
-          };
-          if (requestData.projectStartDate) projectUpdateData.projectStartDate = new Date(requestData.projectStartDate);
-          if (requestData.projectDeadline) projectUpdateData.projectDeadline = new Date(requestData.projectDeadline);
-          
-          return tx.project.update({ where: { id }, data: projectUpdateData, include: { sdlcPhases: true, weeklyProgress: true } });
-      } else {
-          return tx.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
-      }
+      // Update detail global project
+      const projectUpdateData: Prisma.ProjectUpdateInput = {
+        name: requestData.name, pic: requestData.pic, currentPhase: requestData.currentPhase, status: requestData.status,
+        overallProgress: typeof requestData.overallProgress === 'string' ? parseInt(requestData.overallProgress) : requestData.overallProgress,
+      };
+      if (requestData.projectStartDate) projectUpdateData.projectStartDate = new Date(requestData.projectStartDate);
+      if (requestData.projectDeadline) projectUpdateData.projectDeadline = new Date(requestData.projectDeadline);
+      
+      return tx.project.update({ where: { id }, data: projectUpdateData, include: { sdlcPhases: true, weeklyProgress: true } });
     });
 
     if (!updatedProject) throw new Error("Gagal mengupdate project.");
@@ -176,23 +141,17 @@ export class ProjectService {
     let action = "UPDATE_PROJECT";
     let detail = `Update detail project ${updatedProject.name}`;
 
-    if (isNewCycle) {
-        action = "RESET_CYCLE";
-        detail = `Project ${updatedProject.name} masuk ke Cycle ${(oldProject.cycle || 1) + 1}`;
-    } else if (isPhaseChanged) {
+    if (isPhaseChanged) {
         action = "CHANGE_PHASE";
         detail = `Project ${updatedProject.name} pindah fase ke ${requestData.currentPhase}`;
     } else if (requestData.status && requestData.status !== oldProject.status) {
         action = "UPDATE_STATUS";
         detail = `Ubah status project ${updatedProject.name} menjadi ${requestData.status}`;
-    } else if (requestData.overallProgress && requestData.overallProgress !== oldProject.overallProgress) {
-        action = "UPDATE_PROGRESS";
-        detail = `Update progress project ${updatedProject.name} menjadi ${requestData.overallProgress}%`;
     }
 
     await this.auditService.log(userId, action, detail);
     return updatedProject;
-  } 
+  }
 
   // ==========================================================
   // 4. DELETE PROJECT
@@ -428,5 +387,79 @@ export class ProjectService {
 
       // Tidak perlu auditService.log global jika tidak diinginkan
       return tc;
+  }
+
+  // ==========================================================
+  // 6. NEXT CYCLE MANAGEMENT (SMART AUTOMATION)
+  // ==========================================================
+  async nextCycle(id: string, userId: string) {
+    const oldProject = await this.prisma.project.findUnique({ 
+        where: { id }, 
+        include: { sdlcPhases: true } 
+    });
+    
+    if (!oldProject) throw new NotFoundException("Project not found");
+
+    const currentCycle = oldProject.cycle || 1;
+    const nextCycle = currentCycle + 1;
+    
+    // Smart Automation Dates
+    const today = new Date();
+    
+    // Deadline Project: 1 Bulan ke depan
+    const newGlobalDeadline = new Date(today);
+    newGlobalDeadline.setMonth(newGlobalDeadline.getMonth() + 1);
+    
+    // Deadline Fase Requirement: 1 Minggu ke depan
+    const newReqDeadline = new Date(today);
+    newReqDeadline.setDate(newReqDeadline.getDate() + 7);
+
+    const updatedProject = await this.prisma.$transaction(async (tx) => {
+        // 1. KUNCI DATA LAMA (Archive)
+        // Ubah semua status fase di cycle lama yang masih 'in-progress' menjadi 'completed'
+        await tx.sDLCPhase.updateMany({
+            where: { projectId: id, cycle: currentCycle, status: 'in-progress' },
+            data: { status: 'completed' } 
+        });
+
+        // 2. UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
+        await tx.project.update({ 
+            where: { id }, 
+            data: { 
+                cycle: nextCycle, 
+                overallProgress: 0, 
+                currentPhase: 'Requirement', 
+                status: 'on-track',
+                projectStartDate: today,
+                projectDeadline: newGlobalDeadline
+            } 
+        });
+        
+        // 3. GENERATE 6 FASE BARU UNTUK CYCLE BARU
+        for (const phaseName of this.MASTER_PHASES) {
+            const isReq = phaseName === 'Requirement';
+            await tx.sDLCPhase.create({
+                data: { 
+                    projectId: id, 
+                    phaseName, 
+                    cycle: nextCycle, 
+                    status: isReq ? 'in-progress' : 'pending',
+                    progress: 0, // Reset progress per fase
+                    startDate: isReq ? today : null, 
+                    deadline: isReq ? newReqDeadline : null 
+                }
+            });
+        }
+
+        return tx.project.findUnique({ 
+            where: { id }, 
+            include: { sdlcPhases: true } 
+        });
+    });
+
+    if (!updatedProject) throw new Error("Gagal memuat data project setelah cycle baru.");
+
+    await this.auditService.log(userId, "NEXT_CYCLE", `Project ${updatedProject.name} dinaikkan ke Cycle ${nextCycle}`);
+    return updatedProject;
   }
 }

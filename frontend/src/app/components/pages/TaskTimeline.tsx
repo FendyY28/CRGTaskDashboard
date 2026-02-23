@@ -121,7 +121,6 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
     return { globalPct: Math.round(((idx * 100) + progressInCurrentPhase) / 600 * 100), completedPhases: progressInCurrentPhase === 100 ? idx + 1 : idx };
   }, [project.currentPhase, project.overallProgress, project.status]);
 
-  // 🚀 OPTIMISASI 3: Membuat dictionary O(1) agar tidak perlu memanggil .find() berulang kali
   const phaseDict = useMemo(() => {
     const dict: Record<string, any> = {};
     if (project.sdlcPhases) {
@@ -141,7 +140,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-[#36A39D] bg-[#36A39D]/5 px-2.5 py-1 rounded-md border border-[#36A39D]/20">{project.id}</span>
               <StatusBadge value={project.status} />
-              {project.cycle > 1 && <Badge variant="outline" className="text-[10px] border-blue-200 text-blue-600 bg-blue-50">Cycle {project.cycle}</Badge>}
+              {project.cycle > 1 && <Badge variant="outline" className="text-[10px] border-[#36A39D]/20 text-[#36A39D] bg-[#36A39D]/10">Cycle {project.cycle}</Badge>}
             </div>
             <div className="flex justify-between items-center">
               <div>
@@ -173,7 +172,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
               </TableHeader>
               <TableBody>
                 {PHASES.map((ph, idx) => {
-                  const pData = phaseDict[ph]; // Pengambilan instan O(1)
+                  const pData = phaseDict[ph];
                   const curIdx = PHASES.indexOf(project.currentPhase);
                   const stat = idx < curIdx ? 'completed' : (idx === curIdx ? (Number(project.overallProgress) === 100 ? 'completed' : project.status) : 'pending');
                   return (
@@ -210,8 +209,6 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
 });
 ProjectCard.displayName = "ProjectCard";
 
-// 🚀 OPTIMISASI 1: Ekstraksi komponen Form.
-// Hal ini mencegah TaskTimeline (dan semua ProjectCard) me-render ulang setiap kali kamu mengetik karakter di Form.
 const LogActivityForm = memo(({ projects, onSuccess }: { projects: Project[], onSuccess: () => void }) => {
   const [logForm, setLogForm] = useState({ pid: "", week: "", tasks: "" });
   const [isLogging, setIsLogging] = useState(false);
@@ -241,7 +238,6 @@ const LogActivityForm = memo(({ projects, onSuccess }: { projects: Project[], on
   );
 });
 LogActivityForm.displayName = "LogActivityForm";
-
 
 // --- MAIN COMPONENT ---
 export function TaskTimeline() {
@@ -279,8 +275,6 @@ export function TaskTimeline() {
     setTimeout(() => setHighlightId(null), 2000);
   }, []);
 
-  // 🚀 OPTIMISASI 2: Callbacks ini di-"kunci" posisinya di memori dengan useCallback.
-  // Sekarang React.memo pada ProjectCard bisa bekerja 100% sempurna.
   const handleViewGantt = useCallback((p: Project) => {
     setSelProject(p);
     setView('detail');
@@ -324,6 +318,15 @@ export function TaskTimeline() {
 
   const filtered = useMemo(() => (!filter || filter === 'all') ? projects : projects.filter(p => p.status === filter), [projects, filter]);
 
+  // 🔥 Logika Warna untuk Filter Banner
+  const filterStyle = useMemo(() => {
+    if (!filter || filter === 'all') return { bg: 'bg-[#36A39D]/10', text: 'text-[#36A39D]', border: 'border-[#36A39D]/20' };
+    if (filter === 'on-track') return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' };
+    if (filter === 'at-risk') return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' };
+    if (filter === 'overdue') return { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' };
+    return { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
+  }, [filter]);
+
   if (loading) return <div className="h-screen flex items-center justify-center text-[#36A39D] font-bold animate-pulse text-lg">Loading Timelines...</div>;
 
   return (
@@ -331,7 +334,7 @@ export function TaskTimeline() {
       <div className="flex flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{view === 'list' ? "Project Timeline & Tracking" : `Gantt View: ${selProject?.name}`}</h2>
-          {view === 'detail' && <Button variant="outline" onClick={() => { setView('list'); setSelProject(null); }} className="gap-2 h-9 rounded-xl"><ArrowLeft className="h-4 w-4"/> Back to Timeline</Button>}
+          {view === 'detail' && <Button variant="outline" onClick={() => { setView('list'); setSelProject(null); }} className="gap-2 h-9 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"><ArrowLeft className="h-4 w-4"/> Back to Timeline</Button>}
         </div>
         <p className="text-sm text-gray-500">Real-time monitoring of project SDLC phases and weekly deliverables.</p>
       </div>
@@ -343,7 +346,7 @@ export function TaskTimeline() {
               {l:"On Track", s:'on-track', i:CheckCircle2, c:PROGRESS_COLORS.track}, 
               {l:"At Risk", s:'at-risk', i:AlertCircle, c:PROGRESS_COLORS.risk}, 
               {l:"Overdue", s:'overdue', i:Timer, c:PROGRESS_COLORS.overdue}, 
-              {l:"Active Projects", s:'all', i:LayoutDashboard, c:"#0F766E"}
+              {l:"Active Projects", s:'all', i:LayoutDashboard, c:"#36A39D"}
             ].map((k,i) => (
               <DashboardKpiCard key={i} label={k.l} count={projects.filter(p => k.s === 'all' ? true : p.status === k.s).length} icon={k.i} color={k.c} active={filter === k.s} onClick={() => setFilter(filter === k.s ? null : k.s)} />
             ))}
@@ -352,8 +355,8 @@ export function TaskTimeline() {
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             <div className="xl:col-span-3 space-y-8">
               {filter && filter !== 'all' && (
-                <div className="bg-blue-50 text-blue-700 border border-blue-100 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm animate-in slide-in-from-left-2">
-                  <Filter className="h-4 w-4"/> Filtering: <span className="uppercase tracking-wide">{filter.replace('-', ' ')}</span>
+                <div className={`${filterStyle.bg} ${filterStyle.text} ${filterStyle.border} border px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm animate-in slide-in-from-left-2`}>
+                  <Filter className="h-4 w-4"/> Filtering By: <span className="uppercase tracking-wide">{filter.replace('-', ' ')}</span>
                   <button onClick={() => setFilter(null)} className="ml-auto p-1 rounded-full hover:bg-black/5"><X className="h-3.5 w-3.5" /></button>
                 </div>
               )}
@@ -390,8 +393,7 @@ export function TaskTimeline() {
                   ))}
                 </DashboardCard>
 
-                <DashboardCard color="#00A651" title="Log Team Activity" icon={PlusCircle} contentClassName="pt-5 px-5 pb-6 text-left">
-                  {/* Komponen form dipisah di sini agar tidak membebani parent */}
+                <DashboardCard color="#36A39D" title="Log Team Activity" icon={PlusCircle} contentClassName="pt-5 px-5 pb-6 text-left">
                   <LogActivityForm projects={projects} onSuccess={fetchData} />
                 </DashboardCard>
               </div>

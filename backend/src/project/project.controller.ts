@@ -238,4 +238,15 @@ export class ProjectController {
     const userId = this.getUserId(req, req.body);
     return this.projectService.remove(id, userId);
   }
+
+  // ===========================================================================
+  // 6. CYCLE MANAGEMENT
+  // ===========================================================================
+
+  @Post(':id/next-cycle')
+  @UseGuards(JwtAuthGuard)
+  async nextCycle(@Param('id') id: string, @Request() req) {
+    const userId = this.getUserId(req, req.body);
+    return this.projectService.nextCycle(id, userId);
+  }
 }
