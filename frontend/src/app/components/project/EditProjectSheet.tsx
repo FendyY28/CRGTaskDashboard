@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { 
-  Loader2, FolderEdit, User, Activity, AlertCircle, 
-  PlayCircle, BarChart3, Calculator, Rocket 
+  Loader2, FolderEdit, User, Activity,
+  PlayCircle, BarChart3, Rocket, AlertCircle, 
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -15,23 +15,24 @@ import {
   Select, SelectContent, SelectItem, 
   SelectTrigger, SelectValue 
 } from "../../components/ui/select";
-
-// 🔥 IMPORTS BARU DARI CONSTANTS DAN API WRAPPER
 import { SDLC_PHASES, PROJECT_STATUS } from "../../constants/projectConstants";
 import { api } from "../../services/api";
+import { capitalize } from "../../../lib/utils"; // <-- Ambil capitalize dari utils.ts
 
-// --- HELPERS LOKAL ---
+// HELPERS KHUSUS FORM (HTML Date input wajib format YYYY-MM-DD)
 const getToday = () => new Date().toISOString().split('T')[0];
-const fmtDate = (d: string) => d ? new Date(d).toISOString().split('T')[0] : "";
+const toFormDate = (d: string | Date | null | undefined) => {
+  if (!d) return "";
+  const date = new Date(d);
+  return isNaN(date.getTime()) ? "" : date.toISOString().split('T')[0];
+};
 const calcDate = (d: string, n: number, t: 'D' | 'M') => {
   const date = new Date(d);
   if (isNaN(date.getTime())) return "";
   t === 'D' ? date.setDate(date.getDate() + n) : date.setMonth(date.getMonth() + n);
   return date.toISOString().split('T')[0];
 };
-const fmtStatus = (s: string) => s ? s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
 
-// Arrays dari Constants untuk Dropdown
 const PHASES_ARRAY = Object.values(SDLC_PHASES);
 const STATUS_OPTIONS_ARRAY = [
   PROJECT_STATUS.PENDING, 
@@ -41,7 +42,7 @@ const STATUS_OPTIONS_ARRAY = [
 ];
 
 export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated }: any) {
-  // --- STATES ---
+  // STATES
   const [isLoading, setIsLoading] = useState(false);
   const [isNextCycleLoading, setIsNextCycleLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false); 
@@ -52,7 +53,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     projectStartDate: "", projectDeadline: "", phaseStartDate: "", phaseDeadline: "", phaseStatus: ""
   });
 
-  // --- INITIALIZATION ---
+  // INITIALIZATION
   useEffect(() => {
     if (!open) {
       setShowConfirm(false); 
@@ -61,7 +62,6 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
 
     const fetchExisting = async () => {
       try {
-        // 🔥 Menggunakan api wrapper baru (jauh lebih bersih)
         const d = await api.get(`/project`);
         if (Array.isArray(d)) setExistingNames(d.filter((p: any) => p.id !== project?.id).map((p: any) => p.name.toLowerCase()));
       } catch (e) { console.error("Failed to fetch projects", e); }
@@ -71,10 +71,11 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     if (project) {
       const currentCycle = project.cycle || 1;
       const ph = project.sdlcPhases?.find((p: any) => p.phaseName === project.currentPhase && p.cycle === currentCycle);
-      const ps = fmtDate(project.projectStartDate) || getToday();
-      const pd = fmtDate(project.projectDeadline) || calcDate(ps, 2, 'M');
-      const phs = fmtDate(ph?.startDate) || ps;
-      let phd = fmtDate(ph?.deadline) || calcDate(phs, 7, 'D');
+      
+      const ps = toFormDate(project.projectStartDate) || getToday();
+      const pd = toFormDate(project.projectDeadline) || calcDate(ps, 2, 'M');
+      const phs = toFormDate(ph?.startDate) || ps;
+      let phd = toFormDate(ph?.deadline) || calcDate(phs, 7, 'D');
 
       let initialStatus = ph?.status || project.status || PROJECT_STATUS.ON_TRACK;
       if (!STATUS_OPTIONS_ARRAY.includes(initialStatus)) initialStatus = PROJECT_STATUS.ON_TRACK;
@@ -91,7 +92,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     }
   }, [open, project]);
 
-  // --- VALIDATION ---
+  // VALIDATION
   useEffect(() => {
     const e: Record<string, string> = {};
     const { name, projectStartDate: ps, projectDeadline: pd, phaseStartDate: phs, phaseDeadline: phd } = form;
@@ -101,7 +102,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     setErrs(e);
   }, [form, existingNames]);
 
-  // --- ACTIONS ---
+  // ACTIONS
   const handleChange = (k: string, v: string) => {
     setForm(p => {
       const n = { ...p, [k]: v };
@@ -118,7 +119,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
       if (k === "status") n.phaseStatus = v;
       if (k === "projectStartDate") n.projectDeadline = calcDate(v, 2, 'M');
       
-      // 🔥 SMART DATE AUTOMATION UNTUK FASE
+      // SMART DATE AUTOMATION UNTUK FASE
       if (k === "currentPhase" && v !== p.currentPhase) { 
         if (v === SDLC_PHASES.REQUIREMENT) {
              const today = getToday();
@@ -139,7 +140,6 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     });
   };
 
-  // 💡 Payload builder (userId sudah tidak perlu disisipkan manual karena di-handle oleh api.ts)
   const getPreparedPayload = () => {
     const dates = ['projectStartDate', 'projectDeadline', 'phaseStartDate', 'phaseDeadline'].reduce(
       (a, k) => ({ ...a, [k]: form[k as keyof typeof form] ? new Date(form[k as keyof typeof form]) : undefined }),
@@ -158,7 +158,6 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     if (Object.keys(errs).length) return;
     setIsLoading(true);
     try {
-      // 🔥 Menggunakan api wrapper (method PATCH)
       await api.patch(`/project/${project.id}`, getPreparedPayload());
       onOpenChange(false);
       onProjectUpdated();
@@ -169,12 +168,8 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
   const executeNextCycle = async () => {
     setIsNextCycleLoading(true);
     try {
-      // 1. Force Save before cycling (PATCH via API wrapper)
       await api.patch(`/project/${project.id}`, getPreparedPayload());
-
-      // 2. Trigger Next Cycle (POST via API wrapper, body kosong akan otomatis diinjeksi userId)
       await api.post(`/project/${project.id}/next-cycle`, {});
-
       setShowConfirm(false);
       onOpenChange(false);
       onProjectUpdated();
@@ -191,7 +186,6 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     }
   };
 
-  // 🔥 DOUBLE CONDITION INTEGRITY LOGIC
   const isFormValidForCycle = form.currentPhase === SDLC_PHASES.LIVE && Number(form.overallProgress) === 100;
   const isDatabaseValidForCycle = project?.currentPhase === SDLC_PHASES.LIVE && Number(project?.overallProgress) === 100;
   const isReadyForNextCycle = isFormValidForCycle && isDatabaseValidForCycle;
@@ -239,12 +233,13 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   <Label className="text-xs font-bold text-gray-500 uppercase mr-1">Status:</Label>
                   <Select value={form.phaseStatus} onValueChange={v => handleChange("status", v)}>
                     <SelectTrigger className={`h-7 w-auto min-w-[110px] border-none text-xs font-bold uppercase focus:ring-0 px-0 text-right capitalize ${getStatusColor(form.phaseStatus)}`}>
-                      <SelectValue>{fmtStatus(form.phaseStatus)}</SelectValue>
+                      {/* 🔥 Memanfaatkan helper capitalize dari utils */}
+                      <SelectValue>{capitalize(form.phaseStatus)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       {STATUS_OPTIONS_ARRAY.map(opt => (
                         <SelectItem key={opt} value={opt} className={`${getStatusColor(opt)} font-bold text-xs uppercase`}>
-                          {fmtStatus(opt)}
+                          {capitalize(opt)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -275,6 +270,13 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   ))}
                 </div>
               </div>
+              
+              {isFormValidForCycle && !isDatabaseValidForCycle && (
+                <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100">
+                  <AlertCircle className="h-3 w-3" />
+                  Please click "Save Changes" first to confirm Live state in database.
+                </div>
+              )}
             </div>
 
             {/* Global Timeline */}
@@ -291,9 +293,9 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
             <div className="space-y-2 bg-[#36A39D]/5 p-3 rounded-lg border border-[#36A39D]/10">
               <Label className="text-sm font-bold text-gray-700">Global Project Status</Label>
               <Select value={form.status} onValueChange={v => handleChange("status", v)}>
-                <SelectTrigger className="bg-white border-[#36A39D]/20 h-10 focus:ring-[#36A39D] capitalize"><SelectValue>{fmtStatus(form.status)}</SelectValue></SelectTrigger>
+                <SelectTrigger className="bg-white border-[#36A39D]/20 h-10 focus:ring-[#36A39D] capitalize"><SelectValue>{capitalize(form.status)}</SelectValue></SelectTrigger>
                 <SelectContent className="bg-white">
-                  {STATUS_OPTIONS_ARRAY.map(s => <SelectItem key={s} value={s} className="capitalize">{fmtStatus(s)}</SelectItem>)}
+                  {STATUS_OPTIONS_ARRAY.map(s => <SelectItem key={s} value={s} className="capitalize">{capitalize(s)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
