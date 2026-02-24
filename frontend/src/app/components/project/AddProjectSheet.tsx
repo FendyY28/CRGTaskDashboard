@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Plus, Loader2, FolderPlus, User, Hash, BarChart3, Calendar, Clock, AlertCircle, AlertTriangle, CheckCircle2, PlayCircle, Activity } from "lucide-react";
-import { Button } from "../../ui/button"; 
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger, DialogFooter } from "../../ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { API_URL } from "../../../../lib/utils"; 
+import { Button } from "../../components/ui/button"; 
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger, DialogFooter } from "../../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { API_URL } from "../../../lib/utils"; 
 
 // --- HELPERS ---
 const getToday = () => new Date().toISOString().split('T')[0];

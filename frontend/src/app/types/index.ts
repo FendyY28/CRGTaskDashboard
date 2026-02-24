@@ -85,6 +85,7 @@ export interface ProjectIssue {
   reportedDate: string;
   status: string; // 'open', 'in-progress', 'resolved'
   projectName?: string;
+  type: 'issue';
 }
 
 export interface ImprovementNote {
@@ -97,6 +98,8 @@ export interface ImprovementNote {
   priority: string;
   createdDate: string;
   projectName?: string;
+  type: 'improvement';
+  status?: string;
 }
 
 // --- 5. MASTER PROJECT INTERFACE ---

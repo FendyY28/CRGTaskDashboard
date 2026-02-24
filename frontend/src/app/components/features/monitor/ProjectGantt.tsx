@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Gantt, type Task, ViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Calendar as CalendarIcon, ArrowLeft, RefreshCw, Layers } from "lucide-react";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Button } from "../../ui/button";
+import { Badge } from "../../ui/badge";
 
 const PHASE_ORDER = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
 

@@ -1,32 +1,27 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo, type FormEvent } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Badge } from "../ui/badge";
-import { User, Clock, ChevronDown, ChevronUp, CheckCircle2, LayoutDashboard, AlertCircle, Timer, Filter, PlusCircle, ArrowRight, Loader2, Map, ArrowLeft, FolderKanban, X, Trash2, AlertTriangle } from "lucide-react";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { ProjectGantt } from "./ProjectGantt";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Badge } from "../../components/ui/badge";
+import { 
+  User, Clock, ChevronDown, ChevronUp, CheckCircle2, 
+  LayoutDashboard, AlertCircle, Timer, Filter, PlusCircle, 
+  ArrowRight, Loader2, Map, ArrowLeft, FolderKanban, X, Trash2, AlertTriangle 
+} from "lucide-react";
+import { Button } from "../../components/ui/button";
+import { Label } from "../../components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { ProjectGantt } from "../../components/features/monitor/ProjectGantt";
 import type { Project, WeeklyProgress } from "../../types";
-import { API_URL, fmtDate } from "../../../lib/utils";
-import { DashboardKpiCard, DashboardInput, DashboardTextarea, DashboardSelect, StatusBadge, DashboardCard } from "../dashboard/SharedComponents";
+import { fmtDate } from "../../../lib/utils";
+import { DashboardKpiCard, DashboardInput, DashboardTextarea, DashboardSelect, StatusBadge, DashboardCard } from "../../components/dashboard/index";
 
-const PHASES = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
+// 🔥 IMPORTS BARU DARI CONSTANTS DAN API WRAPPER
+import { SDLC_PHASES, PROJECT_STATUS } from "../../constants/projectConstants"; // Sesuaikan path jika berbeda
+import { api } from "../../services/api"; // Sesuaikan path jika berbeda
+
+// Gunakan Array dari Constants
+const PHASES_ARRAY = Object.values(SDLC_PHASES);
 const PROGRESS_COLORS = { track: "#36A39D", risk: "#F9AD3C", overdue: "#E11D48" };
-
-const getUserIdFromToken = () => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    const backupEmail = localStorage.getItem('user_email');
-    const backupName = localStorage.getItem('user_name');
-    if (!token || token === "mock-jwt-token") return backupEmail || backupName || "system";
-    const parts = token.split('.');
-    if (parts.length !== 3) return backupEmail || "system";
-    const jsonPayload = decodeURIComponent(window.atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    const parsed = JSON.parse(jsonPayload);
-    return parsed.id || parsed.sub || parsed.userId || parsed.email || backupEmail || "system"; 
-  } catch (e) { return localStorage.getItem('user_email') || "system"; }
-};
 
 // --- SUB-COMPONENT: Weekly Row ---
 const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog, onRequestDeleteTask }: { 
@@ -38,25 +33,27 @@ const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [loadingId, setLoadingId] = useState<number | null>(null);
-  const color = projectStatus.includes('track') || projectStatus === 'completed' ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
+  const color = projectStatus.includes('track') || projectStatus === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
   const handleCheck = async (tid: number, e: React.MouseEvent) => {
-    e.stopPropagation(); setLoadingId(tid);
+    e.stopPropagation(); 
+    setLoadingId(tid);
     try { 
-      const userId = getUserIdFromToken();
-      const res = await fetch(`${API_URL}/project/task/${tid}/toggle`, { 
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) 
-      }); 
-      if (res.ok) onTaskToggle(); 
-    } catch { alert("Update failed"); } 
-    finally { setLoadingId(null); }
+      // 🔥 Menggunakan api wrapper, userId otomatis di-inject
+      await api.patch(`/project/task/${tid}/toggle`); 
+      onTaskToggle(); 
+    } catch (err: any) { 
+      alert(err.message || "Update failed"); 
+    } finally { 
+      setLoadingId(null); 
+    }
   };
 
   return (
     <>
       <TableRow className="hover:bg-gray-50/50 cursor-pointer group transition-colors relative" onClick={() => setExpanded(!expanded)}>
         <TableCell><div className="flex items-center gap-3 font-semibold text-gray-700 group-hover:text-[#36A39D]">{expanded ? <ChevronUp className="h-4 w-4"/> : <ChevronDown className="h-4 w-4"/>} {week.weekRange}</div></TableCell>
-        <TableCell className="text-center font-medium text-gray-600">{week.tasks?.filter((t: any) => t.status === 'completed').length} / {week.tasks?.length || 0}</TableCell>
+        <TableCell className="text-center font-medium text-gray-600">{week.tasks?.filter((t: any) => t.status === PROJECT_STATUS.COMPLETED).length} / {week.tasks?.length || 0}</TableCell>
         <TableCell className="min-w-[120px]"><div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full rounded-full transition-all duration-700" style={{ width: `${week.progress}%`, backgroundColor: color }} /></div></TableCell>
         <TableCell className="text-center font-bold text-[#36A39D] relative">
             <div className="flex items-center justify-center gap-3">
@@ -77,7 +74,7 @@ const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog,
           <TableCell colSpan={4} className="p-4">
             <div className="grid gap-2">
               {week.tasks?.length > 0 ? week.tasks?.map((t: any) => {
-                const isDone = t.status === 'completed';
+                const isDone = t.status === PROJECT_STATUS.COMPLETED;
                 return (
                   <div key={t.id} className={`flex items-center justify-between p-3 rounded-xl border shadow-sm transition-all bg-white group/task ${isDone ? 'border-[#36A39D]/30' : 'border-gray-100'}`}>
                     <div className="flex items-center gap-3">
@@ -115,8 +112,8 @@ WeeklyRow.displayName = "WeeklyRow";
 // --- SUB-COMPONENT: Project Card ---
 const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDeleteLog, onDeleteTask }: any) => {
   const { globalPct, completedPhases } = useMemo(() => {
-    if (project.status === 'completed') return { globalPct: 100, completedPhases: 6 };
-    const idx = PHASES.indexOf(project.currentPhase);
+    if (project.status === PROJECT_STATUS.COMPLETED) return { globalPct: 100, completedPhases: 6 };
+    const idx = PHASES_ARRAY.indexOf(project.currentPhase);
     const progressInCurrentPhase = Number(project.overallProgress) || 0;
     return { globalPct: Math.round(((idx * 100) + progressInCurrentPhase) / 600 * 100), completedPhases: progressInCurrentPhase === 100 ? idx + 1 : idx };
   }, [project.currentPhase, project.overallProgress, project.status]);
@@ -129,7 +126,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
     return dict;
   }, [project.sdlcPhases]);
 
-  const accentColor = project.status.includes('track') || project.status === 'completed' ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
+  const accentColor = project.status.includes('track') || project.status === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
   return (
     <Card className={`border-none shadow-md ring-1 bg-white overflow-hidden scroll-mt-24 rounded-2xl group transition-all duration-300 ${highlight ? 'ring-2 ring-[#36A39D] shadow-lg scale-[1.01]' : 'ring-gray-100'}`}>
@@ -140,7 +137,7 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-[#36A39D] bg-[#36A39D]/5 px-2.5 py-1 rounded-md border border-[#36A39D]/20">{project.id}</span>
               <StatusBadge value={project.status} />
-              {project.cycle > 1 && <Badge variant="outline" className="text-[10px] border-[#36A39D]/20 text-[#36A39D] bg-[#36A39D]/10">Cycle {project.cycle}</Badge>}
+              {project.cycle > 1 && <Badge variant="outline" className="text-[10px] border-blue-200 text-blue-600 bg-blue-50">Cycle {project.cycle}</Badge>}
             </div>
             <div className="flex justify-between items-center">
               <div>
@@ -171,12 +168,12 @@ const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDelete
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {PHASES.map((ph, idx) => {
-                  const pData = phaseDict[ph];
-                  const curIdx = PHASES.indexOf(project.currentPhase);
-                  const stat = idx < curIdx ? 'completed' : (idx === curIdx ? (Number(project.overallProgress) === 100 ? 'completed' : project.status) : 'pending');
+                {PHASES_ARRAY.map((ph, idx) => {
+                  const pData = phaseDict[ph]; 
+                  const curIdx = PHASES_ARRAY.indexOf(project.currentPhase);
+                  const stat = idx < curIdx ? PROJECT_STATUS.COMPLETED : (idx === curIdx ? (Number(project.overallProgress) === 100 ? PROJECT_STATUS.COMPLETED : project.status) : PROJECT_STATUS.PENDING);
                   return (
-                    <TableRow key={ph} className={stat === 'pending' ? "bg-gray-50/30 opacity-60" : "hover:bg-[#36A39D]/5"}>
+                    <TableRow key={ph} className={stat === PROJECT_STATUS.PENDING ? "bg-gray-50/30 opacity-60" : "hover:bg-[#36A39D]/5"}>
                       <TableCell className="py-3 font-semibold text-gray-800 text-xs">{idx + 1}. {ph}</TableCell>
                       <TableCell className="text-[11px] text-gray-600 font-medium py-3">{pData ? `${fmtDate(pData.startDate)} - ${fmtDate(pData.deadline)}` : "-"}</TableCell>
                       <TableCell className="text-center py-3"><StatusBadge value={stat} /></TableCell>
@@ -218,14 +215,20 @@ const LogActivityForm = memo(({ projects, onSuccess }: { projects: Project[], on
     if (!logForm.pid || !logForm.week) return;
     setIsLogging(true);
     try {
-      const userId = getUserIdFromToken();
-      const res = await fetch(`${API_URL}/project/log`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: logForm.pid, weekRange: logForm.week, tasks: logForm.tasks.split('\n').filter(t => t), progress: 0, userId })
+      // 🔥 Menggunakan api wrapper, method POST
+      await api.post(`/project/log`, { 
+        projectId: logForm.pid, 
+        weekRange: logForm.week, 
+        tasks: logForm.tasks.split('\n').filter(t => t), 
+        progress: 0 
       });
-      if (res.ok) { setLogForm({ pid: "", week: "", tasks: "" }); onSuccess(); }
-    } catch { alert("Log failed"); } 
-    finally { setIsLogging(false); }
+      setLogForm({ pid: "", week: "", tasks: "" }); 
+      onSuccess();
+    } catch (err: any) { 
+      alert(err.message || "Log failed"); 
+    } finally { 
+      setIsLogging(false); 
+    }
   };
 
   return (
@@ -255,8 +258,8 @@ export function TaskTimeline() {
 
   const fetchData = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch(`${API_URL}/project`, { signal });
-      const data = await res.json();
+      // 🔥 Menggunakan api wrapper, method GET
+      const data = await api.get(`/project`, { signal });
       if (Array.isArray(data)) setProjects(data);
     } catch (e: any) {
       if (e.name !== 'AbortError') console.error("Load failed", e);
@@ -292,25 +295,17 @@ export function TaskTimeline() {
     if (!deleteConf) return;
     setIsDeleting(true);
     try {
-        const userId = getUserIdFromToken();
-        const url = deleteConf.type === 'log' 
-            ? `${API_URL}/project/log/${deleteConf.id}`
-            : `${API_URL}/project/task/${deleteConf.id}`;
+        const endpoint = deleteConf.type === 'log' 
+            ? `/project/log/${deleteConf.id}`
+            : `/project/task/${deleteConf.id}`;
         
-        const res = await fetch(url, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
+        // 🔥 Menggunakan api wrapper, method DELETE
+        await api.delete(endpoint);
 
-        if (res.ok) {
-            setDeleteConf(null); 
-            await fetchData();   
-        } else {
-            alert(`Failed to delete ${deleteConf.type}`);
-        }
-    } catch (e) {
-        alert("System error.");
+        setDeleteConf(null); 
+        await fetchData();   
+    } catch (e: any) {
+        alert(e.message || "System error.");
     } finally {
         setIsDeleting(false);
     }
@@ -318,12 +313,12 @@ export function TaskTimeline() {
 
   const filtered = useMemo(() => (!filter || filter === 'all') ? projects : projects.filter(p => p.status === filter), [projects, filter]);
 
-  // 🔥 Logika Warna untuk Filter Banner
+  // 🔥 Logika Warna untuk Filter Banner (Diperbarui dengan konstanta)
   const filterStyle = useMemo(() => {
     if (!filter || filter === 'all') return { bg: 'bg-[#36A39D]/10', text: 'text-[#36A39D]', border: 'border-[#36A39D]/20' };
-    if (filter === 'on-track') return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' };
-    if (filter === 'at-risk') return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' };
-    if (filter === 'overdue') return { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' };
+    if (filter === PROJECT_STATUS.ON_TRACK) return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' };
+    if (filter === PROJECT_STATUS.AT_RISK) return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' };
+    if (filter === PROJECT_STATUS.OVERDUE) return { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' };
     return { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
   }, [filter]);
 
@@ -343,9 +338,9 @@ export function TaskTimeline() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              {l:"On Track", s:'on-track', i:CheckCircle2, c:PROGRESS_COLORS.track}, 
-              {l:"At Risk", s:'at-risk', i:AlertCircle, c:PROGRESS_COLORS.risk}, 
-              {l:"Overdue", s:'overdue', i:Timer, c:PROGRESS_COLORS.overdue}, 
+              {l:"On Track", s: PROJECT_STATUS.ON_TRACK, i:CheckCircle2, c:PROGRESS_COLORS.track}, 
+              {l:"At Risk", s: PROJECT_STATUS.AT_RISK, i:AlertCircle, c:PROGRESS_COLORS.risk}, 
+              {l:"Overdue", s: PROJECT_STATUS.OVERDUE, i:Timer, c:PROGRESS_COLORS.overdue}, 
               {l:"Active Projects", s:'all', i:LayoutDashboard, c:"#36A39D"}
             ].map((k,i) => (
               <DashboardKpiCard key={i} label={k.l} count={projects.filter(p => k.s === 'all' ? true : p.status === k.s).length} icon={k.i} color={k.c} active={filter === k.s} onClick={() => setFilter(filter === k.s ? null : k.s)} />
@@ -393,7 +388,7 @@ export function TaskTimeline() {
                   ))}
                 </DashboardCard>
 
-                <DashboardCard color="#36A39D" title="Log Team Activity" icon={PlusCircle} contentClassName="pt-5 px-5 pb-6 text-left">
+                <DashboardCard color="#00A651" title="Log Team Activity" icon={PlusCircle} contentClassName="pt-5 px-5 pb-6 text-left">
                   <LogActivityForm projects={projects} onSuccess={fetchData} />
                 </DashboardCard>
               </div>
