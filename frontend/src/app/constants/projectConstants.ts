@@ -26,3 +26,15 @@ export const TEST_CASE_TYPE = {
   POSITIVE: "positive",
   NEGATIVE: "negative",
 } as const;
+
+export const THEME = {
+  TOSCA: "#38A79C",
+  ORANGE: "#F5A328",
+  BSI_GREEN: "#00A39D",
+  BSI_YELLOW: "#F8AD3C",
+  BSI_GREY: "#888B8D",
+  BSI_WHITE: "#FFFFFF",
+  BSI_DARK_GRAY: "#54565A",
+  BSI_LIGHT_GRAY: "#76777A",
+  BSI_LIGHT_GOLD: "#B0851E",
+} as const;

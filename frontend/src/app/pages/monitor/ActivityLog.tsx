@@ -9,7 +9,7 @@ const LogItem = memo(({ log, isLast }: { log: any, isLast: boolean }) => (
   <div className="flex gap-3 relative group">
     {/* Garis Vertikal */}
     {!isLast && (
-      <div className="absolute left-[11px] top-8 bottom-[-24px] w-[2px] bg-gray-100/80 group-hover:bg-[#36A39D]/20 transition-colors"></div>
+      <div className="absolute left-[11px] top-8 bottom-[-24px] w-[2px] bg-gray-100/80 group-hover:bg-[#38A79C]/20 transition-colors"></div>
     )}
     
     {/* Icon User */}
@@ -32,7 +32,7 @@ const LogItem = memo(({ log, isLast }: { log: any, isLast: boolean }) => (
       </div>
       
       {/* Action Badge */}
-      <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#36A39D]/10 text-[#36A39D] mb-1.5 border border-[#36A39D]/10 uppercase tracking-wider">
+      <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#38A79C]/10 text-[#38A79C] mb-1.5 border border-[#38A79C]/10 uppercase tracking-wider">
         {log.action ? log.action.replace(/_/g, " ") : "UPDATE"}
       </span>
 
@@ -53,8 +53,8 @@ export function ActivityLog() {
     <Card className="h-full border-none shadow-sm ring-1 ring-gray-200 bg-white flex flex-col">
       <CardHeader className="pb-3 border-b border-gray-50 bg-gray-50/30">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#36A39D]/10 rounded-lg">
-            <Activity className="h-4 w-4 text-[#36A39D]" />
+          <div className="p-2 bg-[#38A79C]/10 rounded-lg">
+            <Activity className="h-4 w-4 text-[#38A79C]" />
           </div>
           <div>
             <CardTitle className="text-sm font-bold text-gray-800">Activity Log</CardTitle>

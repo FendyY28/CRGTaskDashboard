@@ -3,8 +3,8 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { 
   CheckCircle2, XCircle, User, ShieldCheck, PlayCircle, LayoutList, 
-  ThumbsUp, ThumbsDown, Plus, Trash2, StickyNote, Pencil, 
-  AlertOctagon, RotateCcw, Clock, CalendarDays 
+  ThumbsUp, ThumbsDown, Plus, StickyNote, Pencil, 
+  AlertOctagon, RotateCcw, Clock, CalendarDays, ArchiveX
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
@@ -12,15 +12,13 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { TEST_CASE_STATUS, TEST_CASE_TYPE } from "../../constants/projectConstants";
+import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../constants/projectConstants";
 import { useTestCases } from "../../hooks/useTestCases";
-
-// 🚀 IMPORT SONNER
 import { toast } from "sonner";
 
 // Map Constants ke Styles
 const STYLES = {
-  [TEST_CASE_STATUS.PASS]: { bg: "bg-[#36A39D]/5 border-[#36A39D]/20", text: "text-[#36A39D]", badge: "bg-[#36A39D]/10 text-[#36A39D] border-[#36A39D]/20", icon: CheckCircle2 },
+  [TEST_CASE_STATUS.PASS]: { bg: `bg-[${THEME.TOSCA}]/5 border-[${THEME.TOSCA}]/20`, text: `text-[${THEME.TOSCA}]`, badge: `bg-[${THEME.TOSCA}]/10 text-[${THEME.TOSCA}] border-[${THEME.TOSCA}]/20`, icon: CheckCircle2 },
   [TEST_CASE_STATUS.FAIL]: { bg: "bg-[#E11D48]/5 border-[#E11D48]/20", text: "text-[#E11D48]", badge: "bg-[#E11D48]/10 text-[#E11D48] border-[#E11D48]/20", icon: XCircle },
   [TEST_CASE_STATUS.PENDING]: { bg: "bg-white border-gray-100 hover:border-gray-200", text: "text-gray-400", badge: "text-gray-400 border-gray-200", icon: Clock }
 };
@@ -36,9 +34,9 @@ const formatDate = (dateStr: string) => {
 
 // SUB-COMPONENT: TestCaseRow (Memoized)
 const TestCaseRow = memo(({ item, onAction }: { item: any, onAction: (type: string, item: any) => void }) => {
-  const isDel = item.isDeleted; 
+  const isDel = item.isDeleted; // Gunakan flag ini sebagai tanda "Takeout"
   const s = isDel 
-    ? { bg: "bg-gray-50 border-gray-200 opacity-80", text: "text-gray-400", badge: "bg-gray-100 text-gray-500", icon: Trash2 }
+    ? { bg: "bg-gray-50 border-gray-200 opacity-90", text: "text-gray-400", badge: "bg-gray-100 text-gray-500", icon: ArchiveX }
     : (STYLES[item.status as keyof typeof STYLES] || STYLES[TEST_CASE_STATUS.PENDING]);
   
   const Icon = s.icon;
@@ -51,7 +49,7 @@ const TestCaseRow = memo(({ item, onAction }: { item: any, onAction: (type: stri
   if (isDel) {
       displayUser = item.deletedBy || "Unknown";
       displayTime = item.deletedAt || item.updatedAt;
-      actionLabel = "Deleted";
+      actionLabel = "Taken Out";
       userIconColor = "text-red-400";
       badgeColor = "bg-red-50 text-red-600 border-red-100";
   }
@@ -74,23 +72,29 @@ const TestCaseRow = memo(({ item, onAction }: { item: any, onAction: (type: stri
                 <span className="truncate max-w-[100px]">{displayUser}</span>
              </div>
              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${badgeColor}`}>
-                {isDel ? <Trash2 className="h-3 w-3 text-red-400"/> : <CalendarDays className="h-3 w-3 text-gray-400" />}
+                {isDel ? <ArchiveX className="h-3 w-3 text-red-400"/> : <CalendarDays className="h-3 w-3 text-gray-400" />}
                 <span>{actionLabel} {formatDate(displayTime)}</span>
              </div>
           </div>
 
-          {!isDel && (
-            <div className="flex items-center gap-3 mt-2">
-              {item.status === TEST_CASE_STATUS.FAIL && item.defect ? (
-                <button onClick={() => onAction('view', item)} className="text-xs text-[#E11D48] flex items-center gap-1.5 font-bold hover:underline"><AlertOctagon className="h-3 w-3" /> View Defect</button>
-              ) : item.notes ? (
-                <button onClick={() => onAction('view', item)} className="text-xs text-[#F9AD3C] flex items-center gap-1.5 font-medium hover:underline"><StickyNote className="h-3 w-3" /> View Notes</button>
-              ) : null}
-              {item.status === TEST_CASE_STATUS.PENDING && (
-                <button onClick={() => onAction('edit', item)} className="text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:text-[#36A39D]"><Pencil className="h-3 w-3" /> {item.notes ? "Edit Notes" : "Add Notes"}</button>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-3 mt-2">
+             {isDel ? (
+                // Tampilkan alasan Takeout
+                <button onClick={() => onAction('view-takeout', item)} className="text-xs text-red-500 flex items-center gap-1.5 font-bold hover:underline"><StickyNote className="h-3 w-3" /> View Takeout Reason</button>
+             ) : (
+                <>
+                  {item.status === TEST_CASE_STATUS.FAIL && item.defect ? (
+                    <button onClick={() => onAction('view', item)} className="text-xs text-[#E11D48] flex items-center gap-1.5 font-bold hover:underline"><AlertOctagon className="h-3 w-3" /> View Defect</button>
+                  ) : item.notes ? (
+                    <button onClick={() => onAction('view', item)} className={`text-xs text-[${THEME.BSI_YELLOW}] flex items-center gap-1.5 font-medium hover:underline`}><StickyNote className="h-3 w-3" /> View Notes</button>
+                  ) : null}
+                  
+                  {item.status === TEST_CASE_STATUS.PENDING && (
+                    <button onClick={() => onAction('edit', item)} className={`text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:text-[${THEME.TOSCA}]`}><Pencil className="h-3 w-3" /> {item.notes ? "Edit Notes" : "Add Notes"}</button>
+                  )}
+                </>
+             )}
+          </div>
         </div>
       </div>
 
@@ -99,7 +103,7 @@ const TestCaseRow = memo(({ item, onAction }: { item: any, onAction: (type: stri
           <>
             {item.status === TEST_CASE_STATUS.PENDING ? (
               <div className="flex gap-1.5">
-                <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className="h-8 border-[#36A39D] text-[#36A39D] hover:bg-[#36A39D] hover:text-white rounded-lg"><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Pass</Button>
+                <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className={`h-8 border-[${THEME.TOSCA}] text-[${THEME.TOSCA}] hover:bg-[${THEME.TOSCA}] hover:text-white rounded-lg`}><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Pass</Button>
                 <Button size="sm" variant="outline" onClick={() => onAction('fail', item)} className="h-8 border-[#E11D48] text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg"><ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Fail</Button>
               </div>
             ) : (
@@ -109,11 +113,12 @@ const TestCaseRow = memo(({ item, onAction }: { item: any, onAction: (type: stri
               </div>
             )}
             <div className="h-4 w-[1px] bg-gray-200 mx-1"/>
-            <Button variant="ghost" size="icon" onClick={() => onAction('delete', item)} className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><Trash2 className="h-4 w-4" /></Button>
+            {/* Tombol Takeout */}
+            <Button variant="ghost" size="icon" onClick={() => onAction('takeout', item)} title="Takeout this scenario" className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><ArchiveX className="h-4 w-4" /></Button>
           </>
         ) : (
-          <span className="text-[10px] font-bold uppercase text-red-400 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider">
-            In Trash
+          <span className="text-[10px] font-bold uppercase text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider flex items-center gap-1">
+            <ArchiveX className="h-3 w-3" /> TAKEOUT
           </span>
         )}
       </div>
@@ -132,7 +137,8 @@ export function TestingStatus() {
 
   const [selProject, setSelProject] = useState<any | null>(null);
   const [modal, setModal] = useState<{ type: string | null, item?: any }>({ type: null });
-  const [form, setForm] = useState({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low" });
+  // Menambahkan form field 'takeoutReason'
+  const [form, setForm] = useState({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low", takeoutReason: "" });
   const [showDeleted, setShowDeleted] = useState(false);
 
   // Load awal: Ambil project dan set project pertama sebagai default
@@ -147,35 +153,27 @@ export function TestingStatus() {
 
   const handleRowAction = useCallback(async (type: string, item: any) => {
     if (type === 'reset') {
-      // 🚀 TOAST: Menggunakan Promise untuk Reset Status
       toast.promise(
         updateTestCase(item.id, { status: TEST_CASE_STATUS.PENDING, notes: null }, selProject.id),
-        {
-          loading: 'Resetting test case...',
-          success: 'Test case status reset to Pending.',
-          error: 'Failed to reset test case.'
-        }
+        { loading: 'Resetting test case...', success: 'Test case status reset to Pending.', error: 'Failed to reset test case.' }
       );
       return;
     }
+    
     setModal({ type, item });
+    
+    // Reset form state based on action
     if (type === 'pass') setForm(f => ({ ...f, notes: "" }));
     else if (type === 'fail') setForm(f => ({ ...f, description: "", severity: "Low" }));
     else if (type === 'edit') setForm(f => ({ ...f, notes: item.notes || "" }));
+    else if (type === 'takeout') setForm(f => ({ ...f, takeoutReason: "" }));
   }, [updateTestCase, selProject]);
 
   const handleAction = {
     add: async () => {
       toast.promise(
         addTestCase({ ...form, projectId: selProject.id }),
-        {
-          loading: 'Adding new scenario...',
-          success: () => {
-            setModal({ type: null });
-            return 'Test scenario added successfully!';
-          },
-          error: 'Failed to add scenario.'
-        }
+        { loading: 'Adding new scenario...', success: () => { setModal({ type: null }); return 'Test scenario added successfully!'; }, error: 'Failed to add scenario.' }
       );
     },
     update: async (status: string) => {
@@ -186,27 +184,27 @@ export function TestingStatus() {
           notes: form.notes, 
           defect: isFail ? { description: form.description, severity: form.severity } : undefined 
         }, selProject.id),
-        {
-          loading: 'Updating execution record...',
-          success: () => {
-            setModal({ type: null });
-            return isFail ? 'Defect logged successfully.' : 'Test case marked as Passed!';
-          },
-          error: 'Failed to update test case.'
-        }
+        { loading: 'Updating execution record...', success: () => { setModal({ type: null }); return isFail ? 'Defect logged successfully.' : 'Test case marked as Passed!'; }, error: 'Failed to update test case.' }
       );
     },
-    del: async () => {
+    // Fungsi Takeout (sebelumnya delete)
+    takeout: async () => {
+      if (!form.takeoutReason.trim()) {
+          toast.error("Please provide a reason for takeout.");
+          return;
+      }
       toast.promise(
-        deleteTestCase(modal.item.id, selProject.id),
-        {
-          loading: 'Moving to trash...',
-          success: () => {
-            setModal({ type: null });
-            return 'Scenario moved to trash bin.';
-          },
-          error: 'Failed to delete scenario.'
-        }
+        // Catatan: Karena backend (deleteTestCase) saat ini belum menerima body/reason, 
+        // pastikan backend (deleteTestCase) diupdate untuk bisa menyimpan reason.
+        // Jika tidak, kita gunakan updateTestCase untuk mengubah isDeleted dan menyisipkan reason di notes.
+        // Asumsi: Kita override field notes dengan alasan takeout untuk sementara waktu (jika backend blm diupdate).
+        updateTestCase(modal.item.id, { 
+             status: modal.item.status, // Biarkan status sama, atau set fail
+             notes: `[TAKEOUT REASON]: ${form.takeoutReason}`, // Override notes
+             isDeleted: true // Trigger soft delete (jika didukung backend secara patch)
+        }, selProject.id).then(() => deleteTestCase(modal.item.id, selProject.id)), 
+        // ^ Idealnya `deleteTestCase` punya parameter data tambahan untuk mencatat Takeout Reason di backend.
+        { loading: 'Processing takeout...', success: () => { setModal({ type: null }); return 'Scenario moved to takeout bin.'; }, error: 'Failed to takeout scenario.' }
       );
     },
   };
@@ -241,7 +239,7 @@ export function TestingStatus() {
   }, [testCases, showDeleted]);
 
   if (loading && !projects.length) return (
-    <div className="h-screen flex items-center justify-center text-[#36A39D] font-bold animate-pulse text-lg">
+    <div className={`h-screen flex items-center justify-center text-[${THEME.TOSCA}] font-bold animate-pulse text-lg`}>
       Initializing UAT Console...
     </div>
   );
@@ -250,7 +248,7 @@ export function TestingStatus() {
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-left">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-[#36A39D]" /> UAT Execution Console
+          <ShieldCheck className={`h-6 w-6 text-[${THEME.TOSCA}]`} /> UAT Execution Console
         </h2>
         <p className="text-sm text-gray-500">Manage and execute User Acceptance Testing for active projects.</p>
       </div>
@@ -263,11 +261,11 @@ export function TestingStatus() {
               <div 
                 key={p.id} 
                 onClick={() => { setSelProject(p); fetchTestCases(p.id); }} 
-                className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${selProject?.id === p.id ? 'bg-white border-[#36A39D] shadow-md ring-1 ring-[#36A39D]/10' : 'bg-white border-gray-100 hover:border-[#36A39D]/30 shadow-sm'}`}
+                className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${selProject?.id === p.id ? `bg-white border-[${THEME.TOSCA}] shadow-md ring-1 ring-[${THEME.TOSCA}]/10` : `bg-white border-gray-100 hover:border-[${THEME.TOSCA}]/30 shadow-sm`}`}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className={`text-sm font-bold truncate ${selProject?.id === p.id ? 'text-[#36A39D]' : 'text-gray-800'}`}>{p.name}</h4>
-                  {selProject?.id === p.id && <PlayCircle className="h-4 w-4 text-[#36A39D]" />}
+                  <h4 className={`text-sm font-bold truncate ${selProject?.id === p.id ? `text-[${THEME.TOSCA}]` : 'text-gray-800'}`}>{p.name}</h4>
+                  {selProject?.id === p.id && <PlayCircle className={`h-4 w-4 text-[${THEME.TOSCA}]`} />}
                 </div>
               </div>
             ))}
@@ -283,7 +281,7 @@ export function TestingStatus() {
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-gray-900">{selProject.name}</h3>
                       <div className="flex gap-2 text-xs font-bold mt-1 uppercase tracking-wider">
-                        <span className="text-[#36A39D]">{stats.passed} Pass</span>
+                        <span className={`text-[${THEME.TOSCA}]`}>{stats.passed} Pass</span>
                         <span className="text-gray-300">|</span>
                         <span className="text-[#E11D48]">{stats.failed} Fail</span>
                         <span className="text-gray-300">|</span>
@@ -291,22 +289,23 @@ export function TestingStatus() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* Tombol Toggle ke Tab Takeout */}
                         <Button variant="outline" onClick={() => setShowDeleted(!showDeleted)} className={`h-10 gap-2 border-dashed transition-all ${showDeleted ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'text-gray-500 border-gray-300 hover:text-gray-700'}`}>
-                            {showDeleted ? <LayoutList className="h-4 w-4"/> : <Trash2 className="h-4 w-4"/>}
-                            {showDeleted ? "Show Active" : "Trash Bin"}
+                            {showDeleted ? <LayoutList className="h-4 w-4"/> : <ArchiveX className="h-4 w-4"/>}
+                            {showDeleted ? "Show Active" : "Takeout Cases"}
                         </Button>
-                        <Button onClick={() => { setModal({ type: 'add' }); setForm({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low" }); }} className="bg-[#36A39D] hover:bg-[#2b8580] text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6">
+                        <Button onClick={() => { setModal({ type: 'add' }); setForm({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low", takeoutReason: "" }); }} className={`bg-[${THEME.TOSCA}] hover:bg-[${THEME.TOSCA}]/80 text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6`}>
                             <Plus className="h-4 w-4" /> Add Test Case
                         </Button>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider">
-                      <span className="text-[#36A39D]">{stats.progress}% Quality Index</span>
+                      <span className={`text-[${THEME.TOSCA}]`}>{stats.progress}% Quality Index</span>
                       <span className="text-gray-400">{testCases.filter(t => !t.isDeleted).length} Total Scenarios</span>
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#36A39D] transition-all duration-1000 ease-out" style={{ width: `${stats.progress}%` }} />
+                      <div className={`h-full bg-[${THEME.TOSCA}] transition-all duration-1000 ease-out`} style={{ width: `${stats.progress}%` }} />
                     </div>
                   </div>
                 </CardContent>
@@ -317,9 +316,9 @@ export function TestingStatus() {
                   const items = groupedCases[type]; 
                   return (
                     <div key={type} className="space-y-4">
-                      <div className={`flex items-center gap-2 px-1 ${type === TEST_CASE_TYPE.POSITIVE ? 'text-[#36A39D]' : 'text-[#F9AD3C]'}`}>
+                      <div className={`flex items-center gap-2 px-1 ${type === TEST_CASE_TYPE.POSITIVE ? `text-[${THEME.TOSCA}]` : `text-[${THEME.BSI_YELLOW}]`}`}>
                         <LayoutList className="h-4 w-4" />
-                        <h4 className="font-black text-xs uppercase tracking-widest">{type} Test Suite</h4>
+                        <h4 className="font-black text-s uppercase tracking-widest">{type} Test Suite</h4>
                       </div>
                       <div className="animate-in slide-in-from-bottom-2 duration-500">
                         {items.map(tc => (
@@ -327,7 +326,7 @@ export function TestingStatus() {
                         ))}
                         {items.length === 0 && (
                             <div className="p-4 text-center text-xs text-gray-400 border border-dashed rounded-xl italic">
-                                No {showDeleted ? 'deleted' : 'active'} items in this suite.
+                                No {showDeleted ? 'taken out' : 'active'} items in this suite.
                             </div>
                         )}
                       </div>
@@ -345,10 +344,11 @@ export function TestingStatus() {
         </main>
       </div>
 
+      {/* Modal General (Add, Edit, Pass, Fail) */}
       <Dialog open={['add', 'edit', 'pass', 'fail'].includes(modal.type || '')} onOpenChange={() => setModal({ type: null })}>
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[500px] text-left">
           <DialogHeader>
-            <DialogTitle className={modal.type === 'fail' ? "text-[#E11D48]" : "text-[#36A39D]"}>
+            <DialogTitle className={modal.type === 'fail' ? "text-[#E11D48]" : `text-[${THEME.TOSCA}]`}>
               {modal.type === 'add' && "Create New Scenario"}
               {modal.type === 'edit' && "Edit Scenario Notes"}
               {modal.type === 'pass' && "Validation Success"}
@@ -360,7 +360,7 @@ export function TestingStatus() {
           <div className="space-y-4 py-4">
             {modal.type === 'add' && (
               <>
-                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">Title</Label><Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="rounded-xl border-gray-100 focus-visible:ring-[#36A39D] h-11" /></div>
+                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">Title</Label><Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className={`rounded-xl border-gray-100 focus-visible:ring-[${THEME.TOSCA}] h-11`} /></div>
                 <div className="space-y-1.5 text-left">
                   <Label className="text-xs font-bold uppercase text-gray-400">Type</Label>
                   <Select value={form.type} onValueChange={v => setForm({...form, type: v})}>
@@ -375,7 +375,7 @@ export function TestingStatus() {
             )}
             
             {(modal.type === 'add' || modal.type === 'edit' || modal.type === 'pass') && (
-              <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">Notes / Remarks</Label><Textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="rounded-xl border-gray-100 focus-visible:ring-[#36A39D] min-h-[120px]" placeholder="Add technical observations..." /></div>
+              <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">Notes / Remarks</Label><Textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className={`rounded-xl border-gray-100 focus-visible:ring-[${THEME.TOSCA}] min-h-[120px]`} placeholder="Add technical observations..." /></div>
             )}
 
             {modal.type === 'fail' && (
@@ -390,7 +390,7 @@ export function TestingStatus() {
             <Button variant="ghost" onClick={() => setModal({ type: null })} className="rounded-xl h-11 font-bold">Cancel</Button>
             <Button 
               onClick={() => modal.type === 'add' ? handleAction.add() : handleAction.update(modal.type === 'fail' ? TEST_CASE_STATUS.FAIL : modal.type === 'pass' ? TEST_CASE_STATUS.PASS : modal.item.status)} 
-              className={`rounded-xl h-11 px-8 font-bold text-white transition-all ${modal.type === 'fail' ? 'bg-[#E11D48] hover:bg-[#be123c]' : 'bg-[#36A39D] hover:bg-[#2b8580]'}`}
+              className={`rounded-xl h-11 px-8 font-bold text-white transition-all ${modal.type === 'fail' ? 'bg-[#E11D48] hover:bg-[#be123c]' : `bg-[${THEME.TOSCA}] hover:bg-[${THEME.TOSCA}]/80`}`}
             >
               Confirm Changes
             </Button>
@@ -398,30 +398,47 @@ export function TestingStatus() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={modal.type === 'delete'} onOpenChange={() => setModal({ type: null })}>
+      {/* Modal Khusus Takeout */}
+      <Dialog open={modal.type === 'takeout'} onOpenChange={() => setModal({ type: null })}>
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[400px] text-center p-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="p-4 bg-red-50 rounded-full text-red-600 ring-4 ring-red-50/50"><Trash2 className="h-8 w-8" /></div>
-            <div className="space-y-1"><h3 className="text-lg font-bold text-gray-900">Move to Trash?</h3><p className="text-sm text-gray-500">This action will move the test scenario to the trash bin.</p></div>
+            <div className="p-4 bg-red-50 rounded-full text-red-600 ring-4 ring-red-50/50"><ArchiveX className="h-8 w-8" /></div>
+            <div className="space-y-1"><h3 className="text-lg font-bold text-gray-900">Takeout Scenario?</h3><p className="text-sm text-gray-500">Provide a reason why this scenario is being taken out.</p></div>
           </div>
+          
+          <div className="mt-4 text-left space-y-1.5">
+             <Label className="text-xs font-bold uppercase text-gray-400">Reason</Label>
+             <Textarea 
+                value={form.takeoutReason} 
+                onChange={e => setForm({...form, takeoutReason: e.target.value})} 
+                className="rounded-xl border-red-100 focus-visible:ring-[#E11D48] min-h-[100px]" 
+                placeholder="E.g., Feature deprecated, logic changed, repeated fails..." 
+             />
+          </div>
+
           <DialogFooter className="mt-6 flex gap-2 w-full">
             <Button variant="outline" onClick={() => setModal({ type: null })} className="flex-1 rounded-xl h-11 font-bold">Cancel</Button>
-            <Button onClick={handleAction.del} className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white h-11 font-bold">Delete</Button>
+            <Button onClick={handleAction.takeout} disabled={!form.takeoutReason.trim()} className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white h-11 font-bold">Confirm Takeout</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={modal.type === 'view'} onOpenChange={() => setModal({ type: null })}>
+      {/* Modal View (Notes / Defect / Takeout Reason) */}
+      <Dialog open={modal.type === 'view' || modal.type === 'view-takeout'} onOpenChange={() => setModal({ type: null })}>
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[500px] text-left">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
-              {modal.item?.status === TEST_CASE_STATUS.FAIL ? <AlertOctagon className="h-5 w-5 text-[#E11D48]"/> : <StickyNote className="h-5 w-5 text-[#F9AD3C]"/>}
-              <DialogTitle>{modal.item?.status === TEST_CASE_STATUS.FAIL ? 'Defect Log' : 'Internal Notes'}</DialogTitle>
+              {modal.type === 'view-takeout' ? <ArchiveX className="h-5 w-5 text-red-500"/> : modal.item?.status === TEST_CASE_STATUS.FAIL ? <AlertOctagon className="h-5 w-5 text-[#E11D48]"/> : <StickyNote className={`h-5 w-5 text-[${THEME.BSI_YELLOW}]`}/>}
+              <DialogTitle>
+                {modal.type === 'view-takeout' ? 'Takeout Reason' : modal.item?.status === TEST_CASE_STATUS.FAIL ? 'Defect Log' : 'Internal Notes'}
+              </DialogTitle>
             </div>
             <DialogDescription className="font-bold text-gray-800 text-sm">{modal.item?.title}</DialogDescription>
           </DialogHeader>
           <div className="p-5 bg-gray-50 rounded-2xl text-sm text-gray-600 border border-gray-100 leading-relaxed shadow-inner">
-            {modal.item?.status === TEST_CASE_STATUS.FAIL && modal.item?.defect ? (
+            {modal.type === 'view-takeout' ? (
+               <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.notes?.replace('[TAKEOUT REASON]: ', '') || "No reason provided."}</p>
+            ) : modal.item?.status === TEST_CASE_STATUS.FAIL && modal.item?.defect ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2"><span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Severity:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-[10px] font-black">{modal.item.defect.severity}</Badge></div>
                 <div className="space-y-1"><span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Issue Summary:</span><p className="font-medium text-gray-700">{modal.item.defect.description}</p></div>
@@ -430,7 +447,7 @@ export function TestingStatus() {
               <p className="whitespace-pre-wrap font-medium">{modal.item?.notes || "No additional information provided."}</p>
             )}
           </div>
-          <DialogFooter><Button onClick={() => setModal({ type: null })} className="bg-[#36A39D] hover:bg-[#2b8580] text-white font-bold rounded-xl px-8 h-11">Got it</Button></DialogFooter>
+          <DialogFooter><Button onClick={() => setModal({ type: null })} className={`bg-[${THEME.TOSCA}] hover:bg-[${THEME.TOSCA}]/80 text-white font-bold rounded-xl px-8 h-11`}>Got it</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

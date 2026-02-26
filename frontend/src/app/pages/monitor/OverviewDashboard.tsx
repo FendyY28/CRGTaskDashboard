@@ -8,7 +8,7 @@ import { useProjects } from "../../hooks/useProjects";
 import { PageHeader, DashboardKpiCard, DashboardCard } from "../../components/dashboard";
 import { PhaseBlock } from "../../components/features/monitor/PhaseBlock";
 import { ActivityLog } from "./ActivityLog"; 
-import { SDLC_PHASES, PROJECT_STATUS } from "../../constants/projectConstants";
+import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../constants/projectConstants";
 import { toast } from "sonner";
 import type { Project } from "../../types";
 
@@ -71,7 +71,7 @@ export function OverviewDashboard() {
     return { stats: s, phaseBreakdown: phases };
   }, [projects]);
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-[#36A39D] font-bold animate-pulse text-lg">Initializing Dashboard...</div>;
+  if (loading) return <div className={`h-screen flex items-center justify-center text-[${THEME.TOSCA}] font-bold animate-pulse text-lg`}>Initializing Dashboard...</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10 text-left">
@@ -84,15 +84,21 @@ export function OverviewDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardKpiCard label="Total Projects" count={stats.total} icon={FolderKanban} trend={stats.new > 0 ? `+${stats.new} this month` : ""} color="#36A39D" clickable={false} />
-        <DashboardKpiCard label="Active Projects" count={stats.active} icon={Clock} description="Currently in progress" color="#F9AD3C" clickable={false} />
+        <DashboardKpiCard label="Total Projects" count={stats.total} icon={FolderKanban} trend={stats.new > 0 ? `+${stats.new} this month` : ""} color={THEME.TOSCA} clickable={false} />
+        <DashboardKpiCard label="Active Projects" count={stats.active} icon={Clock} description="Currently in progress" color={THEME.BSI_YELLOW} clickable={false} />
         <DashboardKpiCard label="Completed" count={stats.completed} icon={CheckCircle2} color="#059669" clickable={false} />
         <DashboardKpiCard label="Freshly Live" count={stats.deliveredThisMonth} icon={Rocket} description="Launched this month" color="#8B5CF6" clickable={false} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <DashboardCard icon={LayoutDashboard} color="#36A39D" title="SDLC Phase Breakdown" contentClassName="pt-4">
+          <DashboardCard 
+            icon={LayoutDashboard} 
+            color={THEME.TOSCA} 
+            title="SDLC Phase Breakdown"
+            contentClassName="pt-6 space-y-6"
+          >
+            {/* Phase Blocks */}
             {phaseBreakdown.map(p => (
               <PhaseBlock key={p.phase} p={p} onEdit={setEdit} onDelete={setDelId} />
             ))}
