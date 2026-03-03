@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { TEST_CASE_STATUS, THEME } from "../../../constants/projectConstants";
 
+import { ProtectAction } from "../../auth/ProtectAction"; 
+
 const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', { 
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
 });
@@ -17,7 +19,6 @@ const formatDate = (dateStr: string) => {
   return DATE_FORMATTER.format(new Date(dateStr));
 };
 
-// Map Constants ke Styles (Menggunakan helper function untuk warna dinamis)
 const getStyles = (status: string, isDel: boolean) => {
   if (isDel) {
     return { bg: "#F9FAFB", border: "#E5E7EB", text: "#9CA3AF", badgeBg: "#F3F4F6", badgeText: "#6B7280", icon: ArchiveX };
@@ -87,7 +88,9 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
                   ) : null}
                   
                   {item.status === TEST_CASE_STATUS.PENDING && (
-                    <button onClick={() => onAction('edit', item)} className="text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:underline"><Pencil className="h-3 w-3" /> {item.notes ? "Edit Notes" : "Add Notes"}</button>
+                    <ProtectAction>
+                      <button onClick={() => onAction('edit', item)} className="text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:underline"><Pencil className="h-3 w-3" /> {item.notes ? "Edit Notes" : "Add Notes"}</button>
+                    </ProtectAction>
                   )}
                 </>
              )}
@@ -99,18 +102,28 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
         {!isDel ? (
           <>
             {item.status === TEST_CASE_STATUS.PENDING ? (
-              <div className="flex gap-1.5">
-                <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className="h-8 rounded-lg hover:text-white transition-colors" style={{ borderColor: THEME.TOSCA, color: THEME.TOSCA }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.TOSCA} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Pass</Button>
-                <Button size="sm" variant="outline" onClick={() => onAction('fail', item)} className="h-8 border-[#E11D48] text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg transition-colors"><ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Fail</Button>
-              </div>
+              <ProtectAction>
+                <div className="flex gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className="h-8 rounded-lg hover:text-white transition-colors" style={{ borderColor: THEME.TOSCA, color: THEME.TOSCA }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.TOSCA} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Pass</Button>
+                  <Button size="sm" variant="outline" onClick={() => onAction('fail', item)} className="h-8 border-[#E11D48] text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg transition-colors"><ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Fail</Button>
+                </div>
+              </ProtectAction>
             ) : (
               <div className="flex items-center gap-2">
                 <Badge className="shadow-none px-3 capitalize font-bold rounded-md" style={{ backgroundColor: s.badgeBg, color: s.badgeText, border: `1px solid ${s.border}` }}>{item.status}</Badge>
-                <Button variant="ghost" size="sm" onClick={() => onAction('reset', item)} className="h-7 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full px-2"><RotateCcw className="h-3 w-3 mr-1" /> Reset</Button>
+
+                <ProtectAction>
+                  <Button variant="ghost" size="sm" onClick={() => onAction('reset', item)} className="h-7 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full px-2"><RotateCcw className="h-3 w-3 mr-1" /> Reset</Button>
+                </ProtectAction>
               </div>
             )}
-            <div className="h-4 w-[1px] bg-gray-200 mx-1"/>
-            <Button variant="ghost" size="icon" onClick={() => onAction('takeout', item)} title="Takeout this scenario" className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><ArchiveX className="h-4 w-4" /></Button>
+            
+            <ProtectAction>
+              <div className="flex items-center">
+                <div className="h-4 w-[1px] bg-gray-200 mx-1"/>
+                <Button variant="ghost" size="icon" onClick={() => onAction('takeout', item)} title="Takeout this scenario" className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><ArchiveX className="h-4 w-4" /></Button>
+              </div>
+            </ProtectAction>
           </>
         ) : (
           <span className="text-[10px] font-bold uppercase text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider flex items-center gap-1">

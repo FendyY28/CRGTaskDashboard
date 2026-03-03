@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { TestCaseRow } from "../../components/features/testing/TestCaseRow";
 import { TestingModals } from "../../components/features/testing/TestingModals";
 
+// ✅ 1. Import ProtectAction
+import { ProtectAction } from "../../components/auth/ProtectAction";
+
 export function TestingStatus() {
   const { 
     projects, testCases, loading: isLoading, 
@@ -131,9 +134,12 @@ export function TestingStatus() {
                             {isShowingDeleted ? <LayoutList className="h-4 w-4"/> : <ArchiveX className="h-4 w-4"/>}
                             {isShowingDeleted ? "Show Active" : "Takeout Cases"}
                         </Button>
-                        <Button onClick={() => setActiveModal({ type: 'add' })} className="text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6 hover:opacity-90 transition-opacity" style={{ backgroundColor: THEME.TOSCA }}>
-                            <Plus className="h-4 w-4" /> Add Test Case
-                        </Button>
+
+                        <ProtectAction>
+                          <Button onClick={() => setActiveModal({ type: 'add' })} className="text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6 hover:opacity-90 transition-opacity" style={{ backgroundColor: THEME.TOSCA }}>
+                              <Plus className="h-4 w-4" /> Add Test Case
+                          </Button>
+                        </ProtectAction>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -181,12 +187,12 @@ export function TestingStatus() {
         </main>
       </div>
 
-      <TestingModals 
-        modal={activeModal} 
-        selProject={selectedProject} 
-        onClose={() => setActiveModal({ type: null })} 
-        onSuccess={() => fetchTestCases(selectedProject.id)}
-      />
+        <TestingModals 
+          modal={activeModal} 
+          selProject={selectedProject} 
+          onClose={() => setActiveModal({ type: null })} 
+          onSuccess={() => fetchTestCases(selectedProject.id)}
+        />
     </div>
   );
 }
