@@ -7,7 +7,6 @@ import { PROJECT_STATUS, THEME } from "../../../constants/projectConstants";
 import { api } from "../../../services/api"; 
 import type { WeeklyProgress } from "../../../types";
 
-// ✅ 1. Import ProtectAction
 import { ProtectAction } from "../../auth/ProtectAction"; 
 
 const PROGRESS_COLORS = { track: THEME.TOSCA, risk: THEME.BSI_YELLOW, overdue: "#E11D48" }; 
@@ -58,7 +57,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
             <div className="flex items-center justify-center gap-3">
                 <span>{week.progress}%</span>
                 
-                {/* ✅ 2. Sembunyikan icon hapus Weekly Log */}
+                {/* Sembunyikan icon hapus Weekly Log */}
                 <ProtectAction>
                   <Button 
                       variant="ghost" size="icon" 
@@ -82,7 +81,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                   <div key={t.id} className="flex items-center justify-center sm:justify-between p-3 rounded-xl border shadow-sm transition-all bg-white group/task" style={{ borderColor: isDone ? THEME.TOSCA + '50' : THEME.BSI_LIGHT_GRAY + '30' }}>
                     <div className="flex items-center gap-3">
                       
-                      {/* ✅ 3. Fallback Checkbox: HEAD melihat versi statis, OFFICER melihat versi klik */}
+                      {/* Fallback Checkbox: HEAD melihat versi statis, OFFICER melihat versi klik */}
                       <ProtectAction 
                         fallback={
                           <div 
@@ -117,7 +116,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className={`text-[10px] font-bold`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_GREY, borderColor: isDone ? THEME.TOSCA + '40' : THEME.BSI_LIGHT_GRAY + '50' }}>{isDone ? 'DONE' : 'WIP'}</Badge>
                         
-                        {/* ✅ 4. Sembunyikan icon hapus Task (X) */}
+                        {/*  Sembunyikan icon hapus Task (X) */}
                         <ProtectAction>
                           <Button
                               variant="ghost" size="icon"
