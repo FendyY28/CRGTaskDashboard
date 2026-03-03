@@ -12,49 +12,49 @@ import { IdeaFormCard } from "../../components/features/report/IdeaFormCard";
 import { LiveProjectsList } from "../../components/features/report/LiveProjectsList";
 
 export function PostImplementation() {
-  // 🔥 Ekstrak semua yang dibutuhkan dari hook di level Induk
   const { liveProjects, issues, improvements, loading, addIssue, addImprovement, refresh } = usePIR();
 
   const [selectedItem, setSelectedItem] = useState<ProjectIssue | ImprovementNote | null>(null); 
-  const [filter, setFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all'); 
   const [activeTab, setActiveTab] = useState<'active' | 'resolved' | 'improvements'>('active'); 
 
   const handleItemClick = useCallback((item: ProjectIssue | ImprovementNote) => setSelectedItem(item), []);
 
   const handleUpdateSelectedItemStatus = useCallback((newStatus: string) => {
-    setSelectedItem((prev) => {
-      if (!prev) return null;
+    setSelectedItem((prevItem) => {
+      if (!prevItem) return null;
       // Update status pada state lokal agar Modal langsung berubah tampilannya
-      return { ...prev, status: newStatus } as ProjectIssue;
+      return { ...prevItem, status: newStatus } as ProjectIssue;
     });
-    // Refresh data background agar list di dashboard sinkron
     refresh(); 
   }, [refresh]);
 
   const filteredList = useMemo(() => {
-    const combined = [...issues, ...improvements] as (ProjectIssue | ImprovementNote)[];
-    return combined
-      .filter(i => {
-        const itemStatus = 'status' in i ? i.status : '';
+    const combinedLogs = [...issues, ...improvements] as (ProjectIssue | ImprovementNote)[];
+    
+    return combinedLogs
+      .filter(logItem => {
+        const itemStatus = 'status' in logItem ? logItem.status : '';
         const isResolved = itemStatus === 'resolved'; 
         
-        if (activeTab === 'improvements' && i.type !== 'improvement') return false;
-        if (activeTab === 'resolved' && (i.type === 'improvement' || !isResolved)) return false; 
-        if (activeTab === 'active' && (i.type === 'improvement' || isResolved)) return false;
-        return filter === 'all' || i.priority === filter;
+        if (activeTab === 'improvements' && logItem.type !== 'improvement') return false;
+        if (activeTab === 'resolved' && (logItem.type === 'improvement' || !isResolved)) return false; 
+        if (activeTab === 'active' && (logItem.type === 'improvement' || isResolved)) return false;
+        
+        return priorityFilter === 'all' || logItem.priority === priorityFilter;
       })
       .sort((a, b) => {
         const dateA = new Date(a.type === 'improvement' ? (a as ImprovementNote).createdDate : (a as ProjectIssue).reportedDate).getTime();
         const dateB = new Date(b.type === 'improvement' ? (b as ImprovementNote).createdDate : (b as ProjectIssue).reportedDate).getTime();
         return dateB - dateA;
       });
-  }, [issues, improvements, filter, activeTab]);
+  }, [issues, improvements, priorityFilter, activeTab]);
 
-  const stats = useMemo(() => ({
-    critical: issues.filter(i => i.priority === "critical" && i.status !== 'resolved').length,
-    high: issues.filter(i => i.priority === "high" && i.status !== 'resolved').length,
-    open: issues.filter(i => i.status === 'open').length, 
-    improvements: improvements.length
+  const dashboardStats = useMemo(() => ({
+    criticalCount: issues.filter(issue => issue.priority === "CRITICAL" && issue.status !== 'RESOLVED').length,
+    inProgressCount: issues.filter(issue => issue.status === 'IN_PROGRESS').length,
+    openCount: issues.filter(issue => issue.status === 'OPEN').length, 
+    improvementCount: improvements.length
   }), [issues, improvements]);
 
   const cardConfig = useMemo(() => {
@@ -75,12 +75,20 @@ export function PostImplementation() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
         {[ 
-          { l: "Critical Issues", c: stats.critical, i: AlertTriangle, clr: "#7C2D12", f: 'critical', tab: 'active' as const }, 
-          { l: "High Priority", c: stats.high, i: AlertTriangle, clr: "#E11D48", f: 'high', tab: 'active' as const }, 
-          { l: "Open Issues", c: stats.open, i: Clock, clr: THEME.BSI_YELLOW, f: 'all', tab: 'active' as const }, 
-          { l: "Improvements", c: stats.improvements, i: TrendingUp, clr: THEME.TOSCA, f: 'all', tab: 'improvements' as const } 
-        ].map((k, i) => (
-          <DashboardKpiCard key={i} label={k.l} count={k.c} icon={k.i} color={k.clr} onClick={() => { setFilter(k.f); setActiveTab(k.tab); }} active={filter === k.f && activeTab === k.tab} />
+          { label: "Critical Issues", count: dashboardStats.criticalCount, icon: AlertTriangle, color: "#7C2D12", filterValue: 'critical', targetTab: 'active' as const }, 
+          { label: "In-Progress Issues", count: dashboardStats.inProgressCount, icon: Clock, color: "#0284C7", filterValue: 'all', targetTab: 'active' as const },
+          { label: "Open Issues", count: dashboardStats.openCount, icon: Clock, color: THEME.BSI_YELLOW, filterValue: 'all', targetTab: 'active' as const }, 
+          { label: "Improvements", count: dashboardStats.improvementCount, icon: TrendingUp, color: THEME.TOSCA, filterValue: 'all', targetTab: 'improvements' as const } 
+        ].map((config, index) => (
+          <DashboardKpiCard 
+            key={index} 
+            label={config.label} 
+            count={config.count} 
+            icon={config.icon} 
+            color={config.color} 
+            onClick={() => { setPriorityFilter(config.filterValue); setActiveTab(config.targetTab); }} 
+            active={priorityFilter === config.filterValue && activeTab === config.targetTab} 
+          />
         ))}
       </div>
 
@@ -91,7 +99,7 @@ export function PostImplementation() {
             {['active', 'resolved', 'improvements'].map((tab) => (
               <button 
                 key={tab} 
-                onClick={() => { setActiveTab(tab as any); setFilter('all'); }} 
+                onClick={() => { setActiveTab(tab as any); setPriorityFilter('all'); }} 
                 className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors capitalize ${activeTab === tab ? '' : 'border-transparent'}`}
                 style={activeTab === tab ? { color: cardConfig.textColor, borderColor: cardConfig.color } : { color: THEME.BSI_GREY }}
               >
@@ -107,14 +115,14 @@ export function PostImplementation() {
             title={<span className="text-lg font-bold uppercase tracking-wide" style={{ color: cardConfig.textColor }}>{cardConfig.title}</span>} 
             headerAction={
                 <div className="flex gap-1.5">
-                    {activeTab !== 'improvements' && ['all', 'critical', 'high', 'medium', 'low'].map(s => 
+                    {activeTab !== 'improvements' && ['all', 'critical', 'high', 'medium', 'low'].map(priorityLevel => 
                         <button 
-                            key={s} 
-                            onClick={() => setFilter(s)} 
-                            className={`px-3 py-1 text-[10px] font-bold rounded-lg capitalize border ${filter === s ? 'bg-white shadow-sm' : 'border-transparent'}`}
-                            style={filter === s ? { color: cardConfig.textColor, borderColor: cardConfig.color } : { color: THEME.BSI_GREY }}
+                            key={priorityLevel} 
+                            onClick={() => setPriorityFilter(priorityLevel)} 
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg capitalize border ${priorityFilter === priorityLevel ? 'bg-white shadow-sm' : 'border-transparent'}`}
+                            style={priorityFilter === priorityLevel ? { color: cardConfig.textColor, borderColor: cardConfig.color } : { color: THEME.BSI_GREY }}
                         >
-                            {s}
+                            {priorityLevel}
                         </button>
                     )}
                 </div>
@@ -130,7 +138,6 @@ export function PostImplementation() {
         <div className="space-y-6 sticky top-6 h-fit text-left">
           <LiveProjectsList projects={liveProjects} />
           
-          {/* 🔥 PASSING FUNGSI ADD DARI INDUK KE ANAK */}
           <IssueFormCard 
             liveProjects={liveProjects} 
             onSubmitIssue={addIssue} 
@@ -145,7 +152,6 @@ export function PostImplementation() {
       <PIRDetailModal 
         selectedItem={selectedItem} 
         onClose={() => setSelectedItem(null)} 
-        // Refresh seluruh data saat modal melakukan action Delete / Update
         onActionComplete={refresh} 
         onLocalUpdate={handleUpdateSelectedItemStatus}
       />

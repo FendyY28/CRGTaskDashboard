@@ -11,6 +11,7 @@ generator client {
 enum Role {
   ADMIN
   OFFICER
+  HEAD
 }
 
 model User {
@@ -128,6 +129,7 @@ model TestCase {
   isDeleted Boolean  @default(false)
   deletedBy String?  // Siapa yang menghapus
   deletedAt DateTime? // Kapan dihapus
+  takeoutReason String?  @db.Text
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

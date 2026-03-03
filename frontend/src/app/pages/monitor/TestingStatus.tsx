@@ -6,65 +6,74 @@ import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../constants/project
 import { useTestCases } from "../../hooks/useTestCases";
 import { toast } from "sonner";
 
-// Imports hasil pemisahan komponen
 import { TestCaseRow } from "../../components/features/testing/TestCaseRow";
 import { TestingModals } from "../../components/features/testing/TestingModals";
 
 export function TestingStatus() {
   const { 
-    projects, testCases, loading, 
+    projects, testCases, loading: isLoading, 
     fetchUatProjects, fetchTestCases, updateTestCase 
   } = useTestCases();
 
-  const [selProject, setSelProject] = useState<any | null>(null);
-  const [modal, setModal] = useState<{ type: string | null, item?: any }>({ type: null });
-  const [showDeleted, setShowDeleted] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [activeModal, setActiveModal] = useState<{ type: string | null, item?: any }>({ type: null });
+  const [isShowingDeleted, setIsShowingDeleted] = useState(false);
 
   useEffect(() => {
-    fetchUatProjects().then(data => {
-      if (data && data.length > 0) {
-        setSelProject(data[0]);
-        fetchTestCases(data[0].id);
+    fetchUatProjects().then(fetchedProjects => {
+      if (fetchedProjects && fetchedProjects.length > 0) {
+        setSelectedProject(fetchedProjects[0]);
+        fetchTestCases(fetchedProjects[0].id);
       }
     });
   }, [fetchUatProjects, fetchTestCases]);
 
-  const handleRowAction = useCallback(async (type: string, item: any) => {
-    if (type === 'reset') {
+  const handleTestCaseAction = useCallback(async (actionType: string, targetTestCase: any) => {
+    if (actionType === 'reset') {
       toast.promise(
-        updateTestCase(item.id, { status: TEST_CASE_STATUS.PENDING, notes: null }, selProject.id),
+        updateTestCase(targetTestCase.id, { status: TEST_CASE_STATUS.PENDING, notes: null }, selectedProject.id),
         { loading: 'Resetting test case...', success: 'Test case status reset to Pending.', error: 'Failed to reset test case.' }
       );
       return;
     }
-    setModal({ type, item });
-  }, [updateTestCase, selProject]);
+    setActiveModal({ type: actionType, item: targetTestCase });
+  }, [updateTestCase, selectedProject]);
 
-  const stats = useMemo(() => {
-    const activeCases = testCases.filter(t => !t.isDeleted);
-    const s = { passed: 0, failed: 0, pending: 0, progress: 0 };
-    activeCases.forEach(t => {
-      if (t.status === TEST_CASE_STATUS.PASS) s.passed++;
-      else if (t.status === TEST_CASE_STATUS.FAIL) s.failed++;
-      else s.pending++;
+  const executionStats = useMemo(() => {
+    const activeTestCases = testCases.filter(testCase => !testCase.isDeleted);
+    const calculatedStats = { passedCount: 0, failedCount: 0, pendingCount: 0, progressPercentage: 0 };
+    
+    activeTestCases.forEach(testCase => {
+      if (testCase.status === TEST_CASE_STATUS.PASS) calculatedStats.passedCount++;
+      else if (testCase.status === TEST_CASE_STATUS.FAIL) calculatedStats.failedCount++;
+      else calculatedStats.pendingCount++;
     });
-    s.progress = activeCases.length ? Math.round((s.passed / activeCases.length) * 100) : 0;
-    return s;
+    
+    calculatedStats.progressPercentage = activeTestCases.length 
+        ? Math.round((calculatedStats.passedCount / activeTestCases.length) * 100) 
+        : 0;
+        
+    return calculatedStats;
   }, [testCases]);
 
-  const groupedCases = useMemo(() => {
-    const res = { [TEST_CASE_TYPE.POSITIVE]: [] as any[], [TEST_CASE_TYPE.NEGATIVE]: [] as any[] };
-    testCases.forEach(t => {
-      const matchStatus = showDeleted ? t.isDeleted : !t.isDeleted;
-      if (matchStatus) {
-        if (t.type === TEST_CASE_TYPE.POSITIVE) res[TEST_CASE_TYPE.POSITIVE].push(t);
-        else res[TEST_CASE_TYPE.NEGATIVE].push(t);
+  const testCasesBySuite = useMemo(() => {
+    const categorizedSuites = { 
+        [TEST_CASE_TYPE.POSITIVE]: [] as any[], 
+        [TEST_CASE_TYPE.NEGATIVE]: [] as any[] 
+    };
+    
+    testCases.forEach(testCase => {
+      const isMatchingCurrentView = isShowingDeleted ? testCase.isDeleted : !testCase.isDeleted;
+      if (isMatchingCurrentView) {
+        if (testCase.type === TEST_CASE_TYPE.POSITIVE) categorizedSuites[TEST_CASE_TYPE.POSITIVE].push(testCase);
+        else categorizedSuites[TEST_CASE_TYPE.NEGATIVE].push(testCase);
       }
     });
-    return res;
-  }, [testCases, showDeleted]);
+    
+    return categorizedSuites;
+  }, [testCases, isShowingDeleted]);
 
-  if (loading && !projects.length) return (
+  if (isLoading && !projects.length) return (
     <div className="h-screen flex items-center justify-center font-bold animate-pulse text-lg" style={{ color: THEME.TOSCA }}>
       Initializing UAT Console...
     </div>
@@ -84,16 +93,16 @@ export function TestingStatus() {
         <aside className="lg:col-span-1 space-y-4">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Active UAT Projects</h3>
           <div className="space-y-2">
-            {projects.map(p => (
+            {projects.map(project => (
               <div 
-                key={p.id} 
-                onClick={() => { setSelProject(p); fetchTestCases(p.id); }} 
-                className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${selProject?.id === p.id ? 'bg-white shadow-md ring-1' : 'bg-white border-gray-100 shadow-sm'}`}
-                style={selProject?.id === p.id ? { borderColor: THEME.TOSCA, boxShadow: `0 0 0 1px ${THEME.TOSCA}1A` } : {}}
+                key={project.id} 
+                onClick={() => { setSelectedProject(project); fetchTestCases(project.id); }} 
+                className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${selectedProject?.id === project.id ? 'bg-white shadow-md ring-1' : 'bg-white border-gray-100 shadow-sm'}`}
+                style={selectedProject?.id === project.id ? { borderColor: THEME.TOSCA, boxShadow: `0 0 0 1px ${THEME.TOSCA}1A` } : {}}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-sm font-bold truncate" style={{ color: selProject?.id === p.id ? THEME.TOSCA : '#1F2937' }}>{p.name}</h4>
-                  {selProject?.id === p.id && <PlayCircle className="h-4 w-4" style={{ color: THEME.TOSCA }} />}
+                  <h4 className="text-sm font-bold truncate" style={{ color: selectedProject?.id === project.id ? THEME.TOSCA : '#1F2937' }}>{project.name}</h4>
+                  {selectedProject?.id === project.id && <PlayCircle className="h-4 w-4" style={{ color: THEME.TOSCA }} />}
                 </div>
               </div>
             ))}
@@ -102,59 +111,59 @@ export function TestingStatus() {
 
         {/* Main Content */}
         <main className="lg:col-span-3 space-y-6">
-          {selProject ? (
+          {selectedProject ? (
             <>
               <Card className="border-none shadow-sm ring-1 ring-gray-200 bg-white rounded-2xl overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                     <div className="text-left">
-                      <h3 className="text-lg font-bold text-gray-900">{selProject.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-900">{selectedProject.name}</h3>
                       <div className="flex gap-2 text-xs font-bold mt-1 uppercase tracking-wider">
-                        <span style={{ color: THEME.TOSCA }}>{stats.passed} Pass</span>
+                        <span style={{ color: THEME.TOSCA }}>{executionStats.passedCount} Pass</span>
                         <span className="text-gray-300">|</span>
-                        <span className="text-[#E11D48]">{stats.failed} Fail</span>
+                        <span className="text-[#E11D48]">{executionStats.failedCount} Fail</span>
                         <span className="text-gray-300">|</span>
-                        <span className="text-gray-400">{stats.pending} Pending</span>
+                        <span className="text-gray-400">{executionStats.pendingCount} Pending</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" onClick={() => setShowDeleted(!showDeleted)} className={`h-10 gap-2 border-dashed transition-all ${showDeleted ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'text-gray-500 border-gray-300 hover:text-gray-700'}`}>
-                            {showDeleted ? <LayoutList className="h-4 w-4"/> : <ArchiveX className="h-4 w-4"/>}
-                            {showDeleted ? "Show Active" : "Takeout Cases"}
+                        <Button variant="outline" onClick={() => setIsShowingDeleted(!isShowingDeleted)} className={`h-10 gap-2 border-dashed transition-all ${isShowingDeleted ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'text-gray-500 border-gray-300 hover:text-gray-700'}`}>
+                            {isShowingDeleted ? <LayoutList className="h-4 w-4"/> : <ArchiveX className="h-4 w-4"/>}
+                            {isShowingDeleted ? "Show Active" : "Takeout Cases"}
                         </Button>
-                        <Button onClick={() => setModal({ type: 'add' })} className="text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6 hover:opacity-90 transition-opacity" style={{ backgroundColor: THEME.TOSCA }}>
+                        <Button onClick={() => setActiveModal({ type: 'add' })} className="text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6 hover:opacity-90 transition-opacity" style={{ backgroundColor: THEME.TOSCA }}>
                             <Plus className="h-4 w-4" /> Add Test Case
                         </Button>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider">
-                      <span style={{ color: THEME.TOSCA }}>{stats.progress}% Quality Index</span>
-                      <span className="text-gray-400">{testCases.filter(t => !t.isDeleted).length} Total Scenarios</span>
+                      <span style={{ color: THEME.TOSCA }}>{executionStats.progressPercentage}% Quality Index</span>
+                      <span className="text-gray-400">{testCases.filter(testCase => !testCase.isDeleted).length} Total Scenarios</span>
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${stats.progress}%`, backgroundColor: THEME.TOSCA }} />
+                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${executionStats.progressPercentage}%`, backgroundColor: THEME.TOSCA }} />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {([TEST_CASE_TYPE.POSITIVE, TEST_CASE_TYPE.NEGATIVE] as const).map(type => {
-                  const items = groupedCases[type]; 
+                {([TEST_CASE_TYPE.POSITIVE, TEST_CASE_TYPE.NEGATIVE] as const).map(suiteType => {
+                  const testCasesInSuite = testCasesBySuite[suiteType]; 
                   return (
-                    <div key={type} className="space-y-4">
-                      <div className="flex items-center gap-2 px-1" style={{ color: type === TEST_CASE_TYPE.POSITIVE ? THEME.TOSCA : THEME.BSI_YELLOW }}>
+                    <div key={suiteType} className="space-y-4">
+                      <div className="flex items-center gap-2 px-1" style={{ color: suiteType === TEST_CASE_TYPE.POSITIVE ? THEME.TOSCA : THEME.BSI_YELLOW }}>
                         <LayoutList className="h-4 w-4" />
-                        <h4 className="font-black text-sm uppercase tracking-widest">{type} Test Suite</h4>
+                        <h4 className="font-black text-sm uppercase tracking-widest">{suiteType} Test Suite</h4>
                       </div>
                       <div className="animate-in slide-in-from-bottom-2 duration-500">
-                        {items.map(tc => (
-                          <TestCaseRow key={tc.id} item={tc} onAction={handleRowAction} />
+                        {testCasesInSuite.map(testCase => (
+                          <TestCaseRow key={testCase.id} item={testCase} onAction={handleTestCaseAction} />
                         ))}
-                        {items.length === 0 && (
+                        {testCasesInSuite.length === 0 && (
                             <div className="p-4 text-center text-xs text-gray-400 border border-dashed rounded-xl italic">
-                                No {showDeleted ? 'taken out' : 'active'} items in this suite.
+                                No {isShowingDeleted ? 'taken out' : 'active'} items in this suite.
                             </div>
                         )}
                       </div>
@@ -173,10 +182,10 @@ export function TestingStatus() {
       </div>
 
       <TestingModals 
-        modal={modal} 
-        selProject={selProject} 
-        onClose={() => setModal({ type: null })} 
-        onSuccess={() => fetchTestCases(selProject.id)}
+        modal={activeModal} 
+        selProject={selectedProject} 
+        onClose={() => setActiveModal({ type: null })} 
+        onSuccess={() => fetchTestCases(selectedProject.id)}
       />
     </div>
   );

@@ -15,7 +15,7 @@ interface TestingModalsProps {
   modal: { type: string | null; item?: any };
   selProject: any;
   onClose: () => void;
-  onSuccess: () => void; // 🔥 1. Tambahkan prop onSuccess
+  onSuccess: () => void;
 }
 
 export function TestingModals({ modal, selProject, onClose, onSuccess }: TestingModalsProps) {
@@ -41,7 +41,7 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
           success: () => { 
             onClose(); 
             setIsBusy(false); 
-            onSuccess(); // 🔥 2. Panggil onSuccess agar data di layar belakang me-refresh
+            onSuccess(); 
             return 'Test scenario added successfully!'; 
           }, 
           error: () => { setIsBusy(false); return 'Failed to add scenario.'; } 
@@ -62,7 +62,7 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
           success: () => { 
             onClose(); 
             setIsBusy(false); 
-            onSuccess(); // 🔥 2. Panggil onSuccess
+            onSuccess(); 
             return isFail ? 'Defect logged successfully.' : 'Test case updated!'; 
           }, 
           error: () => { setIsBusy(false); return 'Failed to update test case.'; } 
@@ -75,7 +75,7 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
       toast.promise(
         updateTestCase(modal.item.id, { 
              status: modal.item.status, 
-             notes: `[TAKEOUT REASON]: ${form.takeoutReason}`, 
+             takeoutReason: form.takeoutReason, 
              isDeleted: true 
         }, selProject.id).then(() => deleteTestCase(modal.item.id, selProject.id)), 
         { 
@@ -83,7 +83,7 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
           success: () => { 
             onClose(); 
             setIsBusy(false); 
-            onSuccess(); // 🔥 2. Panggil onSuccess
+            onSuccess(); 
             return 'Scenario moved to takeout bin.'; 
           }, 
           error: () => { setIsBusy(false); return 'Failed to takeout scenario.'; } 
@@ -184,7 +184,7 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
           </DialogHeader>
           <div className="p-5 bg-gray-50 rounded-2xl text-sm text-gray-600 border border-gray-100 leading-relaxed shadow-inner">
             {modal.type === 'view-takeout' ? (
-               <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.notes?.replace('[TAKEOUT REASON]: ', '') || "No reason provided."}</p>
+               <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.takeoutReason || "No reason provided."}</p>
             ) : modal.item?.status === TEST_CASE_STATUS.FAIL && modal.item?.defect ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2"><span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Severity:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-[10px] font-black">{modal.item.defect.severity}</Badge></div>

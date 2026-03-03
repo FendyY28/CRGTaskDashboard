@@ -1,3 +1,5 @@
+export type Role = "ADMIN" | "OFFICER" | "HEAD";
+
 export const SDLC_PHASES = {
   REQUIREMENT: "Requirement",
   TF_MEETING: "TF Meeting",

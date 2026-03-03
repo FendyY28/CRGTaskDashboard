@@ -333,7 +333,7 @@ export class ProjectService {
   
   // 🔥 UPDATE dengan pencarian User yang lebih standar
   async updateTestCase(id: string, data: any, userId: string) {
-    const { status, notes, defect } = data;
+    const { status, notes, defect, takeoutReason, isDeleted } = data;
 
     // Kita cari user secara proper (mirip Create)
     let userName = "Unknown User";
@@ -349,6 +349,8 @@ export class ProjectService {
       data: { 
         status, 
         notes,
+        takeoutReason,
+        isDeleted,
         updatedBy: userName // ✅ Update nama pelaksana terakhir
       } 
     });
@@ -385,7 +387,15 @@ export class ProjectService {
           } 
       }); 
 
-      // Tidak perlu auditService.log global jika tidak diinginkan
+      // 🔥 3. TAMBAHAN: Catat ke Audit Log Activity
+      // Jika tc.takeoutReason ada (karena di-update di fungsi updateTestCase sebelumnya),
+      // kita bisa memasukkannya ke detail log.
+      await this.auditService.log(
+          userId, 
+          "TAKEOUT_TEST_CASE", 
+          `Melakukan Takeout pada Test Case: "${tc.title}"`
+      );
+
       return tc;
   }
 

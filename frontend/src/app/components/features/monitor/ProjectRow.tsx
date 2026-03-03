@@ -1,8 +1,10 @@
 import { memo } from "react";
 import { Users, Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
-import { StatusBadge } from "../../dashboard/index"; // Gunakan Barrel Import
+import { StatusBadge } from "../../dashboard/index"; 
 import type { Project } from "../../../types";
+// ✅ Import ProtectAction
+import { ProtectAction } from "../../auth/ProtectAction"; 
 
 interface ProjectRowProps {
   proj: Project;
@@ -20,19 +22,34 @@ export const ProjectRow = memo(({ proj, onEdit, onDelete }: ProjectRowProps) => 
         <Users className="h-3 w-3 text-[#F9AD3C]"/> {proj.pic || "Unassigned"}
       </p>
     </div>
+    
     <div className="flex items-center gap-4 shrink-0">
       <div className="flex flex-col items-end gap-1">
         <span className="text-xs font-black text-gray-700">{proj.overallProgress}%</span>
         <StatusBadge value={proj.status} />
       </div>
-      <div className="flex items-center gap-1 border-l pl-3 ml-2 border-gray-200">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-[#36A39D] hover:bg-white" onClick={() => onEdit(proj)}>
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-white" onClick={() => onDelete(proj.id)}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+
+      {/* ✅ Bungkus bagian aksi dengan ProtectAction */}
+      <ProtectAction>
+        <div className="flex items-center gap-1 border-l pl-3 ml-2 border-gray-200">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-gray-400 hover:text-[#36A39D] hover:bg-white" 
+            onClick={() => onEdit(proj)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-white" 
+            onClick={() => onDelete(proj.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </ProtectAction>
     </div>
   </div>
 ));
