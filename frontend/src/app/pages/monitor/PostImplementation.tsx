@@ -11,19 +11,25 @@ import { IssueFormCard } from "../../components/features/report/IssueFormCard";
 import { IdeaFormCard } from "../../components/features/report/IdeaFormCard";
 import { LiveProjectsList } from "../../components/features/report/LiveProjectsList";
 
+import { ProtectAction } from "../../components/auth/ProtectAction";
+
+const normalizeStr = (str?: string) => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/[-_]/g, ' ').trim();
+};
+
 export function PostImplementation() {
   const { liveProjects, issues, improvements, loading, addIssue, addImprovement, refresh } = usePIR();
 
   const [selectedItem, setSelectedItem] = useState<ProjectIssue | ImprovementNote | null>(null); 
   const [priorityFilter, setPriorityFilter] = useState('all'); 
-  const [activeTab, setActiveTab] = useState<'active' | 'resolved' | 'improvements'>('active'); 
+  const [activeTab, setActiveTab] = useState<'open' | 'in-progress' | 'resolved' | 'improvements'>('open'); 
 
   const handleItemClick = useCallback((item: ProjectIssue | ImprovementNote) => setSelectedItem(item), []);
 
   const handleUpdateSelectedItemStatus = useCallback((newStatus: string) => {
     setSelectedItem((prevItem) => {
       if (!prevItem) return null;
-      // Update status pada state lokal agar Modal langsung berubah tampilannya
       return { ...prevItem, status: newStatus } as ProjectIssue;
     });
     refresh(); 
@@ -34,14 +40,18 @@ export function PostImplementation() {
     
     return combinedLogs
       .filter(logItem => {
-        const itemStatus = 'status' in logItem ? logItem.status : '';
-        const isResolved = itemStatus === 'resolved'; 
+        const itemStatus = normalizeStr('status' in logItem ? logItem.status : '');
+        const itemPriority = normalizeStr('priority' in logItem ? logItem.priority : '');
         
         if (activeTab === 'improvements' && logItem.type !== 'improvement') return false;
-        if (activeTab === 'resolved' && (logItem.type === 'improvement' || !isResolved)) return false; 
-        if (activeTab === 'active' && (logItem.type === 'improvement' || isResolved)) return false;
+        if (activeTab !== 'improvements' && logItem.type === 'improvement') return false;
         
-        return priorityFilter === 'all' || logItem.priority === priorityFilter;
+        if (activeTab === 'open' && itemStatus !== 'open') return false;
+        if (activeTab === 'in-progress' && itemStatus !== 'in progress') return false;
+        if (activeTab === 'resolved' && itemStatus !== 'resolved') return false;
+        
+        // Filter Priority
+        return priorityFilter === 'all' || itemPriority === priorityFilter.toLowerCase();
       })
       .sort((a, b) => {
         const dateA = new Date(a.type === 'improvement' ? (a as ImprovementNote).createdDate : (a as ProjectIssue).reportedDate).getTime();
@@ -50,18 +60,27 @@ export function PostImplementation() {
       });
   }, [issues, improvements, priorityFilter, activeTab]);
 
-  const dashboardStats = useMemo(() => ({
-    criticalCount: issues.filter(issue => issue.priority === "CRITICAL" && issue.status !== 'RESOLVED').length,
-    inProgressCount: issues.filter(issue => issue.status === 'IN_PROGRESS').length,
-    openCount: issues.filter(issue => issue.status === 'OPEN').length, 
-    improvementCount: improvements.length
-  }), [issues, improvements]);
+  const dashboardStats = useMemo(() => {
+    return {
+      criticalCount: issues.filter(issue => 
+        normalizeStr(issue.priority) === "critical" && 
+        normalizeStr(issue.status) !== 'resolved'
+      ).length,
+      inProgressCount: issues.filter(issue => 
+        normalizeStr(issue.status) === 'in progress'
+      ).length,
+      openCount: issues.filter(issue => normalizeStr(issue.status) === 'open').length, 
+      improvementCount: improvements.length
+    };
+  }, [issues, improvements]);
 
   const cardConfig = useMemo(() => {
     switch (activeTab) {
       case 'resolved': return { color: THEME.BSI_GREEN, icon: CheckCircle2, title: "Resolved Archive", textColor: THEME.BSI_GREEN };
       case 'improvements': return { color: THEME.TOSCA, icon: Lightbulb, title: "Optimization Ideas", textColor: THEME.TOSCA };
-      default: return { color: "#E11D48", icon: AlertTriangle, title: "Active Issue Log", textColor: "#E11D48" };
+      case 'in-progress': return { color: "#0284C7", icon: Clock, title: "In-Progress Logs", textColor: "#0284C7" };
+      case 'open':
+      default: return { color: "#E11D48", icon: AlertTriangle, title: "Open Issues Log", textColor: "#E11D48" };
     }
   }, [activeTab]);
 
@@ -75,9 +94,9 @@ export function PostImplementation() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
         {[ 
-          { label: "Critical Issues", count: dashboardStats.criticalCount, icon: AlertTriangle, color: "#7C2D12", filterValue: 'critical', targetTab: 'active' as const }, 
-          { label: "In-Progress Issues", count: dashboardStats.inProgressCount, icon: Clock, color: "#0284C7", filterValue: 'all', targetTab: 'active' as const },
-          { label: "Open Issues", count: dashboardStats.openCount, icon: Clock, color: THEME.BSI_YELLOW, filterValue: 'all', targetTab: 'active' as const }, 
+          { label: "Critical Issues", count: dashboardStats.criticalCount, icon: AlertTriangle, color: "#7C2D12", filterValue: 'critical', targetTab: 'open' as const }, 
+          { label: "In-Progress Issues", count: dashboardStats.inProgressCount, icon: Clock, color: "#0284C7", filterValue: 'all', targetTab: 'in-progress' as const },
+          { label: "Open Issues", count: dashboardStats.openCount, icon: Clock, color: THEME.BSI_YELLOW, filterValue: 'all', targetTab: 'open' as const }, 
           { label: "Improvements", count: dashboardStats.improvementCount, icon: TrendingUp, color: THEME.TOSCA, filterValue: 'all', targetTab: 'improvements' as const } 
         ].map((config, index) => (
           <DashboardKpiCard 
@@ -96,7 +115,7 @@ export function PostImplementation() {
         
         <div className="xl:col-span-2 space-y-4">
           <div className="flex border-b border-gray-200">
-            {['active', 'resolved', 'improvements'].map((tab) => (
+            {['open', 'in-progress', 'resolved', 'improvements'].map((tab) => (
               <button 
                 key={tab} 
                 onClick={() => { setActiveTab(tab as any); setPriorityFilter('all'); }} 
@@ -138,14 +157,16 @@ export function PostImplementation() {
         <div className="space-y-6 sticky top-6 h-fit text-left">
           <LiveProjectsList projects={liveProjects} />
           
-          <IssueFormCard 
-            liveProjects={liveProjects} 
-            onSubmitIssue={addIssue} 
-          />
-          <IdeaFormCard 
-            liveProjects={liveProjects} 
-            onSubmitImprovement={addImprovement} 
-          />
+          <ProtectAction>
+            <IssueFormCard 
+              liveProjects={liveProjects} 
+              onSubmitIssue={addIssue} 
+            />
+            <IdeaFormCard 
+              liveProjects={liveProjects} 
+              onSubmitImprovement={addImprovement} 
+            />
+          </ProtectAction>
         </div>
       </div>
 

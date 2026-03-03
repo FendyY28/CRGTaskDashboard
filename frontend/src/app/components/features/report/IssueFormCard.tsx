@@ -12,7 +12,7 @@ const INITIAL_ISSUE = { projectId: "", title: "", priority: "medium", descriptio
 
 interface IssueFormCardProps {
   liveProjects: Project[];
-  onSubmitIssue: (data: any) => Promise<any>; // 🔥 Prop Baru
+  onSubmitIssue: (data: any) => Promise<any>; 
 }
 
 export function IssueFormCard({ liveProjects, onSubmitIssue }: IssueFormCardProps) {
