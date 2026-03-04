@@ -98,7 +98,7 @@ export function LoginPage() {
   };
 
   return (
-    // 🚀 2. Bungkus HANYA dengan AuthLayout (BSI Logo & Footer otomatis terpasang)
+    // Bungkus HANYA dengan AuthLayout (BSI Logo & Footer otomatis terpasang)
     <AuthLayout 
       title="Welcome Back" 
       subtitle="Sign in to access CRG Monitoring System"

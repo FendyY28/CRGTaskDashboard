@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "../../components/ui/button";
 
-// 🚀 1. Import Standarisasi
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { api } from "../../services/api";
 
@@ -21,7 +20,7 @@ export function VerifyEmailPage() {
 
     const verify = async () => {
       try {
-        // 🚀 2. Gunakan API Service (Tanpa raw fetch)
+        // Gunakan API Service
         await api.post("/auth/verify-email", { token });
 
         setStatus("success");
@@ -37,7 +36,7 @@ export function VerifyEmailPage() {
     verify();
   }, [token, navigate]);
 
-  // 🚀 3. Dinamis Title & Subtitle berdasarkan State
+  // Dinamis Title & Subtitle berdasarkan State
   const getHeader = () => {
     if (status === "loading") return { t: "Verifying...", s: "Please wait while we validate your token." };
     if (status === "success") return { t: "Email Verified!", s: "Your account is now active. Welcome to BSI CRG." };
@@ -50,7 +49,7 @@ export function VerifyEmailPage() {
     <AuthLayout title={header.t} subtitle={header.s}>
       <div className="text-center animate-in fade-in zoom-in-95 duration-500">
         
-        {/* === STATE: LOADING === */}
+        {/* STATE: LOADING */}
         {status === "loading" && (
           <div className="py-6">
             <div className="h-20 w-20 bg-[#36A39D]/5 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -59,7 +58,7 @@ export function VerifyEmailPage() {
           </div>
         )}
 
-        {/* === STATE: SUCCESS === */}
+        {/* STATE: SUCCESS */}
         {status === "success" && (
           <div className="space-y-6">
             <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
@@ -72,7 +71,7 @@ export function VerifyEmailPage() {
           </div>
         )}
 
-        {/* === STATE: ERROR === */}
+        {/* ERROR */}
         {status === "error" && (
           <div className="space-y-6">
             <div className="h-20 w-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto">

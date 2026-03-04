@@ -4,7 +4,6 @@ import { Lock, ShieldCheck, ChevronRight, Loader2, CheckCircle2, AlertCircle } f
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
-// 🚀 1. Import komponen terstandarisasi
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
 import { api } from "../../services/api";
@@ -22,7 +21,7 @@ export function ResetPasswordPage() {
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
   const [ui, setUi] = useState({ loading: false, error: "", success: false });
 
-  // 🚀 2. Proteksi URL: Jika tidak ada email, tendang balik
+  // Proteksi URL: Jika tidak ada email, tendang balik
   useEffect(() => {
     if (!email) {
       navigate("/login");
@@ -39,7 +38,7 @@ export function ResetPasswordPage() {
     }
 
     try {
-      // 🚀 3. Gunakan API Service (Jauh lebih bersih)
+      // Gunakan API Service
       await api.post("/auth/reset-password", { email, password: form.password });
 
       setUi({ loading: false, error: "", success: true });
@@ -51,7 +50,7 @@ export function ResetPasswordPage() {
     }
   };
 
-  // 🚀 4. Dinamis Layout Title berdasarkan state Success
+  // Dinamis Layout Title berdasarkan state Success
   const layoutTitle = ui.success ? "Password Updated!" : "New Password";
   const layoutSubtitle = ui.success 
     ? "Redirecting you to login page..." 
@@ -60,7 +59,7 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout title={layoutTitle} subtitle={layoutSubtitle}>
       {ui.success ? (
-        /* --- TAMPILAN SUKSES --- */
+        /* TAMPILAN SUKSES */
         <div className="text-center py-4 animate-in fade-in zoom-in-95 duration-500">
           <div className="mx-auto w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="h-10 w-10 text-[#36A39D] animate-bounce" />
@@ -71,7 +70,7 @@ export function ResetPasswordPage() {
           </p>
         </div>
       ) : (
-        /* --- TAMPILAN FORM --- */
+        /* TAMPILAN FORM */
         <form onSubmit={handleReset} className="space-y-5 animate-in fade-in duration-300">
           <div className="space-y-2 text-left relative">
             <Label htmlFor="password" title="New Password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">New Password</Label>

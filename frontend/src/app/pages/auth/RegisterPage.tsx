@@ -4,7 +4,6 @@ import { Lock, Mail, ChevronRight, User, Loader2, ShieldCheck, ArrowRight, Refre
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
-// 🚀 1. Import AuthLayout, DashboardInput, dan API service
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
 import { api } from "../../services/api";
@@ -25,7 +24,7 @@ export function RegisterPage() {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    // 🚀 2. FIX TYPE TIMER: Gunakan ReturnType bawaan TS agar tidak perlu 'any'
+    // FIX TYPE TIMER: Gunakan ReturnType bawaan TS agar tidak perlu 'any'
     let timer: ReturnType<typeof setInterval>; 
 
     if (cooldown > 0) {
@@ -42,7 +41,7 @@ export function RegisterPage() {
     if (ui.error) setUi(prev => ({ ...prev, error: "" }));
   };
 
-  // 🚀 3. Logic API menggunakan Service (Sangat bersih!)
+  // Logic API menggunakan Service (Sangat bersih!)
   const performRegister = async () => {
     return await api.post("/auth/register", {
       name: form.name,
@@ -79,7 +78,6 @@ export function RegisterPage() {
       await performRegister(); 
       setCooldown(60); 
     } catch (err: any) {
-      // 🚀 Menampilkan error di UI, bukan alert() yang merusak UX
       setUi(prev => ({ ...prev, error: err.message || "Gagal mengirim ulang email" }));
     } finally {
       setUi(prev => ({ ...prev, resendLoading: false }));
@@ -92,14 +90,14 @@ export function RegisterPage() {
     setCooldown(0); 
   };
 
-  // 🚀 4. Dinamis Layout Title & Subtitle berdasarkan state Success
+  // Dinamis Layout Title & Subtitle berdasarkan state Success
   const layoutTitle = ui.success ? "Check Your Inbox!" : "Create Account";
   const layoutSubtitle = ui.success 
     ? "Verification required to continue." 
     : "Join CRG Monitoring Access Portal";
 
   return (
-    // 🚀 5. Bungkus dengan AuthLayout (Hanya ditulis 1 kali untuk kedua state!)
+    // Bungkus dengan AuthLayout (Hanya ditulis 1 kali untuk kedua state!)
     <AuthLayout title={layoutTitle} subtitle={layoutSubtitle}>
       
       {ui.success ? (
@@ -151,7 +149,7 @@ export function RegisterPage() {
           </div>
         </div>
       ) : (
-        /* --- TAMPILAN FORM --- */
+        /* TAMPILAN FORM */
         <form onSubmit={handleRegister} className="space-y-5 animate-in fade-in duration-300">
           <div className="space-y-2 text-left relative">
             <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Full Name</Label>

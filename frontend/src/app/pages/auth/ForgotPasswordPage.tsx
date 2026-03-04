@@ -4,7 +4,6 @@ import { Mail, ChevronRight, Loader2, ArrowLeft, Send, AlertCircle } from "lucid
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
-// 🚀 1. Import Standarisasi Arsitektur
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
 import { api } from "../../services/api"; 
