@@ -5,24 +5,25 @@ import { toast } from "sonner";
 import { DashboardTextarea, DashboardSelect, DashboardCard } from "../../dashboard/index";
 import { THEME } from "../../../constants/projectConstants";
 import type { Project } from "../../../types";
+import { useTranslation } from "react-i18next";
 
 const INITIAL_IMP = { projectId: "", description: "" };
 
 interface IdeaFormCardProps {
   liveProjects: Project[];
-  onSubmitImprovement: (data: any) => Promise<any>; // 🔥 Prop Baru
+  onSubmitImprovement: (data: any) => Promise<any>;
 }
 
 export function IdeaFormCard({ liveProjects, onSubmitImprovement }: IdeaFormCardProps) {
   const [impForm, setImpForm] = useState(INITIAL_IMP);
   const [isBusy, setIsBusy] = useState(false);
+  const { t } = useTranslation();
 
   const handleImprovementSubmit = async () => {
     setIsBusy(true);
     const userName = localStorage.getItem('user_name') || "System Admin";
 
     toast.promise(
-      // Menggunakan fungsi yang dilempar Induk
       onSubmitImprovement({ 
         ...impForm, 
         noteId: `IMP-${Date.now().toString().slice(-4)}`,
@@ -33,29 +34,29 @@ export function IdeaFormCard({ liveProjects, onSubmitImprovement }: IdeaFormCard
         createdDate: new Date().toISOString()
       }),
       {
-        loading: 'Submitting optimization plan...',
+        loading: t('pirComponents.ideaForm.toast.loading'),
         success: () => {
           setImpForm(INITIAL_IMP);
           setIsBusy(false);
-          return 'Idea submitted successfully!';
+          return t('pirComponents.ideaForm.toast.success');
         },
         error: () => {
           setIsBusy(false);
-          return 'Failed to submit idea.';
+          return t('pirComponents.ideaForm.toast.error');
         }
       }
     );
   };
 
   return (
-    <DashboardCard color={THEME.TOSCA} title="Idea" icon={Lightbulb} contentClassName="space-y-4 pt-5 pb-6">
+    <DashboardCard color={THEME.TOSCA} title={t('pirComponents.ideaForm.title')} icon={Lightbulb} contentClassName="space-y-4 pt-5 pb-6">
       <DashboardSelect value={impForm.projectId} onChange={(e: any) => setImpForm(p => ({...p, projectId: e.target.value}))}>
-        <option value="">Select Project...</option>
+        <option value="">{t('pirComponents.ideaForm.labels.select')}</option>
         {liveProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
       </DashboardSelect>
-      <DashboardTextarea value={impForm.description} onChange={(e: any) => setImpForm(p => ({...p, description: e.target.value}))} placeholder="Your idea..." />
+      <DashboardTextarea value={impForm.description} onChange={(e: any) => setImpForm(p => ({...p, description: e.target.value}))} placeholder={t('pirComponents.ideaForm.placeholders.idea')} />
       <Button onClick={handleImprovementSubmit} disabled={isBusy || !impForm.projectId || !impForm.description} className="w-full font-bold text-white rounded-xl border-none hover:opacity-90" style={{ backgroundColor: THEME.TOSCA }}>
-        {isBusy ? <Loader2 className="animate-spin h-4 w-4" /> : "Submit"}
+        {isBusy ? <Loader2 className="animate-spin h-4 w-4" /> : t('pirComponents.common.submit')}
       </Button>
     </DashboardCard>
   );

@@ -1,0 +1,356 @@
+{
+  "timeline": {
+    "loading": "Memuat Linimasa...",
+    "title": "Linimasa & Pelacakan Proyek",
+    "ganttView": "Tampilan Gantt: {{name}}",
+    "backToTimeline": "Kembali ke Linimasa",
+    "description": "Pemantauan fase SDLC proyek dan hasil mingguan secara real-time.",
+    "kpi": {
+      "onTrack": "Sesuai Jalur",
+      "atRisk": "Beresiko",
+      "overdue": "Terlambat",
+      "activeProjects": "Proyek Aktif"
+    },
+    "filteringBy": "Difilter Berdasarkan:",
+    "noProjectsFound": "Tidak ada proyek yang ditemukan untuk filter yang dipilih.",
+    "quickNavigation": "Navigasi Cepat",
+    "logTeamActivity": "Catat Aktivitas Tim",
+    "deleteModal": {
+      "titleLog": "Hapus Log Mingguan?",
+      "titleTask": "Hapus Tugas?",
+      "descLog": "Ini akan menghapus log dan semua tugas di dalamnya secara permanen. Tindakan ini tidak dapat dibatalkan.",
+      "descTask": "Tugas ini akan dihapus secara permanen. Progres akan dihitung ulang."
+    },
+    "toast": {
+      "systemError": "Kesalahan sistem."
+    }
+  },
+  "pir": {
+    "title": "Tinjauan Pasca Implementasi",
+    "description": "Pantau kendala pasca-rilis dan kumpulkan ide optimalisasi untuk proyek aktif.",
+    "criticalIssues": "Isu Kritis",
+    "inProgressIssues": "Isu Sedang Diproses",
+    "openIssues": "Isu Terbuka",
+    "improvements": "Peningkatan",
+    "noItems": "Tidak ada item yang ditemukan.",
+    "loading": "Menyiapkan Modul PIR...",
+    "tabs": {
+      "open": "Terbuka",
+      "in-progress": "Diproses",
+      "resolved": "Selesai",
+      "improvements": "Peningkatan"
+    },
+    "priorities": {
+      "all": "Semua",
+      "critical": "Kritis",
+      "high": "Tinggi",
+      "medium": "Menengah",
+      "low": "Rendah"
+    }
+  },
+  "common": {
+    "cancel": "Batal",
+    "confirm": "Konfirmasi",
+    "delete": "Hapus",
+    "status": "Status",
+    "action": "Aksi"
+  },
+  "dashboard": {
+    "initializing": "Menyiapkan Dasbor...",
+    "title": "Ringkasan Dasbor",
+    "description": "Pemantauan proyek & statistik secara real-time.",
+    "totalProjects": "Total Proyek",
+    "newThisMonth": "+{{count}} bulan ini",
+    "activeProjects": "Proyek Aktif",
+    "currentlyInProgress": "Sedang berlangsung",
+    "completed": "Selesai",
+    "freshlyLive": "Baru Saja Rilis",
+    "launchedThisMonth": "Dirilis bulan ini",
+    "sdlcBreakdown": "Rincian Fase SDLC",
+    "toast": {
+      "deleting": "Menghapus proyek...",
+      "deleteSuccess": "Proyek berhasil dihapus.",
+      "deleteFail": "Gagal menghapus proyek.",
+      "createSuccess": "Proyek baru berhasil dibuat!",
+      "updateSuccess": "Proyek berhasil diperbarui!"
+    },
+    "deleteModal": {
+      "title": "Hapus Proyek?",
+      "desc1": "Hapus proyek ID:",
+      "desc2": "secara permanen? Tindakan ini tidak dapat dibatalkan.",
+      "cancel": "Batal",
+      "confirm": "Konfirmasi Hapus"
+    }
+  },
+  "testing": {
+    "loading": "Menyiapkan Konsol UAT...",
+    "title": "Konsol Eksekusi UAT",
+    "description": "Kelola dan jalankan User Acceptance Testing untuk proyek aktif.",
+    "sidebarTitle": "Proyek UAT Aktif",
+    "stats": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "pending": "Menunggu",
+      "qualityIndex": "Indeks Kualitas",
+      "totalScenarios": "Total Skenario"
+    },
+    "buttons": {
+      "showActive": "Tampilkan Aktif",
+      "takeoutCases": "Kasus Dikeluarkan",
+      "addTestCase": "Tambah Kasus Uji"
+    },
+    "suite": {
+      "positive": "Pengujian Positif",
+      "negative": "Pengujian Negatif",
+      "noActive": "Tidak ada item aktif di pengujian ini.",
+      "noTakenOut": "Tidak ada item yang dikeluarkan di pengujian ini."
+    },
+    "emptyState": "Pilih proyek untuk memulai eksekusi.",
+    "toast": {
+      "resetting": "Mereset kasus uji...",
+      "resetSuccess": "Status kasus uji direset ke Menunggu.",
+      "resetFail": "Gagal mereset kasus uji."
+    },
+    "actions": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "defect": "Catat Cacat",
+      "reset": "Atur Ulang",
+      "takeout": "Keluarkan",
+      "restore": "Pulihkan",
+      "edit": "Edit"
+    },
+    "rowStatus": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "pending": "Menunggu"
+    },
+    "row": {
+      "system": "Sistem",
+      "unknown": "Tidak Diketahui",
+      "updated": "Diperbarui",
+      "created": "Dibuat",
+      "takenOut": "Dikeluarkan",
+      "viewTakeoutReason": "Lihat Alasan",
+      "viewDefect": "Lihat Cacat",
+      "viewNotes": "Lihat Catatan",
+      "editNotes": "Edit Catatan",
+      "addNotes": "Tambah Catatan",
+      "takeoutBadge": "DIKELUARKAN",
+      "takeoutTooltip": "Keluarkan skenario ini"
+    },
+    "modals": {
+      "addTitle": "Buat Skenario Baru",
+      "editTitle": "Edit Catatan Skenario",
+      "passTitle": "Validasi Sukses",
+      "failTitle": "Catat Laporan Cacat",
+      "takeoutTitle": "Keluarkan Skenario?",
+      "takeoutDesc": "Berikan alasan mengapa skenario ini dikeluarkan.",
+      "viewTakeoutTitle": "Alasan Dikeluarkan",
+      "viewDefectTitle": "Log Cacat",
+      "viewNotesTitle": "Catatan Internal",
+      "noReason": "Tidak ada alasan yang diberikan.",
+      "noNotes": "Tidak ada informasi tambahan.",
+      "projectPrefix": "Proyek: ",
+      "labels": {
+        "title": "Judul",
+        "type": "Tipe",
+        "positive": "Positif",
+        "negative": "Negatif",
+        "notes": "Catatan / Keterangan",
+        "severity": "Tingkat Keparahan",
+        "description": "Deskripsi",
+        "reason": "Alasan",
+        "issueSummary": "Ringkasan Masalah:"
+      },
+      "placeholders": {
+        "notes": "Tambahkan observasi teknis...",
+        "description": "Hasil yang diharapkan vs Hasil aktual...",
+        "reason": "Misal, Fitur usang, logika berubah..."
+      },
+      "buttons": {
+        "cancel": "Batal",
+        "confirmChanges": "Konfirmasi Perubahan",
+        "confirmTakeout": "Konfirmasi",
+        "gotIt": "Mengerti"
+      },
+      "toast": {
+        "adding": "Menambahkan skenario baru...",
+        "addSuccess": "Skenario uji berhasil ditambahkan!",
+        "addFail": "Gagal menambahkan skenario.",
+        "updating": "Memperbarui catatan eksekusi...",
+        "defectSuccess": "Cacat berhasil dicatat.",
+        "updateSuccess": "Kasus uji diperbarui!",
+        "updateFail": "Gagal memperbarui kasus uji.",
+        "takeoutReasonReq": "Harap berikan alasan pengeluaran.",
+        "takeoutProcessing": "Memproses pengeluaran...",
+        "takeoutSuccess": "Skenario dipindahkan ke keranjang keluar.",
+        "takeoutFail": "Gagal mengeluarkan skenario."
+      }
+    }
+  },
+  "addProject": {
+    "triggerBtn": "Proyek Baru",
+    "title": "Buat Proyek Baru",
+    "description": "Tentukan detail proyek dan linimasa fase awal.",
+    "labels": {
+      "projectName": "Nama Proyek *",
+      "projectCode": "Kode Proyek",
+      "picName": "Nama PIC *",
+      "projectStart": "Mulai Proyek",
+      "projectDeadline": "Tenggat Proyek",
+      "initialPhaseSetup": "Pengaturan Fase Awal",
+      "startingPhase": "Fase Awal",
+      "progress": "Progres",
+      "phaseStart": "Mulai Fase",
+      "phaseDeadline": "Tenggat Fase",
+      "initialStatus": "Status Awal"
+    },
+    "placeholders": {
+      "projectName": "mis. Revamp Mobile Banking",
+      "projectCode": "Otomatis atau Kustom",
+      "picName": "Nama PIC"
+    },
+    "errors": {
+      "nameExists": "Nama proyek sudah ada.",
+      "codeExists": "Kode proyek sudah terdaftar.",
+      "deadlineBeforeStart": "Tenggat harus setelah Tanggal Mulai.",
+      "phaseDeadlineBeforeStart": "Tenggat Fase harus setelah Mulai Fase.",
+      "phaseBeforeProject": "Fase tidak bisa dimulai sebelum Proyek.",
+      "loadValidationFailed": "Gagal memuat data validasi.",
+      "saveFailed": "Gagal menyimpan proyek.",
+      "systemError": "Terjadi kesalahan sistem."
+    },
+    "success": {
+      "created": "Proyek berhasil dibuat!"
+    },
+    "buttons": {
+      "cancel": "Batal",
+      "saving": "Menyimpan...",
+      "saved": "Tersimpan!",
+      "submit": "Buat Proyek"
+    },
+    "statuses": {
+      "on-track": "Sesuai Jalur",
+      "at-risk": "Beresiko",
+      "overdue": "Terlambat",
+      "completed": "Selesai"
+    }
+  },
+  "editProject": {
+    "title": "Edit Proyek: {{id}}",
+    "cycleBadge": "Siklus {{cycle}}",
+    "description": "Kelola linimasa & status proyek.",
+    "labels": {
+      "projectName": "Nama Proyek",
+      "pic": "PIC",
+      "phaseManagement": "Manajemen Fase",
+      "status": "Status:",
+      "activePhase": "Fase Aktif",
+      "completion": "Penyelesaian",
+      "start": "Mulai",
+      "end": "Selesai",
+      "projectStart": "Mulai Proyek",
+      "projectDeadline": "Tenggat Proyek",
+      "globalStatus": "Status Proyek Global"
+    },
+    "warnings": {
+      "saveFirst": "Silakan klik \"Simpan Perubahan\" dahulu untuk konfirmasi status Live di database.",
+      "noteAutoSave": "Catatan: Perubahan saat ini akan disimpan otomatis sebelum diarsipkan."
+    },
+    "errors": {
+      "nameUsed": "Nama sudah digunakan.",
+      "invalidProjDeadline": "Tenggat proyek tidak valid.",
+      "invalidPhaseDeadline": "Tenggat fase tidak valid.",
+      "systemError": "Kesalahan: "
+    },
+    "buttons": {
+      "startCycle": "Mulai Siklus {{cycle}}",
+      "saveChangesFirst": "Simpan Perubahan Dahulu",
+      "setLiveFirst": "Set Live 100% Dahulu",
+      "cancel": "Batal",
+      "saving": "Menyimpan...",
+      "saveChanges": "Simpan Perubahan",
+      "yesStart": "Ya, Mulai!"
+    },
+    "nextCycleModal": {
+      "title": "Siklus Berikutnya?",
+      "desc1": "Ini akan mengarsipkan",
+      "desc2": "dan memulai",
+      "desc3": "dari fase Requirement.",
+      "cycleText": "Siklus {{cycle}}"
+    }
+  },
+  "pirComponents": {
+    "liveProjects": {
+      "title": "Proyek Aktif (Live)",
+      "noProjects": "Tidak ada proyek aktif yang ditemukan."
+    },
+    "issueForm": {
+      "title": "Lapor Kendala",
+      "labels": {
+        "project": "Proyek",
+        "priority": "Prioritas",
+        "select": "Pilih..."
+      },
+      "placeholders": {
+        "summary": "Ringkasan...",
+        "details": "Detail..."
+      },
+      "toast": {
+        "loading": "Melaporkan kendala...",
+        "success": "Kendala berhasil dilaporkan!",
+        "error": "Gagal melaporkan kendala."
+      }
+    },
+    "ideaForm": {
+      "title": "Ide",
+      "labels": {
+        "select": "Pilih Proyek..."
+      },
+      "placeholders": {
+        "idea": "Ide Anda..."
+      },
+      "toast": {
+        "loading": "Mengirim rencana optimalisasi...",
+        "success": "Ide berhasil dikirim!",
+        "error": "Gagal mengirim ide."
+      }
+    },
+    "modal": {
+      "unknownDate": "Tanggal Tidak Diketahui",
+      "improvementPlan": "Rencana Peningkatan",
+      "projectLabel": "Proyek:",
+      "labels": {
+        "reporter": "Pelapor",
+        "submitted": "Dikirim",
+        "description": "Deskripsi",
+        "updateStatus": "Perbarui Status",
+        "dangerZone": "Zona Berbahaya"
+      },
+      "statuses": {
+        "resolved": "SELESAI",
+        "inProgress": "DIPROSES",
+        "open": "TERBUKA",
+        "unknown": "TIDAK DIKETAHUI",
+        "issueResolvedText": "Kendala Terselesaikan."
+      },
+      "buttons": {
+        "deleteIssue": "Hapus Kendala",
+        "cancel": "Batal",
+        "confirm": "Konfirmasi"
+      },
+      "toast": {
+        "updateLoading": "Memperbarui status...",
+        "updateSuccess": "Status diperbarui ke {{status}}",
+        "updateError": "Gagal memperbarui status.",
+        "deleteLoading": "Menghapus kendala...",
+        "deleteSuccess": "Kendala berhasil dihapus.",
+        "deleteError": "Gagal menghapus kendala."
+      }
+    },
+    "common": {
+      "submit": "Kirim"
+    }
+  }
+}

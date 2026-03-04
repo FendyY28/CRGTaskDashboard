@@ -3,14 +3,16 @@ import { Badge } from "../../ui/badge";
 import { DashboardCard } from "../../dashboard/index";
 import { THEME } from "../../../constants/projectConstants";
 import type { Project } from "../../../types";
+import { useTranslation } from "react-i18next";
 
 interface LiveProjectsListProps {
   projects: Project[];
 }
 
 export function LiveProjectsList({ projects }: LiveProjectsListProps) {
+  const { t } = useTranslation();
   return (
-    <DashboardCard color={THEME.BSI_GREEN} title="Live Projects" icon={Rocket} contentClassName="space-y-3 pt-4 max-h-[250px] overflow-y-auto custom-scrollbar">
+    <DashboardCard color={THEME.BSI_GREEN} title={t('pirComponents.liveProjects.title')} icon={Rocket} contentClassName="space-y-3 pt-4 max-h-[250px] overflow-y-auto custom-scrollbar">
       {projects.length > 0 ? projects.map(p => (
         <div key={p.id} className="p-3 border rounded-xl flex items-center justify-between" style={{ backgroundColor: THEME.BSI_GREEN + '10', borderColor: THEME.BSI_GREEN + '30' }}>
           <div className="flex flex-col min-w-0 pr-2">
@@ -19,7 +21,7 @@ export function LiveProjectsList({ projects }: LiveProjectsListProps) {
           </div>
           <Badge className="bg-white text-[10px] font-bold" style={{ color: THEME.BSI_GREEN, borderColor: THEME.BSI_GREEN + '40' }}>LIVE</Badge>
         </div>
-      )) : <div className="text-center p-4 text-xs" style={{ color: THEME.BSI_LIGHT_GRAY }}>No live projects found.</div>}
+      )) : <div className="text-center p-4 text-xs" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('pirComponents.liveProjects.noProjects')}</div>}
     </DashboardCard>
   );
 }

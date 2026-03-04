@@ -12,6 +12,7 @@ import { IdeaFormCard } from "../../components/features/report/IdeaFormCard";
 import { LiveProjectsList } from "../../components/features/report/LiveProjectsList";
 
 import { ProtectAction } from "../../components/auth/ProtectAction";
+import { useTranslation } from "react-i18next";
 
 const normalizeStr = (str?: string) => {
   if (!str) return '';
@@ -20,6 +21,7 @@ const normalizeStr = (str?: string) => {
 
 export function PostImplementation() {
   const { liveProjects, issues, improvements, loading, addIssue, addImprovement, refresh } = usePIR();
+  const { t } = useTranslation();
 
   const [selectedItem, setSelectedItem] = useState<ProjectIssue | ImprovementNote | null>(null); 
   const [priorityFilter, setPriorityFilter] = useState('all'); 
@@ -50,7 +52,6 @@ export function PostImplementation() {
         if (activeTab === 'in-progress' && itemStatus !== 'in progress') return false;
         if (activeTab === 'resolved' && itemStatus !== 'resolved') return false;
         
-        // Filter Priority
         return priorityFilter === 'all' || itemPriority === priorityFilter.toLowerCase();
       })
       .sort((a, b) => {
@@ -84,20 +85,22 @@ export function PostImplementation() {
     }
   }, [activeTab]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold animate-pulse" style={{ color: THEME.TOSCA }}>Initializing PIR Module...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold animate-pulse" style={{ color: THEME.TOSCA }}>{t('pir.loading')}</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <div className="flex flex-col gap-1 text-left mb-2">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Post Implementation Review</h2>
+      {/* 🔥 Mengubah mb-2 menjadi mb-6 agar jaraknya lega */}
+      <div className="flex flex-col gap-1 text-left mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('pir.title')}</h2>
+        <p className="text-sm font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('pir.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
         {[ 
-          { label: "Critical Issues", count: dashboardStats.criticalCount, icon: AlertTriangle, color: "#7C2D12", filterValue: 'critical', targetTab: 'open' as const }, 
-          { label: "In-Progress Issues", count: dashboardStats.inProgressCount, icon: Clock, color: "#0284C7", filterValue: 'all', targetTab: 'in-progress' as const },
-          { label: "Open Issues", count: dashboardStats.openCount, icon: Clock, color: THEME.BSI_YELLOW, filterValue: 'all', targetTab: 'open' as const }, 
-          { label: "Improvements", count: dashboardStats.improvementCount, icon: TrendingUp, color: THEME.TOSCA, filterValue: 'all', targetTab: 'improvements' as const } 
+          { label: t('pir.criticalIssues'), count: dashboardStats.criticalCount, icon: AlertTriangle, color: "#7C2D12", filterValue: 'critical', targetTab: 'open' as const }, 
+          { label: t('pir.inProgressIssues'), count: dashboardStats.inProgressCount, icon: Clock, color: "#0284C7", filterValue: 'all', targetTab: 'in-progress' as const },
+          { label: t('pir.openIssues'), count: dashboardStats.openCount, icon: Clock, color: THEME.BSI_YELLOW, filterValue: 'all', targetTab: 'open' as const }, 
+          { label: t('pir.improvements'), count: dashboardStats.improvementCount, icon: TrendingUp, color: THEME.TOSCA, filterValue: 'all', targetTab: 'improvements' as const } 
         ].map((config, index) => (
           <DashboardKpiCard 
             key={index} 
@@ -122,7 +125,7 @@ export function PostImplementation() {
                 className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors capitalize ${activeTab === tab ? '' : 'border-transparent'}`}
                 style={activeTab === tab ? { color: cardConfig.textColor, borderColor: cardConfig.color } : { color: THEME.BSI_GREY }}
               >
-                {tab.replace('-', ' ')}
+                {t(`pir.tabs.${tab}`)}
               </button>
             ))}
           </div>
@@ -141,7 +144,7 @@ export function PostImplementation() {
                             className={`px-3 py-1 text-[10px] font-bold rounded-lg capitalize border ${priorityFilter === priorityLevel ? 'bg-white shadow-sm' : 'border-transparent'}`}
                             style={priorityFilter === priorityLevel ? { color: cardConfig.textColor, borderColor: cardConfig.color } : { color: THEME.BSI_GREY }}
                         >
-                            {priorityLevel}
+                            {t(`pir.priorities.${priorityLevel}`)}
                         </button>
                     )}
                 </div>
@@ -150,7 +153,7 @@ export function PostImplementation() {
           >
             {filteredList.length > 0 
               ? filteredList.map(item => <LogRow key={'issueId' in item ? item.issueId : item.noteId} item={item} onClick={handleItemClick} />) 
-              : <div className="p-20 text-center text-sm" style={{ color: THEME.BSI_LIGHT_GRAY }}>No items found.</div>}
+              : <div className="p-20 text-center text-sm" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('pir.noItems')}</div>}
           </DashboardCard>
         </div>
 

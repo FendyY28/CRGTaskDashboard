@@ -1,0 +1,356 @@
+{
+  "timeline": {
+    "loading": "Loading Timelines...",
+    "title": "Project Timeline & Tracking",
+    "ganttView": "Gantt View: {{name}}",
+    "backToTimeline": "Back to Timeline",
+    "description": "Real-time monitoring of project SDLC phases and weekly deliverables.",
+    "kpi": {
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "overdue": "Overdue",
+      "activeProjects": "Active Projects"
+    },
+    "filteringBy": "Filtering By:",
+    "noProjectsFound": "No projects found for the selected filter.",
+    "quickNavigation": "Quick Navigation",
+    "logTeamActivity": "Log Team Activity",
+    "deleteModal": {
+      "titleLog": "Delete Weekly Log?",
+      "titleTask": "Delete Task?",
+      "descLog": "This will permanently remove the log and all tasks inside it. This action cannot be undone.",
+      "descTask": "This task will be removed permanently. Progress will be recalculated."
+    },
+    "toast": {
+      "systemError": "System error."
+    }
+  },
+  "pir": {
+    "title": "Post Implementation Review",
+    "description": "Track post-deployment issues and gather optimization ideas for live projects.",
+    "criticalIssues": "Critical Issues",
+    "inProgressIssues": "In-Progress Issues",
+    "openIssues": "Open Issues",
+    "improvements": "Improvements",
+    "noItems": "No items found.",
+    "loading": "Initializing PIR Module...",
+    "tabs": {
+      "open": "Open",
+      "in-progress": "In Progress",
+      "resolved": "Resolved",
+      "improvements": "Improvements"
+    },
+    "priorities": {
+      "all": "All",
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "status": "Status",
+    "action": "Action"
+  },
+  "dashboard": {
+    "initializing": "Initializing Dashboard...",
+    "title": "Dashboard Overview",
+    "description": "Real-time project monitoring & statistics.",
+    "totalProjects": "Total Projects",
+    "newThisMonth": "+{{count}} this month",
+    "activeProjects": "Active Projects",
+    "currentlyInProgress": "Currently in progress",
+    "completed": "Completed",
+    "freshlyLive": "Freshly Live",
+    "launchedThisMonth": "Launched this month",
+    "sdlcBreakdown": "SDLC Phase Breakdown",
+    "toast": {
+      "deleting": "Deleting project...",
+      "deleteSuccess": "Project deleted successfully.",
+      "deleteFail": "Failed to delete project.",
+      "createSuccess": "New project created!",
+      "updateSuccess": "Project updated successfully!"
+    },
+    "deleteModal": {
+      "title": "Delete Project?",
+      "desc1": "Permanently delete project ID:",
+      "desc2": "? Action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Confirm Delete"
+    }
+  },
+  "testing": {
+    "loading": "Initializing UAT Console...",
+    "title": "UAT Execution Console",
+    "description": "Manage and execute User Acceptance Testing for active projects.",
+    "sidebarTitle": "Active UAT Projects",
+    "stats": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "pending": "Pending",
+      "qualityIndex": "Quality Index",
+      "totalScenarios": "Total Scenarios"
+    },
+    "buttons": {
+      "showActive": "Show Active",
+      "takeoutCases": "Takeout Cases",
+      "addTestCase": "Add Test Case"
+    },
+    "suite": {
+      "positive": "Positive Testing",
+      "negative": "Negative Testing",
+      "noActive": "No active items in this suite.",
+      "noTakenOut": "No taken out items in this suite."
+    },
+    "emptyState": "Select a project to begin execution.",
+    "toast": {
+      "resetting": "Resetting test case...",
+      "resetSuccess": "Test case status reset to Pending.",
+      "resetFail": "Failed to reset test case."
+    },
+    "actions": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "defect": "Log Defect",
+      "reset": "Reset",
+      "takeout": "Takeout",
+      "restore": "Restore",
+      "edit": "Edit"
+    },
+    "rowStatus": {
+      "pass": "Passed",
+      "fail": "Failed",
+      "pending": "Pending"
+    },
+    "row": {
+      "system": "System",
+      "unknown": "Unknown",
+      "updated": "Updated",
+      "created": "Created",
+      "takenOut": "Taken Out",
+      "viewTakeoutReason": "View Takeout Reason",
+      "viewDefect": "View Defect",
+      "viewNotes": "View Notes",
+      "editNotes": "Edit Notes",
+      "addNotes": "Add Notes",
+      "takeoutBadge": "TAKEOUT",
+      "takeoutTooltip": "Takeout this scenario"
+    },
+    "modals": {
+      "addTitle": "Create New Scenario",
+      "editTitle": "Edit Scenario Notes",
+      "passTitle": "Validation Success",
+      "failTitle": "Log Defect Report",
+      "takeoutTitle": "Takeout Scenario?",
+      "takeoutDesc": "Provide a reason why this scenario is being taken out.",
+      "viewTakeoutTitle": "Takeout Reason",
+      "viewDefectTitle": "Defect Log",
+      "viewNotesTitle": "Internal Notes",
+      "noReason": "No reason provided.",
+      "noNotes": "No additional information provided.",
+      "projectPrefix": "Project: ",
+      "labels": {
+        "title": "Title",
+        "type": "Type",
+        "positive": "Positive",
+        "negative": "Negative",
+        "notes": "Notes / Remarks",
+        "severity": "Severity",
+        "description": "Description",
+        "reason": "Reason",
+        "issueSummary": "Issue Summary:"
+      },
+      "placeholders": {
+        "notes": "Add technical observations...",
+        "description": "Expected result vs Actual result...",
+        "reason": "E.g., Feature deprecated, logic changed..."
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "confirmChanges": "Confirm Changes",
+        "confirmTakeout": "Confirm Takeout",
+        "gotIt": "Got it"
+      },
+      "toast": {
+        "adding": "Adding new scenario...",
+        "addSuccess": "Test scenario added successfully!",
+        "addFail": "Failed to add scenario.",
+        "updating": "Updating execution record...",
+        "defectSuccess": "Defect logged successfully.",
+        "updateSuccess": "Test case updated!",
+        "updateFail": "Failed to update test case.",
+        "takeoutReasonReq": "Please provide a reason for takeout.",
+        "takeoutProcessing": "Processing takeout...",
+        "takeoutSuccess": "Scenario moved to takeout bin.",
+        "takeoutFail": "Failed to takeout scenario."
+      }
+    }
+  },
+  "addProject": {
+    "triggerBtn": "New Project",
+    "title": "Create New Project",
+    "description": "Define project details and initial phase timeline.",
+    "labels": {
+      "projectName": "Project Name *",
+      "projectCode": "Project Code",
+      "picName": "PIC Name *",
+      "projectStart": "Project Start",
+      "projectDeadline": "Project Deadline",
+      "initialPhaseSetup": "Initial Phase Setup",
+      "startingPhase": "Starting Phase",
+      "progress": "Progress",
+      "phaseStart": "Phase Start",
+      "phaseDeadline": "Phase Deadline",
+      "initialStatus": "Initial Status"
+    },
+    "placeholders": {
+      "projectName": "e.g. Mobile Banking Revamp",
+      "projectCode": "Auto or Custom",
+      "picName": "PIC Name"
+    },
+    "errors": {
+      "nameExists": "Project name already exists.",
+      "codeExists": "Project code already registered.",
+      "deadlineBeforeStart": "Deadline must be after Start Date.",
+      "phaseDeadlineBeforeStart": "Phase Deadline must be after Phase Start.",
+      "phaseBeforeProject": "Phase cannot start before Project.",
+      "loadValidationFailed": "Failed to load validation data.",
+      "saveFailed": "Failed to save project.",
+      "systemError": "System error occurred."
+    },
+    "success": {
+      "created": "Project successfully created!"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saved": "Saved!",
+      "submit": "Create Project"
+    },
+    "statuses": {
+      "on-track": "On Track",
+      "at-risk": "At Risk",
+      "overdue": "Overdue",
+      "completed": "Completed"
+    }
+  },
+  "editProject": {
+    "title": "Edit Project: {{id}}",
+    "cycleBadge": "Cycle {{cycle}}",
+    "description": "Manage project timeline & status.",
+    "labels": {
+      "projectName": "Project Name",
+      "pic": "PIC",
+      "phaseManagement": "Phase Management",
+      "status": "Status:",
+      "activePhase": "Active Phase",
+      "completion": "Completion",
+      "start": "Start",
+      "end": "End",
+      "projectStart": "Project Start",
+      "projectDeadline": "Project Deadline",
+      "globalStatus": "Global Project Status"
+    },
+    "warnings": {
+      "saveFirst": "Please click \"Save Changes\" first to confirm Live state in database.",
+      "noteAutoSave": "Note: Current changes will be saved automatically before archiving."
+    },
+    "errors": {
+      "nameUsed": "Name used.",
+      "invalidProjDeadline": "Invalid project deadline.",
+      "invalidPhaseDeadline": "Invalid phase deadline.",
+      "systemError": "Error: "
+    },
+    "buttons": {
+      "startCycle": "Start Cycle {{cycle}}",
+      "saveChangesFirst": "Save Changes First",
+      "setLiveFirst": "Set Live 100% First",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "yesStart": "Yes, Start!"
+    },
+    "nextCycleModal": {
+      "title": "Next Cycle?",
+      "desc1": "This will archive",
+      "desc2": "and start",
+      "desc3": "from the Requirement phase.",
+      "cycleText": "Cycle {{cycle}}"
+    }
+  },
+  "pirComponents": {
+    "liveProjects": {
+      "title": "Live Projects",
+      "noProjects": "No live projects found."
+    },
+    "issueForm": {
+      "title": "Report Issue",
+      "labels": {
+        "project": "Project",
+        "priority": "Priority",
+        "select": "Select..."
+      },
+      "placeholders": {
+        "summary": "Summary...",
+        "details": "Details..."
+      },
+      "toast": {
+        "loading": "Reporting issue...",
+        "success": "Issue reported successfully!",
+        "error": "Failed to report issue."
+      }
+    },
+    "ideaForm": {
+      "title": "Idea",
+      "labels": {
+        "select": "Select Project..."
+      },
+      "placeholders": {
+        "idea": "Your idea..."
+      },
+      "toast": {
+        "loading": "Submitting optimization plan...",
+        "success": "Idea submitted successfully!",
+        "error": "Failed to submit idea."
+      }
+    },
+    "modal": {
+      "unknownDate": "Unknown Date",
+      "improvementPlan": "Improvement Plan",
+      "projectLabel": "Project:",
+      "labels": {
+        "reporter": "Reporter",
+        "submitted": "Submitted",
+        "description": "Description",
+        "updateStatus": "Update Status",
+        "dangerZone": "Danger Zone"
+      },
+      "statuses": {
+        "resolved": "RESOLVED",
+        "inProgress": "IN PROGRESS",
+        "open": "OPEN",
+        "unknown": "UNKNOWN",
+        "issueResolvedText": "Issue Resolved."
+      },
+      "buttons": {
+        "deleteIssue": "Delete Issue",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+      },
+      "toast": {
+        "updateLoading": "Updating status...",
+        "updateSuccess": "Status updated to {{status}}",
+        "updateError": "Status update failed.",
+        "deleteLoading": "Removing issue...",
+        "deleteSuccess": "Issue deleted successfully.",
+        "deleteError": "Failed to delete issue."
+      }
+    },
+    "common": {
+      "submit": "Submit"
+    }
+  }
+}

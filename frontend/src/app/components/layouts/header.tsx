@@ -23,6 +23,9 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 // Import asset logo
 import BSILogo from "../../../assets/Logo BSI.png"; 
 
+// 🔥 1. Import komponen Language Switcher yang baru kita buat
+import { LanguageSwitcher } from "./LanguageSwitcher"; 
+
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,8 +108,13 @@ export function Header() {
             })}
           </nav>
 
-          {/* Profile Dropdown Section (Dinamis) */}
-          <div className="flex items-center">
+          {/* Profile Dropdown Section & Language Switcher */}
+          {/* 🔥 2. Tambahkan gap-4 di div ini agar jarak tombol bahasa dan profil pas */}
+          <div className="flex items-center gap-4">
+            
+            {/* 🔥 3. Taruh LanguageSwitcher di sini! */}
+            <LanguageSwitcher />
+
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button 

@@ -7,6 +7,7 @@ import { capitalize } from "../../../../lib/utils";
 import { DashboardInput, DashboardTextarea, DashboardSelect, DashboardCard } from "../../dashboard/index";
 import { THEME } from "../../../constants/projectConstants";
 import type { Project } from "../../../types";
+import { useTranslation } from "react-i18next";
 
 const INITIAL_ISSUE = { projectId: "", title: "", priority: "medium", description: "" };
 
@@ -18,13 +19,13 @@ interface IssueFormCardProps {
 export function IssueFormCard({ liveProjects, onSubmitIssue }: IssueFormCardProps) {
   const [issueForm, setIssueForm] = useState(INITIAL_ISSUE);
   const [isBusy, setIsBusy] = useState(false);
+  const { t } = useTranslation();
 
   const handleIssueSubmit = async () => {
     setIsBusy(true);
     const userName = localStorage.getItem('user_name') || "System Admin";
     
     toast.promise(
-      // Menggunakan fungsi yang dilempar Induk
       onSubmitIssue({ 
         ...issueForm, 
         issueId: `ISS-${Date.now().toString().slice(-4)}`,
@@ -34,41 +35,41 @@ export function IssueFormCard({ liveProjects, onSubmitIssue }: IssueFormCardProp
         status: "open"
       }), 
       {
-        loading: 'Reporting issue...',
+        loading: t('pirComponents.issueForm.toast.loading'),
         success: () => {
           setIssueForm(INITIAL_ISSUE);
           setIsBusy(false);
-          return 'Issue reported successfully!';
+          return t('pirComponents.issueForm.toast.success');
         },
         error: () => {
           setIsBusy(false);
-          return 'Failed to report issue.';
+          return t('pirComponents.issueForm.toast.error');
         }
       }
     );
   };
 
   return (
-    <DashboardCard color="#E11D48" title="Report Issue" icon={PlusCircle} contentClassName="space-y-4 pt-5 pb-6">
+    <DashboardCard color="#E11D48" title={t('pirComponents.issueForm.title')} icon={PlusCircle} contentClassName="space-y-4 pt-5 pb-6">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>Project</Label>
+            <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.issueForm.labels.project')}</Label>
             <DashboardSelect value={issueForm.projectId} onChange={(e: any) => setIssueForm(p => ({...p, projectId: e.target.value}))}>
-                <option value="">Select...</option>
+                <option value="">{t('pirComponents.issueForm.labels.select')}</option>
                 {liveProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </DashboardSelect>
         </div>
         <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>Priority</Label>
+            <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.issueForm.labels.priority')}</Label>
             <DashboardSelect value={issueForm.priority} onChange={(e: any) => setIssueForm(p => ({...p, priority: e.target.value}))}>
                 {['critical', 'high', 'medium', 'low'].map(c => <option key={c} value={c}>{capitalize(c)}</option>)}
             </DashboardSelect>
         </div>
       </div>
-      <DashboardInput value={issueForm.title} onChange={(e: any) => setIssueForm(p => ({...p, title: e.target.value}))} placeholder="Summary..." />
-      <DashboardTextarea value={issueForm.description} onChange={(e: any) => setIssueForm(p => ({...p, description: e.target.value}))} placeholder="Details..." />
+      <DashboardInput value={issueForm.title} onChange={(e: any) => setIssueForm(p => ({...p, title: e.target.value}))} placeholder={t('pirComponents.issueForm.placeholders.summary')} />
+      <DashboardTextarea value={issueForm.description} onChange={(e: any) => setIssueForm(p => ({...p, description: e.target.value}))} placeholder={t('pirComponents.issueForm.placeholders.details')} />
       <Button onClick={handleIssueSubmit} disabled={isBusy || !issueForm.projectId || !issueForm.title} className="w-full font-bold bg-[#E11D48] hover:bg-[#be123c] text-white rounded-xl">
-        {isBusy ? <Loader2 className="animate-spin h-4 w-4" /> : "Submit"}
+        {isBusy ? <Loader2 className="animate-spin h-4 w-4" /> : t('pirComponents.common.submit')}
       </Button>
     </DashboardCard>
   );

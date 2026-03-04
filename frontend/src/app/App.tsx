@@ -1,15 +1,14 @@
-import { Suspense, lazy } from "react"; // 🚀 1. Import Suspense dan lazy
+import { Suspense, lazy } from "react"; // Import Suspense dan lazy
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
-import { Loader2 } from "lucide-react"; // 🚀 2. Import icon untuk loading state
+import { Loader2 } from "lucide-react"; // Import icon untuk loading state
 
-// --- IMPORTS LAYOUTS & SECURITY (Tetap menggunakan import biasa) ---
 import { Header } from "./components/layouts/Header";
 import { Footer } from "./components/layouts/Footer";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 
-// 🚀 3. UBAH IMPORT HALAMAN MENJADI LAZY LOADING
+// UBAH IMPORT HALAMAN MENJADI LAZY LOADING
 const LoginPage = lazy(() => import("./pages/auth/LoginPage").then(module => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage").then(module => ({ default: module.RegisterPage })));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage").then(module => ({ default: module.ForgotPasswordPage })));

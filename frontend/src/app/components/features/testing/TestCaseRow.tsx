@@ -7,8 +7,8 @@ import {
   RotateCcw, Clock, CalendarDays, ArchiveX
 } from "lucide-react";
 import { TEST_CASE_STATUS, THEME } from "../../../constants/projectConstants";
-
 import { ProtectAction } from "../../auth/ProtectAction"; 
+import { useTranslation } from "react-i18next";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', { 
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
@@ -42,10 +42,16 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
   const isDel = item.isDeleted;
   const s = getStyles(item.status, isDel);
   const Icon = s.icon;
+  const { t } = useTranslation();
   
-  let displayUser = item.updatedBy || "System";
+  let displayUser = item.updatedBy || t('testing.row.system');
   let displayTime = item.updatedAt || item.createdAt;
-  let actionLabel = item.updatedBy ? "Updated" : "Created";
+  let actionLabel = item.updatedBy ? t('testing.row.updated') : t('testing.row.created');
+
+  // Helper untuk translasikan status yang dikirimkan dari Backend (misal "pass" -> "Lulus")
+  const getStatusText = (status: string) => {
+      return t(`testing.rowStatus.${status.toLowerCase()}`, { defaultValue: status });
+  };
 
   return (
     <div 
@@ -68,28 +74,28 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-gray-500 font-medium">
              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md" style={isDel ? { backgroundColor: '#FEF2F2', color: '#DC2626' } : { backgroundColor: '#F3F4F6' }}>
                 <User className="h-3 w-3 opacity-70" />
-                <span className="truncate max-w-[100px]">{isDel ? (item.deletedBy || "Unknown") : displayUser}</span>
+                <span className="truncate max-w-[100px]">{isDel ? (item.deletedBy || t('testing.row.unknown')) : displayUser}</span>
              </div>
              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md" style={isDel ? { backgroundColor: '#FEF2F2', color: '#DC2626' } : { backgroundColor: '#F3F4F6' }}>
                 {isDel ? <ArchiveX className="h-3 w-3 opacity-70"/> : <CalendarDays className="h-3 w-3 opacity-70" />}
-                <span>{isDel ? "Taken Out" : actionLabel} {formatDate(isDel ? (item.deletedAt || item.updatedAt) : displayTime)}</span>
+                <span>{isDel ? t('testing.row.takenOut') : actionLabel} {formatDate(isDel ? (item.deletedAt || item.updatedAt) : displayTime)}</span>
              </div>
           </div>
 
           <div className="flex items-center gap-3 mt-2">
              {isDel ? (
-                <button onClick={() => onAction('view-takeout', item)} className="text-xs text-red-500 flex items-center gap-1.5 font-bold hover:underline"><StickyNote className="h-3 w-3" /> View Takeout Reason</button>
+                <button onClick={() => onAction('view-takeout', item)} className="text-xs text-red-500 flex items-center gap-1.5 font-bold hover:underline"><StickyNote className="h-3 w-3" /> {t('testing.row.viewTakeoutReason')}</button>
              ) : (
                 <>
                   {item.status === TEST_CASE_STATUS.FAIL && item.defect ? (
-                    <button onClick={() => onAction('view', item)} className="text-xs text-[#E11D48] flex items-center gap-1.5 font-bold hover:underline"><AlertOctagon className="h-3 w-3" /> View Defect</button>
+                    <button onClick={() => onAction('view', item)} className="text-xs text-[#E11D48] flex items-center gap-1.5 font-bold hover:underline"><AlertOctagon className="h-3 w-3" /> {t('testing.row.viewDefect')}</button>
                   ) : item.notes ? (
-                    <button onClick={() => onAction('view', item)} className="text-xs flex items-center gap-1.5 font-medium hover:underline" style={{ color: THEME.BSI_YELLOW }}><StickyNote className="h-3 w-3" /> View Notes</button>
+                    <button onClick={() => onAction('view', item)} className="text-xs flex items-center gap-1.5 font-medium hover:underline" style={{ color: THEME.BSI_YELLOW }}><StickyNote className="h-3 w-3" /> {t('testing.row.viewNotes')}</button>
                   ) : null}
                   
                   {item.status === TEST_CASE_STATUS.PENDING && (
                     <ProtectAction>
-                      <button onClick={() => onAction('edit', item)} className="text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:underline"><Pencil className="h-3 w-3" /> {item.notes ? "Edit Notes" : "Add Notes"}</button>
+                      <button onClick={() => onAction('edit', item)} className="text-xs text-gray-400 flex items-center gap-1.5 font-medium hover:underline"><Pencil className="h-3 w-3" /> {item.notes ? t('testing.row.editNotes') : t('testing.row.addNotes')}</button>
                     </ProtectAction>
                   )}
                 </>
@@ -104,16 +110,17 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
             {item.status === TEST_CASE_STATUS.PENDING ? (
               <ProtectAction>
                 <div className="flex gap-1.5">
-                  <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className="h-8 rounded-lg hover:text-white transition-colors" style={{ borderColor: THEME.TOSCA, color: THEME.TOSCA }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.TOSCA} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Pass</Button>
-                  <Button size="sm" variant="outline" onClick={() => onAction('fail', item)} className="h-8 border-[#E11D48] text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg transition-colors"><ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Fail</Button>
+                  <Button size="sm" variant="outline" onClick={() => onAction('pass', item)} className="h-8 rounded-lg hover:text-white transition-colors" style={{ borderColor: THEME.TOSCA, color: THEME.TOSCA }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = THEME.TOSCA} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}><ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> {t('testing.actions.pass')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => onAction('fail', item)} className="h-8 border-[#E11D48] text-[#E11D48] hover:bg-[#E11D48] hover:text-white rounded-lg transition-colors"><ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> {t('testing.actions.fail')}</Button>
                 </div>
               </ProtectAction>
             ) : (
               <div className="flex items-center gap-2">
-                <Badge className="shadow-none px-3 capitalize font-bold rounded-md" style={{ backgroundColor: s.badgeBg, color: s.badgeText, border: `1px solid ${s.border}` }}>{item.status}</Badge>
+                {/* 🔥 Badge status di bawah otomatis ganti bahasa berdasarkan dictionary rowStatus */}
+                <Badge className="shadow-none px-3 capitalize font-bold rounded-md" style={{ backgroundColor: s.badgeBg, color: s.badgeText, border: `1px solid ${s.border}` }}>{getStatusText(item.status)}</Badge>
 
                 <ProtectAction>
-                  <Button variant="ghost" size="sm" onClick={() => onAction('reset', item)} className="h-7 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full px-2"><RotateCcw className="h-3 w-3 mr-1" /> Reset</Button>
+                  <Button variant="ghost" size="sm" onClick={() => onAction('reset', item)} className="h-7 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full px-2"><RotateCcw className="h-3 w-3 mr-1" /> {t('testing.actions.reset')}</Button>
                 </ProtectAction>
               </div>
             )}
@@ -121,13 +128,13 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
             <ProtectAction>
               <div className="flex items-center">
                 <div className="h-4 w-[1px] bg-gray-200 mx-1"/>
-                <Button variant="ghost" size="icon" onClick={() => onAction('takeout', item)} title="Takeout this scenario" className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><ArchiveX className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => onAction('takeout', item)} title={t('testing.row.takeoutTooltip')} className="h-8 w-8 text-gray-400 hover:text-[#E11D48] hover:bg-red-50 rounded-full"><ArchiveX className="h-4 w-4" /></Button>
               </div>
             </ProtectAction>
           </>
         ) : (
           <span className="text-[10px] font-bold uppercase text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider flex items-center gap-1">
-            <ArchiveX className="h-3 w-3" /> TAKEOUT
+            <ArchiveX className="h-3 w-3" /> {t('testing.row.takeoutBadge')}
           </span>
         )}
       </div>
