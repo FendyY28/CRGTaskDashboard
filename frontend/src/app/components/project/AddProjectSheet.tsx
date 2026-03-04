@@ -137,7 +137,6 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
         body: JSON.stringify(payload)
       });
       
-      const responseData = await res.json();
       if (!res.ok) throw new Error("saveFailed"); // Lempar KEY error
 
       setStatusMsg({ success: "created" }); // Simpan KEY success
