@@ -75,21 +75,21 @@ export function PostImplementation() {
     };
   }, [issues, improvements]);
 
+  // 🔥 Menggunakan t() untuk terjemahan judul Card dan memasukkan t ke dependency array
   const cardConfig = useMemo(() => {
     switch (activeTab) {
-      case 'resolved': return { color: THEME.BSI_GREEN, icon: CheckCircle2, title: "Resolved Archive", textColor: THEME.BSI_GREEN };
-      case 'improvements': return { color: THEME.TOSCA, icon: Lightbulb, title: "Optimization Ideas", textColor: THEME.TOSCA };
-      case 'in-progress': return { color: "#0284C7", icon: Clock, title: "In-Progress Logs", textColor: "#0284C7" };
+      case 'resolved': return { color: THEME.BSI_GREEN, icon: CheckCircle2, title: t('pir.cardTitles.resolved'), textColor: THEME.BSI_GREEN };
+      case 'improvements': return { color: THEME.TOSCA, icon: Lightbulb, title: t('pir.cardTitles.improvements'), textColor: THEME.TOSCA };
+      case 'in-progress': return { color: "#0284C7", icon: Clock, title: t('pir.cardTitles.inProgress'), textColor: "#0284C7" };
       case 'open':
-      default: return { color: "#E11D48", icon: AlertTriangle, title: "Open Issues Log", textColor: "#E11D48" };
+      default: return { color: "#E11D48", icon: AlertTriangle, title: t('pir.cardTitles.open'), textColor: "#E11D48" };
     }
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold animate-pulse" style={{ color: THEME.TOSCA }}>{t('pir.loading')}</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      {/* 🔥 Mengubah mb-2 menjadi mb-6 agar jaraknya lega */}
       <div className="flex flex-col gap-1 text-left mb-6">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{t('pir.title')}</h2>
         <p className="text-sm font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('pir.description')}</p>

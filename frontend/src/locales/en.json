@@ -46,6 +46,12 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
+    },
+    "cardTitles": {
+      "resolved": "Resolved Archive",
+      "improvements": "Optimization Ideas",
+      "inProgress": "In-Progress Logs",
+      "open": "Open Issues Log"
     }
   },
   "common": {

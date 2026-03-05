@@ -46,6 +46,12 @@
       "high": "Tinggi",
       "medium": "Menengah",
       "low": "Rendah"
+    },
+    "cardTitles": {
+      "resolved": "Arsip Terselesaikan",
+      "improvements": "Ide Optimisasi",
+      "inProgress": "Log Sedang Diproses",
+      "open": "Log Isu Terbuka"
     }
   },
   "common": {
