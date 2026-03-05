@@ -306,10 +306,12 @@
     "ideaForm": {
       "title": "Ide",
       "labels": {
-        "select": "Pilih Proyek..."
+        "select": "Pilih Proyek...",
+        "title": "Judul Ide"
       },
       "placeholders": {
-        "idea": "Ide Anda..."
+        "title": "Ringkasan singkat...",
+        "idea": "Penjelasan detail..."
       },
       "toast": {
         "loading": "Mengirim rencana optimalisasi...",
@@ -337,6 +339,7 @@
       },
       "buttons": {
         "deleteIssue": "Hapus Kendala",
+        "deleteImprovement": "Hapus Ide",
         "cancel": "Batal",
         "confirm": "Konfirmasi"
       },
@@ -344,9 +347,9 @@
         "updateLoading": "Memperbarui status...",
         "updateSuccess": "Status diperbarui ke {{status}}",
         "updateError": "Gagal memperbarui status.",
-        "deleteLoading": "Menghapus kendala...",
-        "deleteSuccess": "Kendala berhasil dihapus.",
-        "deleteError": "Gagal menghapus kendala."
+        "deleteLoading": "Menghapus...",
+        "deleteSuccess": "Berhasil dihapus.",
+        "deleteError": "Gagal menghapus."
       }
     },
     "common": {

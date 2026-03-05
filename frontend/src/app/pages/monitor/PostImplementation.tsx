@@ -163,11 +163,19 @@ export function PostImplementation() {
           <ProtectAction>
             <IssueFormCard 
               liveProjects={liveProjects} 
-              onSubmitIssue={addIssue} 
+              onSubmitIssue={async (data) => {
+                const result = await addIssue(data);
+                refresh();
+                return result;
+              }} 
             />
             <IdeaFormCard 
               liveProjects={liveProjects} 
-              onSubmitImprovement={addImprovement} 
+              onSubmitImprovement={async (data) => {
+                const result = await addImprovement(data);
+                refresh(); 
+                return result;
+              }} 
             />
           </ProtectAction>
         </div>

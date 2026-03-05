@@ -124,6 +124,12 @@ export class ProjectController {
     return this.projectService.createImprovement(data, userId);
   }
 
+  @Delete('improvement/:id')
+  removeImprovement(@Param('id') id: string, @Request() req: any) {
+     const userId = this.getUserId(req, req.body);
+    return this.projectService.removeImprovement(+id, userId);
+  }
+
   // ===========================================================================
   // 3. LOGS & TASKS ENDPOINTS
   // ===========================================================================

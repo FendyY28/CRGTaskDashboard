@@ -7,7 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// --- AUTHENTICATION ---
+// AUTHENTICATION
 enum Role {
   ADMIN
   OFFICER
@@ -43,7 +43,7 @@ model AuditLog {
   user      User     @relation(fields: [userId], references: [id])
 }
 
-// --- PROJECT CORE ---
+// PROJECT CORE
 model Project {
   id               String   @id // Contoh: PRJ-001
   name             String
@@ -73,7 +73,7 @@ model Project {
   improvements     Improvement[]
 }
 
-// --- TIMELINE & PROGRESS (GANTT CHART DATA) ---
+// TIMELINE & PROGRESS (GANTT CHART DATA)
 model SDLCPhase {
   id        Int       @id @default(autoincrement())
   phaseName String    // Requirement, TF Meeting, Development, SIT, UAT, Live
@@ -93,7 +93,7 @@ model SDLCPhase {
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
-// --- WEEKLY LOGS ---
+// WEEKLY LOGS
 model WeeklyProgress {
   id        Int      @id @default(autoincrement())
   weekRange String   // Contoh: "Week 1 (Jan 27)"
@@ -167,6 +167,7 @@ model Issue {
 model Improvement {
   id              Int      @id @default(autoincrement())
   noteId          String   // IMP-001
+  title           String?
   reviewer        String
   developer       String
   feedback        String   @db.Text

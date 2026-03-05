@@ -91,6 +91,7 @@ export interface ProjectIssue {
 export interface ImprovementNote {
   id?: number;
   noteId: string;
+  title?: string;
   reviewer: string;
   developer: string;
   feedback: string;

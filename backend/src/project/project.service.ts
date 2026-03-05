@@ -20,6 +20,7 @@ export class ProjectService {
       include: { 
         sdlcPhases: true,
         issues: true, 
+        improvements: true,
         weeklyProgress: { 
           include: { tasks: { orderBy: { id: 'asc' } } }, 
           orderBy: { id: 'desc' } 
@@ -198,10 +199,47 @@ export class ProjectService {
 
   async createImprovement(data: any, userId: string) {
     const imp = await this.prisma.improvement.create({
-      data: { noteId: data.noteId, reviewer: data.reviewer, developer: data.developer, feedback: data.feedback, recommendations: data.recommendations, priority: data.priority, projectId: data.projectId }
+      data: { 
+        noteId: data.noteId, 
+        title: data.title || "Optimization Idea",
+        reviewer: data.reviewer, 
+        developer: data.developer, 
+
+        feedback: data.feedback || "", 
+        
+        recommendations: data.recommendations, 
+        priority: data.priority, 
+        projectId: data.projectId 
+      }
     });
     await this.auditService.log(userId, "ADD_IMPROVEMENT", `Menambah catatan improvement untuk project`);
     return imp;
+  }
+
+  async removeImprovement(id: number, userId: string) {
+    // Cari data aslinya dulu sebelum dihapus (agar kita tahu apa yang dihapus)
+    const imp = await this.prisma.improvement.findUnique({
+      where: { id: Number(id) }
+    });
+
+    if (!imp) {
+      throw new NotFoundException("Improvement not found");
+    }
+
+    // Hapus datanya dari database
+    const deletedImp = await this.prisma.improvement.delete({ 
+      where: { id: Number(id) } 
+    });
+
+    // CATAT KE ACTIVITY LOG (AUDIT LOG)
+    // Mencatat siapa yang menghapus dan ID/Deskripsi idenya
+    await this.auditService.log(
+      userId, 
+      "DELETE_IMPROVEMENT", 
+      `Menghapus Ide Optimalisasi: ${imp.title}`
+    );
+
+    return deletedImp;
   }
 
   // ==========================================================
@@ -220,19 +258,19 @@ export class ProjectService {
   }
 
   async removeLog(id: number, userId: string) {
-    // 1. Cari data dulu untuk keperluan Log Audit (Opsional tapi bagus)
+    // Cari data dulu untuk keperluan Log Audit (Opsional tapi bagus)
     const log = await this.prisma.weeklyProgress.findUnique({ 
         where: { id: Number(id) } 
     });
 
     if (!log) throw new NotFoundException("Log not found");
 
-    // 2. Hapus data (Task di dalamnya otomatis terhapus karena Cascade Delete di Schema)
+    // Hapus data (Task di dalamnya otomatis terhapus karena Cascade Delete di Schema)
     const deleted = await this.prisma.weeklyProgress.delete({ 
         where: { id: Number(id) } 
     });
 
-    // 3. Catat siapa yang menghapus
+    // Catat siapa yang menghapus
     await this.auditService.log(userId, "DELETE_WEEKLY_LOG", `Menghapus Weekly Log: ${log.weekRange}`);
     
     return deleted;
@@ -260,7 +298,7 @@ export class ProjectService {
   }
 
   async removeTask(taskId: number, userId: string) {
-    // 1. Cari Task & Parentnya dulu (sebelum dihapus)
+    // Cari Task & Parentnya dulu (sebelum dihapus)
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
       include: { weeklyProgress: true } // Ambil info induknya
@@ -268,10 +306,10 @@ export class ProjectService {
 
     if (!task) throw new NotFoundException("Task not found");
 
-    // 2. Hapus Task
+    // Hapus Task
     await this.prisma.task.delete({ where: { id: taskId } });
 
-    // 3. HITUNG ULANG PROGRESS INDUKNYA (Penting!)
+    // HITUNG ULANG PROGRESS INDUKNYA (Penting!)
     // Ambil ulang parent beserta sisa task-nya
     const parent = await this.prisma.weeklyProgress.findUnique({
         where: { id: task.weeklyProgressId },
@@ -306,7 +344,7 @@ export class ProjectService {
   async getTestingStatus() { return this.prisma.project.findMany({ where: { currentPhase: 'UAT' }, select: { id: true, name: true, testCases: { include: { defect: true } } } }); }
   async getTestCases(projectId: string) { return this.prisma.testCase.findMany({ where: { projectId }, include: { defect: true }, orderBy: { createdAt: 'desc' } }); }
   
-  // 🔥 CREATE dengan pencarian User yang lebih standar
+  // CREATE dengan pencarian User yang lebih standar
   async createTestCase(data: any, userId: string) { 
       // Kita coba cari user secara proper
       let userName = "Unknown User";
@@ -324,14 +362,14 @@ export class ProjectService {
           type: data.type, 
           notes: data.notes, 
           status: 'pending',
-          updatedBy: userName // ✅ Set pembuat sebagai updater pertama
+          updatedBy: userName // Set pembuat sebagai updater pertama
         } 
       }); 
       await this.auditService.log(userId, "CREATE_TEST_CASE", `Membuat Test Case: ${data.title}`);
       return tc;
   }
   
-  // 🔥 UPDATE dengan pencarian User yang lebih standar
+  // UPDATE dengan pencarian User yang lebih standar
   async updateTestCase(id: string, data: any, userId: string) {
     const { status, notes, defect, takeoutReason, isDeleted } = data;
 
@@ -351,7 +389,7 @@ export class ProjectService {
         notes,
         takeoutReason,
         isDeleted,
-        updatedBy: userName // ✅ Update nama pelaksana terakhir
+        updatedBy: userName 
       } 
     });
     
@@ -370,14 +408,14 @@ export class ProjectService {
   }
   
   async deleteTestCase(id: string, userId: string) { 
-      // 1. Cari Nama User Pelaku
+      // Cari Nama User Pelaku
       let userName = "Unknown User";
       if (userId) {
           const user = await this.prisma.user.findFirst({ where: { OR: [{ id: userId }, { email: userId }] } });
           if (user) userName = user.name;
       }
 
-      // 2. Lakukan SOFT DELETE (Update status, bukan hapus data)
+      // SOFT DELETE (Update status, bukan hapus data)
       const tc = await this.prisma.testCase.update({ 
           where: { id }, 
           data: { 
@@ -387,7 +425,7 @@ export class ProjectService {
           } 
       }); 
 
-      // 🔥 3. TAMBAHAN: Catat ke Audit Log Activity
+      // Catat ke Audit Log Activity
       // Jika tc.takeoutReason ada (karena di-update di fungsi updateTestCase sebelumnya),
       // kita bisa memasukkannya ke detail log.
       await this.auditService.log(
@@ -425,14 +463,13 @@ export class ProjectService {
     newReqDeadline.setDate(newReqDeadline.getDate() + 7);
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
-        // 1. KUNCI DATA LAMA (Archive)
-        // Ubah semua status fase di cycle lama yang masih 'in-progress' menjadi 'completed'
+        // KUNCI DATA LAMA (Archive)
         await tx.sDLCPhase.updateMany({
             where: { projectId: id, cycle: currentCycle, status: 'in-progress' },
             data: { status: 'completed' } 
         });
 
-        // 2. UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
+        // UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
         await tx.project.update({ 
             where: { id }, 
             data: { 
@@ -445,7 +482,7 @@ export class ProjectService {
             } 
         });
         
-        // 3. GENERATE 6 FASE BARU UNTUK CYCLE BARU
+        // GENERATE 6 FASE BARU UNTUK CYCLE BARU
         for (const phaseName of this.MASTER_PHASES) {
             const isReq = phaseName === 'Requirement';
             await tx.sDLCPhase.create({

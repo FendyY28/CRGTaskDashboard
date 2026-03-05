@@ -39,7 +39,7 @@ interface PIRDetailModalProps {
 }
 
 export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLocalUpdate }: PIRDetailModalProps) {
-  const { updateIssueStatus, deleteIssue } = usePIR();
+  const { updateIssueStatus, deleteIssue, deleteImprovement } = usePIR();
   const [isBusy, setIsBusy] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const { t } = useTranslation();
@@ -77,7 +77,12 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
     const id = getTargetId();
     if (!id) return;
     setIsBusy(true);
-    toast.promise(deleteIssue(id), {
+
+    const deleteAction = selectedItem?.type === 'improvement' 
+      ? deleteImprovement(id) 
+      : deleteIssue(id);
+
+    toast.promise(deleteAction, {
       loading: t('pirComponents.modal.toast.deleteLoading'),
       success: () => {
         setIsBusy(false);
@@ -139,7 +144,9 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
                   <Badge variant="outline" className="text-[10px] font-bold" style={{ color: selectedItem.type === 'improvement' ? THEME.TOSCA : THEME.BSI_GREY, borderColor: selectedItem.type === 'improvement' ? THEME.TOSCA : THEME.BSI_LIGHT_GRAY }}>{selectedItem.type.toUpperCase()}</Badge>
                   <span className="text-xs font-mono" style={{ color: THEME.BSI_LIGHT_GRAY }}>{'issueId' in selectedItem ? selectedItem.issueId : selectedItem.noteId}</span>
                 </div>
-                <DialogTitle className="text-lg font-bold uppercase" style={{ color: THEME.BSI_DARK_GRAY }}>{('title' in selectedItem ? selectedItem.title : t('pirComponents.modal.improvementPlan'))}</DialogTitle>
+                <DialogTitle className="text-lg font-bold uppercase" style={{ color: THEME.BSI_DARK_GRAY }}>
+                  {selectedItem.title || t('pirComponents.modal.improvementPlan')}
+                </DialogTitle>
                 <DialogDescription className="text-xs mt-1" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.modal.projectLabel')} <span className="font-semibold">{selectedItem.projectName}</span></DialogDescription>
               </div>
               
@@ -171,42 +178,51 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
                 </div>
               </div>
               
-              {selectedItem.type === 'issue' && (
-                (selectedItem as ProjectIssue).status.toLowerCase() === 'resolved' ? (
-                    <div className="p-4 rounded-xl font-bold flex items-center gap-3 border shadow-sm" style={{ backgroundColor: THEME.BSI_GREEN + '10', borderColor: THEME.BSI_GREEN + '30', color: THEME.BSI_GREEN }}>
-                        <CheckCircle2 className="h-5 w-5" /> {t('pirComponents.modal.statuses.issueResolvedText')}
-                    </div>
-                ) : (
-                  <ProtectAction>
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>
+              {/* 🔥 TAMPILAN JIKA ISSUE SUDAH RESOLVED */}
+              {selectedItem.type === 'issue' && (selectedItem as ProjectIssue).status.toLowerCase() === 'resolved' && (
+                  <div className="p-4 rounded-xl font-bold flex items-center gap-3 border shadow-sm" style={{ backgroundColor: THEME.BSI_GREEN + '10', borderColor: THEME.BSI_GREEN + '30', color: THEME.BSI_GREEN }}>
+                      <CheckCircle2 className="h-5 w-5" /> {t('pirComponents.modal.statuses.issueResolvedText')}
+                  </div>
+              )}
+
+              {/* 🔥 TAMPILAN UPDATE STATUS & DELETE (UNTUK ISSUE BELUM RESOLVED & IMPROVEMENT) */}
+              {!(selectedItem.type === 'issue' && (selectedItem as ProjectIssue).status.toLowerCase() === 'resolved') && (
+                <ProtectAction>
+                  <div className={`grid ${selectedItem.type === 'issue' ? 'grid-cols-2' : 'grid-cols-1'} gap-4 pt-4 border-t`} style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>
+                    
+                    {/* Bagian Status (Hanya untuk Issue) */}
+                    {selectedItem.type === 'issue' && (
                       <div className="space-y-2">
                           <Label className="text-[10px] font-bold uppercase ml-1" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.modal.labels.updateStatus')}</Label>
                           <DashboardSelect value={(selectedItem as ProjectIssue).status} onChange={(e: any) => onUpdateStatus(e.target.value)} disabled={isBusy}>
                               {['open', 'in-progress', 'resolved'].map(s => <option key={s} value={s}>{capitalize(s)}</option>)}
                           </DashboardSelect>
                       </div>
-                      <div className="space-y-2 flex flex-col justify-end">
-                          <Label className="text-[10px] font-bold uppercase ml-1" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.modal.labels.dangerZone')}</Label>
-                          
-                          {!deleteConfirm ? (
-                              <Button variant="outline" onClick={() => setDeleteConfirm(true)} disabled={isBusy} className="w-full h-10 text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors">
-                                {t('pirComponents.modal.buttons.deleteIssue')}
-                              </Button>
-                          ) : (
-                              <div className="flex items-center gap-2 w-full">
-                                  <Button variant="outline" onClick={() => setDeleteConfirm(false)} disabled={isBusy} className="flex-1 h-10 px-0 text-[11px] font-bold text-gray-600 border-gray-200 hover:bg-gray-50">
-                                    {t('pirComponents.modal.buttons.cancel')}
-                                  </Button>
-                                  <Button variant="destructive" onClick={onDelete} disabled={isBusy} className="flex-1 h-10 px-0 text-[11px] font-bold border-none bg-red-600 hover:bg-red-700 text-white shadow-md">
-                                      {isBusy ? <Loader2 className="animate-spin h-3 w-3 mx-auto"/> : t('pirComponents.modal.buttons.confirm')}
-                                  </Button>
-                              </div>
-                          )}
-                      </div>
+                    )}
+
+                    {/* Bagian Hapus (Untuk Keduanya: Issue & Improvement) */}
+                    <div className="space-y-2 flex flex-col justify-end">
+                        <Label className="text-[10px] font-bold uppercase ml-1" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.modal.labels.dangerZone')}</Label>
+                        
+                        {!deleteConfirm ? (
+                            <Button variant="outline" onClick={() => setDeleteConfirm(true)} disabled={isBusy} className="w-full h-10 text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors">
+                              {selectedItem.type === 'improvement' ? t('pirComponents.modal.buttons.deleteImprovement') : t('pirComponents.modal.buttons.deleteIssue')}
+                            </Button>
+                        ) : (
+                            <div className="flex items-center gap-2 w-full">
+                                <Button variant="outline" onClick={() => setDeleteConfirm(false)} disabled={isBusy} className="flex-1 h-10 px-0 text-[11px] font-bold text-gray-600 border-gray-200 hover:bg-gray-50">
+                                  {t('pirComponents.modal.buttons.cancel')}
+                                </Button>
+                                <Button variant="destructive" onClick={onDelete} disabled={isBusy} className="flex-1 h-10 px-0 text-[11px] font-bold border-none bg-red-600 hover:bg-red-700 text-white shadow-md">
+                                    {isBusy ? <Loader2 className="animate-spin h-3 w-3 mx-auto"/> : t('pirComponents.modal.buttons.confirm')}
+                                </Button>
+                            </div>
+                        )}
                     </div>
-                  </ProtectAction>
-                )
+                  </div>
+                </ProtectAction>
               )}
+
             </div>
           </>
         )}

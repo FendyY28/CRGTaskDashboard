@@ -306,10 +306,12 @@
     "ideaForm": {
       "title": "Idea",
       "labels": {
-        "select": "Select Project..."
+        "select": "Select Project...",
+        "title": "Idea Title"
       },
       "placeholders": {
-        "idea": "Your idea..."
+        "title": "Short summary...",
+        "idea": "Detailed explanation..."
       },
       "toast": {
         "loading": "Submitting optimization plan...",
@@ -337,6 +339,7 @@
       },
       "buttons": {
         "deleteIssue": "Delete Issue",
+        "deleteImprovement": "Delete Idea", 
         "cancel": "Cancel",
         "confirm": "Confirm"
       },

@@ -59,10 +59,15 @@ export const usePIR = () => {
     await api.post('/project/improvement', data);
     await fetchData();
   };
+  const deleteImprovement = async (id: number) => {
+    await api.delete(`/project/improvement/${id}`);
+    await fetchData();
+  };
+  
 
   return {
     liveProjects, issues, improvements, loading,
     refresh: fetchData,
-    addIssue, updateIssueStatus, deleteIssue, addImprovement
+    addIssue, updateIssueStatus, deleteIssue, addImprovement, deleteImprovement
   };
 };
