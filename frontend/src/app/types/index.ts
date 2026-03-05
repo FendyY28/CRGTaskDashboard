@@ -1,6 +1,4 @@
-// src/app/types/index.ts
-
-// --- 1. CORE TYPES ---
+// CORE TYPES
 export type ProjectStatus = 
   | "on-track" 
   | "at-risk" 
@@ -13,7 +11,7 @@ export type ProjectStatus =
 export type TestCaseType = "positive" | "negative";
 export type UatStatus = "pass" | "fail";
 
-// --- 2. TIMELINE & PROGRESS COMPONENTS ---
+// TIMELINE & PROGRESS COMPONENTS
 export interface Task {
   id: number;       // 👈 WAJIB: ID Database (untuk update status)
   taskId: string;   // ID String (misal: TSK-001)
@@ -39,7 +37,7 @@ export interface SDLCPhase {
   status: string;   // 'completed', 'in-progress', 'pending'
 }
 
-// --- 3. TESTING & QA COMPONENTS ---
+// TESTING & QA COMPONENTS
 export interface Defect {
   id?: number;      // Tambahkan id database jika perlu
   defectId: string; // ID String (DEF-001)
@@ -73,7 +71,7 @@ export interface TestCase {
   projectName?: string; 
 }
 
-// --- 4. PIR (POST IMPLEMENTATION REVIEW) COMPONENTS ---
+// PIR (POST IMPLEMENTATION REVIEW) COMPONENTS 
 export interface ProjectIssue {
   id?: number;
   issueId: string;
@@ -103,7 +101,7 @@ export interface ImprovementNote {
   status?: string;
 }
 
-// --- 5. MASTER PROJECT INTERFACE ---
+// MASTER PROJECT INTERFACE
 export interface Project {
   // Core Info
   id: string;
