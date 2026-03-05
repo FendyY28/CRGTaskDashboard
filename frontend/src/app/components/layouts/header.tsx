@@ -1,8 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LogOut, 
-  User, 
-  Settings, 
   ChevronDown, 
   LayoutDashboard, 
   ListChecks, 
@@ -14,30 +12,26 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
-// Import asset logo
 import BSILogo from "../../../assets/Logo BSI.png"; 
-
-// 🔥 1. Import komponen Language Switcher yang baru kita buat
 import { LanguageSwitcher } from "./LanguageSwitcher"; 
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1. Ambil data user dari Local Storage
+  // Ambil data user dari Local Storage
   const userData = {
     name: localStorage.getItem("user_name") || "Guest User",
     email: localStorage.getItem("user_email") || "guest@bsi.co.id",
     role: localStorage.getItem("user_role") || "Staff",
   };
 
-  // 2. Fungsi membuat inisial (Contoh: "Fendy Yurista" -> "FY")
+  // Fungsi membuat inisial (Contoh: "Fendy Yurista" -> "FY")
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -55,7 +49,6 @@ export function Header() {
   ];
 
   const handleLogout = () => {
-    // 3. Hapus SEMUA data saat logout
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_role");
     localStorage.removeItem("user_name");
@@ -109,10 +102,8 @@ export function Header() {
           </nav>
 
           {/* Profile Dropdown Section & Language Switcher */}
-          {/* 🔥 2. Tambahkan gap-4 di div ini agar jarak tombol bahasa dan profil pas */}
           <div className="flex items-center gap-4">
-            
-            {/* 🔥 3. Taruh LanguageSwitcher di sini! */}
+
             <LanguageSwitcher />
 
             <DropdownMenu modal={false}>
@@ -157,27 +148,7 @@ export function Header() {
                         {userData.email}
                       </p>
                     </div>
-                  </DropdownMenuLabel>
-                  
-                  <DropdownMenuSeparator className="bg-gray-100" />
-                  
-                  <DropdownMenuItem 
-                    onClick={() => navigate("/profile")}
-                    className="flex items-center gap-2 px-3 py-2.5 cursor-pointer rounded-md focus:bg-[#36A39D]/10 focus:text-[#36A39D] outline-none"
-                  >
-                    <User className="h-4 w-4 opacity-70" />
-                    <span className="font-medium text-sm">View Profile</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 px-3 py-2.5 cursor-pointer rounded-md focus:bg-[#36A39D]/10 focus:text-[#36A39D] outline-none"
-                  >
-                    <Settings className="h-4 w-4 opacity-70" />
-                    <span className="font-medium text-sm">Account Settings</span>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator className="bg-gray-100" />
-                  
+                  </DropdownMenuLabel>                
                   <DropdownMenuItem 
                     onClick={handleLogout}
                     className="flex items-center gap-2 px-3 py-2.5 cursor-pointer rounded-md text-red-600 focus:bg-red-50 focus:text-red-700 font-bold outline-none"
