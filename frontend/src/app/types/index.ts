@@ -13,7 +13,7 @@ export type UatStatus = "pass" | "fail";
 
 // TIMELINE & PROGRESS COMPONENTS
 export interface Task {
-  id: number;       // 👈 WAJIB: ID Database (untuk update status)
+  id: number;       // ID Database (untuk update status)
   taskId: string;   // ID String (misal: TSK-001)
   taskName: string;
   status: string;   // 'completed', 'in-progress', etc.
@@ -21,7 +21,7 @@ export interface Task {
 }
 
 export interface WeeklyProgress {
-  id: number;       // 👈 WAJIB: Hapus tanda tanya (?) agar tidak error saat delete
+  id: number;       // Hapus tanda tanya (?) agar tidak error saat delete
   weekRange: string;
   progress: number;
   completed: number;
@@ -30,7 +30,7 @@ export interface WeeklyProgress {
 }
 
 export interface SDLCPhase {
-  id: number;       // 👈 Disarankan wajib ada juga
+  id: number;       // Disarankan wajib ada juga
   phaseName: string;
   startDate: string;
   deadline: string;
