@@ -1,4 +1,14 @@
 {
+  "header": {
+    "menu": {
+      "dashboard": "Dasbor",
+      "analytics": "Analitik",
+      "timeline": "Linimasa",
+      "testing": "Pengujian",
+      "pir": "Tinjauan (PIR)"
+    },
+    "logout": "Keluar dari Sistem"
+  },
   "timeline": {
     "loading": "Memuat Linimasa...",
     "title": "Linimasa & Pelacakan Proyek",
@@ -360,6 +370,23 @@
     },
     "common": {
       "submit": "Kirim"
+    }
+  },
+  "analytics": {
+    "title": "Analitik & Laporan",
+    "description": "Ringkasan eksekutif kesehatan proyek, fase SDLC, dan pelacakan isu.",
+    "charts": {
+      "projectStatus": "Status Kesehatan Proyek",
+      "averageProgress": "Rata-rata Progres per Fase",
+      "testingQuality": "Kualitas UAT (Lulus vs Gagal)",
+      "topDefects": "Proyek dengan Defect Tertinggi",
+      "issuePriority": "Isu Aktif Berdasarkan Prioritas",
+      "issueResolution": "Status Penyelesaian Kendala"
+    },
+    "labels": {
+      "count": "Jumlah",
+      "projects": "Proyek",
+      "issues": "Kendala"
     }
   }
 }

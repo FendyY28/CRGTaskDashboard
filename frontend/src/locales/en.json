@@ -1,4 +1,14 @@
 {
+  "header": {
+    "menu": {
+      "dashboard": "Dashboard",
+      "analytics": "Analytics",
+      "timeline": "Timeline",
+      "testing": "Testing",
+      "pir": "PIR"
+    },
+    "logout": "Logout from System"
+  },
   "timeline": {
     "loading": "Loading Timelines...",
     "title": "Project Timeline & Tracking",
@@ -360,6 +370,23 @@
     },
     "common": {
       "submit": "Submit"
+    }
+  },
+  "analytics": {
+    "title": "Analytics & Reports",
+    "description": "Executive overview of project health, SDLC phases, and issue tracking.",
+    "charts": {
+      "projectStatus": "Project Health Status",
+      "averageProgress": "Average Progress by Phase",
+      "testingQuality": "UAT Quality (Pass vs Fail)",
+      "topDefects": "Top Failed Projects (UAT)",
+      "issuePriority": "Live Issues by Priority",
+      "issueResolution": "Issue Resolution Status"
+    },
+    "labels": {
+      "count": "Count",
+      "projects": "Projects",
+      "issues": "Issues"
     }
   }
 }

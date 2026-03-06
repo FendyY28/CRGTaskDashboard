@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   ListChecks, 
   TestTube2, 
-  ClipboardCheck 
+  ClipboardCheck,
+  BarChart3 // 🔥 Tambahkan icon BarChart3
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,9 +21,13 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import BSILogo from "../../../assets/Logo BSI.png"; 
 import { LanguageSwitcher } from "./LanguageSwitcher"; 
 
+// 🔥 Import i18n Hook
+import { useTranslation } from "react-i18next";
+
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation(); // 🔥 Aktifkan translator
 
   // Ambil data user dari Local Storage
   const userData = {
@@ -41,11 +46,13 @@ export function Header() {
       .toUpperCase();
   };
 
+  // 🔥 Tambahkan menu Analytics dan gunakan terjemahan
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-    { id: "timeline", label: "Timeline", icon: <ListChecks className="h-4 w-4" /> },
-    { id: "testing", label: "Testing", icon: <TestTube2 className="h-4 w-4" /> },
-    { id: "post-implementation", label: "PIR", icon: <ClipboardCheck className="h-4 w-4" /> },
+    { id: "dashboard", label: t('header.menu.dashboard'), icon: <LayoutDashboard className="h-4 w-4" /> },
+    { id: "analytics", label: t('header.menu.analytics'), icon: <BarChart3 className="h-4 w-4" /> }, // Posisi setelah Dashboard
+    { id: "timeline", label: t('header.menu.timeline'), icon: <ListChecks className="h-4 w-4" /> },
+    { id: "testing", label: t('header.menu.testing'), icon: <TestTube2 className="h-4 w-4" /> },
+    { id: "post-implementation", label: t('header.menu.pir'), icon: <ClipboardCheck className="h-4 w-4" /> },
   ];
 
   const handleLogout = () => {
@@ -81,28 +88,29 @@ export function Header() {
           </Link>
 
           {/* Navigasi Utama */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = location.pathname === `/${item.id}`;
               return (
                 <Link
                   key={item.id}
                   to={`/${item.id}`}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] xl:text-sm font-semibold transition-all duration-200 ${
                     isActive 
                       ? "bg-[#36A39D] text-white shadow-md shadow-[#36A39D]/25" 
                       : "text-gray-600 hover:bg-gray-50 hover:text-[#36A39D]"
                   }`}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span className="hidden xl:inline">{item.label}</span>
+                  <span className="inline xl:hidden">{item.label.substring(0,4)}.</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Profile Dropdown Section & Language Switcher */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
 
             <LanguageSwitcher />
 
@@ -111,7 +119,7 @@ export function Header() {
                 <button 
                   className="h-12 flex items-center gap-3 px-2 hover:bg-gray-50 transition-colors focus:outline-none group cursor-pointer border-none bg-transparent rounded-lg"
                 >
-                  <div className="text-right hidden lg:block">
+                  <div className="text-right hidden md:block">
                     {/* Menggunakan Data User */}
                     <p className="text-sm font-bold text-gray-900 leading-none mb-1 capitalize">
                       {userData.name}
@@ -154,7 +162,7 @@ export function Header() {
                     className="flex items-center gap-2 px-3 py-2.5 cursor-pointer rounded-md text-red-600 focus:bg-red-50 focus:text-red-700 font-bold outline-none"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span className="text-sm font-bold">Logout from System</span>
+                    <span className="text-sm font-bold">{t('header.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenuPortal>

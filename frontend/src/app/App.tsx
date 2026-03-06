@@ -20,6 +20,9 @@ const TaskTimeline = lazy(() => import("./pages/monitor/TaskTimeline").then(modu
 const TestingStatus = lazy(() => import("./pages/monitor/TestingStatus").then(module => ({ default: module.TestingStatus })));
 const PostImplementation = lazy(() => import("./pages/monitor/PostImplementation").then(module => ({ default: module.PostImplementation })));
 
+// TAMBAHKAN IMPORT LAZY UNTUK ANALYTICS DI SINI:
+const Analytics = lazy(() => import("./pages/monitor/Analytics").then(module => ({ default: module.Analytics })));
+
 // --- KOMPONEN LOADING LAYAR PENUH ---
 const PageFallback = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-[#36A39D]">
@@ -34,7 +37,7 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-gray-900">
       <Header />
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        {/* 🚀 4. BUNGKUS OUTLET DENGAN SUSPENSE */}
+        {/* BUNGKUS OUTLET DENGAN SUSPENSE */}
         <Suspense fallback={<PageFallback />}>
           <Outlet />
         </Suspense>
@@ -50,7 +53,7 @@ export default function App() {
       <Toaster position="bottom-right" richColors expand={false} closeButton theme="light" />
 
       <Router>
-        {/* 🚀 5. BUNGKUS ROUTES UTAMA DENGAN SUSPENSE JUGA */}
+        {/* BUNGKUS ROUTES UTAMA DENGAN SUSPENSE JUGA */}
         <Suspense fallback={<PageFallback />}>
           <Routes>
             
@@ -69,6 +72,9 @@ export default function App() {
                 <Route path="/timeline" element={<TaskTimeline />} />
                 <Route path="/testing" element={<TestingStatus />} />
                 <Route path="/post-implementation" element={<PostImplementation />} />
+                
+                {/* 🔥 2. TAMBAHKAN ROUTE ANALYTICS DI SINI: */}
+                <Route path="/analytics" element={<Analytics />} />
               </Route>
             </Route>
 
