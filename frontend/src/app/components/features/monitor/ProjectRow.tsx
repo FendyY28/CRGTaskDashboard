@@ -3,7 +3,6 @@ import { Users, Pencil, Trash2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { StatusBadge } from "../../dashboard/index"; 
 import type { Project } from "../../../types";
-// ✅ Import ProtectAction
 import { ProtectAction } from "../../auth/ProtectAction"; 
 
 interface ProjectRowProps {

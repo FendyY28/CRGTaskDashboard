@@ -39,9 +39,10 @@ export const PhaseBlock = memo(({ p, onEdit, onDelete }: PhaseBlockProps) => {
       </div>
 
       <div className="px-5 pb-5">
-        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mb-1">
+        <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden mb-1">
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${p.progress}%`, backgroundColor: PROGRESS_COLORS[p.status] }} />
         </div>
+        
         {isOpen && (
             <div className="mt-5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
             {p.projects.length > 0 ? p.projects.map((proj) => (

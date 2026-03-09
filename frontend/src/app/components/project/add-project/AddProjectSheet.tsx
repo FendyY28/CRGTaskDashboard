@@ -1,60 +1,15 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Plus, Loader2, FolderPlus, User, Hash, BarChart3, Calendar, Clock, AlertCircle, AlertTriangle, CheckCircle2, PlayCircle, Activity } from "lucide-react";
-import { Button } from "../../components/ui/button"; 
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger, DialogFooter } from "../../components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { API_URL } from "../../../lib/utils"; 
-
-// 🔥 1. Import hook terjemahan
+import { Button } from "../../../components/ui/button"; 
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger, DialogFooter } from "../../../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { API_URL } from "../../../../lib/utils"; 
 import { useTranslation } from "react-i18next";
 
-// --- HELPERS ---
-const getToday = () => new Date().toISOString().split('T')[0];
-const calcDate = (date: string, amt: number, type: 'D' | 'M') => {
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return "";
-  type === 'M' ? d.setMonth(d.getMonth() + amt) : d.setDate(d.getDate() + amt);
-  return d.toISOString().split('T')[0];
-};
-
-const getUserIdFromToken = () => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    const backupEmail = localStorage.getItem('user_email');
-    const backupName = localStorage.getItem('user_name');
-
-    if (!token || token === "mock-jwt-token") {
-      console.warn("⚠️ Token asli tidak ditemukan. Menggunakan email/nama sebagai identitas.");
-      return backupEmail || backupName || null;
-    }
-    
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return backupEmail || backupName || null;
-    }
-
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    
-    const parsed = JSON.parse(jsonPayload);
-    return parsed.id || parsed.sub || parsed.userId || parsed.email || backupEmail; 
-  } catch (e) {
-    return localStorage.getItem('user_email') || null;
-  }
-};
-
-const INITIAL_FORM = {
-  name: "", code: "", pic: "", currentPhase: "Requirement", status: "on-track", overallProgress: "0",
-  startDate: getToday(), deadline: calcDate(getToday(), 2, 'M'),
-  phaseStartDate: getToday(), phaseDeadline: calcDate(getToday(), 7, 'D')
-};
-
-const PHASES = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
+// Mengimpor utility functions dan constants
+import { getToday, calcDate, getUserIdFromToken, INITIAL_FORM, PHASES } from "./addProjectUtils";
 
 export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -64,7 +19,6 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
   const [statusMsg, setStatusMsg] = useState<{ error?: string, success?: string }>({});
   const [formData, setFormData] = useState(INITIAL_FORM);
 
-  // 🔥 2. Panggil hook
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -79,14 +33,13 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
         names: data.map(p => p.name.toLowerCase()),
         codes: data.map(p => p.id.toLowerCase())
       }))
-      .catch(() => setStatusMsg({ error: "loadValidationFailed" })); // Simpan KEY-nya saja
+      .catch(() => setStatusMsg({ error: "loadValidationFailed" })); 
   }, [open]);
 
   useEffect(() => {
     const errs: Record<string, string> = {};
     const { name, code, startDate: s, deadline: d, phaseStartDate: ps, phaseDeadline: pd } = formData;
     
-    // Simpan KEY error-nya saja ke state agar bisa dilokalisasi saat render
     if (name && existingData.names.includes(name.trim().toLowerCase())) errs.name = "nameExists";
     if (code && existingData.codes.includes(code.trim().toLowerCase())) errs.code = "codeExists";
     if (s && d && new Date(s) > new Date(d)) errs.dates = "deadlineBeforeStart";
@@ -137,14 +90,13 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
         body: JSON.stringify(payload)
       });
       
-      if (!res.ok) throw new Error("saveFailed"); // Lempar KEY error
+      if (!res.ok) throw new Error("saveFailed"); 
 
-      setStatusMsg({ success: "created" }); // Simpan KEY success
+      setStatusMsg({ success: "created" }); 
       onProjectAdded?.();
       setTimeout(() => setOpen(false), 1200);
     } catch (err: any) {
       console.error("Submit Error:", err);
-      // Jika pesan error berasal dari server kita abaikan, jika tidak kita pakai key
       setStatusMsg({ error: err.message === "saveFailed" ? "saveFailed" : "systemError" });
     } finally {
       setIsLoading(false);
@@ -153,7 +105,6 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
 
   const inputClass = (err?: string) => `h-10 border-gray-200 ${err ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#36A39D]"}`;
   
-  // Terjemahkan pesan error di sini
   const ErrorMsg = ({ msgKey }: { msgKey?: string }) => msgKey ? <p className="text-xs text-red-500 flex items-center gap-1 mt-1 font-medium text-left"><AlertCircle className="h-3 w-3" /> {t(`addProject.errors.${msgKey}`)}</p> : null;
 
   return (
@@ -213,7 +164,6 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
                     <Label className="text-xs font-bold text-gray-500 uppercase">{t('addProject.labels.startingPhase')}</Label>
                     <Select value={formData.currentPhase} onValueChange={v => handleChange("currentPhase", v)}>
                       <SelectTrigger className="bg-white border-slate-300 h-9 font-medium focus:ring-[#36A39D]"><SelectValue /></SelectTrigger>
-                      {/* Note: Phase names dibiarkan original karena standar SDLC */}
                       <SelectContent className="bg-white">{PHASES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                     </Select>
                  </div>

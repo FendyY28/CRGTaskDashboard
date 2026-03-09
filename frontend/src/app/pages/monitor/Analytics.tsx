@@ -54,20 +54,14 @@ export function Analytics() {
   const { t } = useTranslation();
   const data = useAnalyticsData(); 
 
-  const COLORS = {
-    SUCCESS: "#10B981",
-    WARNING: "#F59E0B", 
-    DANGER: "#EF4444", 
-    INFO: "#6366F1",   
-    NEUTRAL: "#94A3B8", 
-    TOSCA: "#36A39D"    
-  };
+  // Warna kustom untuk status bahaya/kritis karena tidak ada di THEME
+  const DANGER_COLOR = "#E11D48"; 
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12 text-left">
       <div className="flex flex-col gap-1 mb-6">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          <BarChart3 className="h-6 w-6" style={{ color: COLORS.TOSCA }} /> {t('analytics.title')}
+          <BarChart3 className="h-6 w-6" style={{ color: THEME.TOSCA }} /> {t('analytics.title')}
         </h2>
         <p className="text-sm font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('analytics.description')}</p>
       </div>
@@ -75,16 +69,16 @@ export function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         
         {/* Chart 1: Project Health */}
-        <DashboardCard color={COLORS.TOSCA} title={t('analytics.charts.projectStatus')} icon={PieIcon} contentClassName="p-2 h-[280px]">
+        <DashboardCard color={THEME.TOSCA} title={t('analytics.charts.projectStatus')} icon={PieIcon} contentClassName="p-2 h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data.statusData} cx="50%" cy="40%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none">
                 {data.statusData.map((entry, index) => {
-                  let color = COLORS.NEUTRAL;
-                  if (entry.name.toLowerCase().includes('track')) color = COLORS.TOSCA;
-                  if (entry.name.toLowerCase().includes('risk')) color = COLORS.WARNING;
-                  if (entry.name.toLowerCase().includes('overdue')) color = COLORS.DANGER;
-                  if (entry.name.toLowerCase().includes('complete')) color = COLORS.SUCCESS;
+                  let color : string = THEME.BSI_GREY;
+                  if (entry.name.toLowerCase().includes('track')) color = THEME.TOSCA;
+                  if (entry.name.toLowerCase().includes('risk')) color = THEME.BSI_YELLOW;
+                  if (entry.name.toLowerCase().includes('overdue')) color = DANGER_COLOR;
+                  if (entry.name.toLowerCase().includes('complete')) color = THEME.BSI_GREEN;
                   return <Cell key={`cell-${index}`} fill={color} />;
                 })}
               </Pie>
@@ -95,31 +89,28 @@ export function Analytics() {
         </DashboardCard>
 
         {/* Chart 2: Average Progress */}
-        <DashboardCard color={COLORS.WARNING} title={t('analytics.charts.averageProgress')} icon={TrendingUp} contentClassName="p-2 h-[280px]">
+        <DashboardCard color={THEME.TOSCA} title={t('analytics.charts.averageProgress')} icon={TrendingUp} contentClassName="p-2 h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.averageProgressData} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 600, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} domain={[0, 100]} />
               <Tooltip cursor={{fill: '#f3f4f6', radius: 4}} content={<CustomAvgProgressTooltip />} />
-              <Bar dataKey="Average" radius={[4, 4, 0, 0]} barSize={24}>
-                {data.averageProgressData.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.Average < 50 ? COLORS.DANGER : entry.Average <= 75 ? COLORS.WARNING : COLORS.TOSCA} />
-                ))}
-              </Bar>
+              <Bar dataKey="Average" fill={THEME.TOSCA} radius={[4, 4, 0, 0]} barSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </DashboardCard>
 
         {/* Chart 3: UAT Quality */}
-        <DashboardCard color={COLORS.INFO} title={t('analytics.charts.testingQuality')} icon={CheckCircle2} contentClassName="p-2 h-[280px]">
+        <DashboardCard color={THEME.BSI_GREEN} title={t('analytics.charts.testingQuality')} icon={CheckCircle2} contentClassName="p-2 h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data.uatData} cx="50%" cy="40%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none">
                 {data.uatData.map((entry, index) => {
-                  let color = COLORS.NEUTRAL;
-                  if (entry.name.toLowerCase().includes('pass')) color = COLORS.SUCCESS;
-                  if (entry.name.toLowerCase().includes('fail')) color = COLORS.DANGER;
-                  if (entry.name.toLowerCase().includes('pending')) color = COLORS.WARNING;
+                  let color: string = THEME.BSI_GREY;
+                  if (entry.name.toLowerCase().includes('pass')) color = THEME.BSI_GREEN;
+                  if (entry.name.toLowerCase().includes('fail')) color = DANGER_COLOR;
+                  if (entry.name.toLowerCase().includes('pending')) color = THEME.BSI_YELLOW;
+                  if (entry.name.toLowerCase().includes('takeout')) color = THEME.BSI_LIGHT_GRAY;
                   return <Cell key={`cell-${index}`} fill={color} />;
                 })}
               </Pie>
@@ -130,50 +121,52 @@ export function Analytics() {
         </DashboardCard>
         
         {/* Chart 4: Top Defects */}
-        <DashboardCard color={COLORS.DANGER} title={t('analytics.charts.topDefects')} icon={AlertTriangle} contentClassName="p-2 h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.topDefectsData} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fontWeight: 600, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} width={80} />
-              <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold', fontSize: '11px' }} />
-              <Bar dataKey="Fails" radius={[0, 4, 4, 0]} barSize={14}>
-                {data.topDefectsData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={index === 0 ? COLORS.DANGER : COLORS.WARNING} /> 
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <DashboardCard color={DANGER_COLOR} title={t('analytics.charts.topDefects') || "Top Failed Projects"} icon={AlertTriangle} contentClassName="p-2 h-[280px]">
+          {data.topDefectsData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.topDefectsData} layout="vertical" margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fontWeight: 600, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} width={80} />
+                <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '11px' }} />
+                <Bar dataKey="Fails" radius={[0, 4, 4, 0]} barSize={14}>
+                  {data.topDefectsData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? DANGER_COLOR : THEME.BSI_YELLOW} /> 
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <div className="h-full flex items-center justify-center text-gray-400 text-xs font-medium">No defects detected</div>}
         </DashboardCard>
 
-        {/* Chart 5: Issue Priorities */}
-        <DashboardCard color={COLORS.DANGER} title={t('analytics.charts.issuePriority')} icon={AlertTriangle} contentClassName="p-2 h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.issueData} layout="vertical" margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fontWeight: 600, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontWeight: 'bold', fontSize: '11px' }} />
-              <Legend verticalAlign="bottom" height={30} iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
-              <Bar dataKey={data.openLbl} fill={COLORS.DANGER} radius={[0, 4, 4, 0]} barSize={10} />
-              <Bar dataKey={data.inProgressLbl} fill={COLORS.INFO} radius={[0, 4, 4, 0]} barSize={10} />
-            </BarChart>
-          </ResponsiveContainer>
-        </DashboardCard>
-
-        {/* Chart 6: Issue Resolution*/}
-        <DashboardCard color={COLORS.SUCCESS} title={t('analytics.charts.issueResolution')} icon={Activity} contentClassName="p-2 h-[280px]">
+        {/* Chart 5: Issue Resolution Tracking */}
+        <DashboardCard color={THEME.BSI_GREEN} title={t('analytics.charts.issueResolution')} icon={Activity} contentClassName="p-2 h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data.issueResolutionData} cx="50%" cy="40%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none">
                 {data.issueResolutionData.map((entry, index) => {
-                  let color = COLORS.DANGER;
-                  if (entry.name.toLowerCase().includes('resolve')) color = COLORS.SUCCESS;
-                  if (entry.name.toLowerCase().includes('progress')) color = COLORS.INFO;
+                  let color = DANGER_COLOR;
+                  if (entry.name.toLowerCase().includes(t('pir.tabs.resolved').toLowerCase()) || entry.name.toLowerCase().includes('resolve')) color = THEME.BSI_GREEN;
+                  if (entry.name.toLowerCase().includes(t('pir.tabs.in-progress').toLowerCase()) || entry.name.toLowerCase().includes('progress')) color = THEME.ORANGE;
                   return <Cell key={`cell-${index}`} fill={color} />;
                 })}
               </Pie>
               <Tooltip content={<CustomPieTooltip />} />
               <Legend verticalAlign="bottom" height={40} iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
             </PieChart>
+          </ResponsiveContainer>
+        </DashboardCard>
+
+        {/* Chart 6: Live Issues by Priority */}
+        <DashboardCard color={DANGER_COLOR} title={t('analytics.charts.issuePriority')} icon={AlertTriangle} contentClassName="p-2 h-[280px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.issueData} layout="vertical" margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fontWeight: 600, fill: THEME.BSI_GREY }} axisLine={false} tickLine={false} />
+              <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '11px' }} />
+              <Legend verticalAlign="bottom" height={30} iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
+              <Bar dataKey={data.openLbl} fill={DANGER_COLOR} radius={[0, 4, 4, 0]} barSize={10} />
+              <Bar dataKey={data.inProgressLbl} fill={THEME.ORANGE} radius={[0, 4, 4, 0]} barSize={10} />
+            </BarChart>
           </ResponsiveContainer>
         </DashboardCard>
 

@@ -19,76 +19,70 @@ const COLORS = {
 
 const getStyle = (status: string, progress: number, isDateOverdue: boolean) => {
   const s = status ? status.toLowerCase() : "";
+  
+  // Jika pending atau progress 0, paksakan jadi kotak transparan (Not Started)
+  if (s === 'pending' || progress === 0) return { bar: "transparent", bg: "#F3F4F6", solid: COLORS.SOLID_PLAN };
+  
   if (s === 'overdue' || (progress < 100 && isDateOverdue)) return { bar: COLORS.LATE, bg: "#FEE2E2", solid: COLORS.LATE };
   if (s === 'at-risk') return { bar: COLORS.RISK, bg: "#FFFBEB", solid: COLORS.RISK };
-  if (progress === 0 || s === 'pending') return { bar: "transparent", bg: "#F3F4F6", solid: COLORS.SOLID_PLAN };
   return { bar: COLORS.OK, bg: "#F0FDFA", solid: COLORS.OK };
 };
 
 export function ProjectGantt({ project, onBack }: { project: any; onBack: () => void }) {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
-  // Ambil cycle terbesar (yang sedang aktif)
   const maxCycle = project?.cycle || 1;
   const [selectedCycle, setSelectedCycle] = useState<number>(maxCycle);
 
-  // Auto-sync cycle ketika data project berubah/refresh
   useEffect(() => {
     if (project?.cycle) setSelectedCycle(project.cycle);
   }, [project?.cycle]);
 
   const tasks: Task[] = useMemo(() => {
-    if (!project?.sdlcPhases) return [];
+    if (!project) return [];
 
     try {
-        // Hanya ambil fase-fase yang sesuai dengan Cycle yang dipilih di Dropdown
-        const phases = project.sdlcPhases.filter((p: any) => (p.cycle || 1) === selectedCycle);
-        if (phases.length === 0) return [];
+        const fallbackDate = project.projectStartDate ? new Date(project.projectStartDate) : new Date();
 
-        return phases.map((p: any, i: number) => {
-            const now = new Date();
-            const start = p.startDate ? new Date(p.startDate) : now;
-            let end = p.deadline ? new Date(p.deadline) : new Date(start.getTime() + 86400000); 
+        return PHASE_ORDER.map((phaseName, index) => {
+            // Cari data fase ini di database sesuai cycle
+            const dbPhase = project.sdlcPhases?.find(
+                (p: any) => p.phaseName === phaseName && (p.cycle || 1) === selectedCycle
+            );
 
-            // Prevent error if end date is before start date
-            if (end <= start) {
-                end = new Date(start.getTime() + 86400000); 
-            }
+            // Tentukan Tanggal
+            let start = dbPhase?.startDate ? new Date(dbPhase.startDate) : fallbackDate;
+            let end = dbPhase?.deadline ? new Date(dbPhase.deadline) : new Date(start.getTime() + 86400000 * 7); 
+            if (end <= start) end = new Date(start.getTime() + 86400000); 
 
-            // Logika Status & Progress
-            // Apakah fase ini adalah fase yang BENAR-BENAR sedang berjalan SAAT INI?
-            const isActivePhase = p.phaseName === project.currentPhase && selectedCycle === maxCycle;
-            
-            // Apakah fase ini sudah lewat di Cycle yang aktif?
-            const isPastPhase = PHASE_ORDER.indexOf(p.phaseName) < PHASE_ORDER.indexOf(project.currentPhase);
-            
-            // Apakah kita sedang melihat History (Siklus masa lalu)?
-            const isHistoryCycle = selectedCycle < maxCycle;
+            // ==========================================
+            // LOGIKA SUPER SIMPLE (BACA MURNI DARI DB)
+            // ==========================================
+            let progress = 0;
+            let effectiveStatus = 'pending';
 
-            let effectiveStatus = p.status;
-            let progress = p.progress || 0; 
+            if (dbPhase) {
+                // Ambil nilai asli dari DB
+                progress = Number(dbPhase.progress) || 0;
+                effectiveStatus = dbPhase.status ? dbPhase.status.toLowerCase() : 'pending';
 
-            if (isActivePhase) {
-                effectiveStatus = project.status;
-                progress = Number(project.overallProgress) || 0;
-            } else if (isHistoryCycle) {
-                // Di riwayat masa lalu, biarkan status apa adanya (misal: 'at-risk' / 'completed')
-                // Tapi progress kita paksa 100 karena fase itu pasti sudah selesai/terlewati
-                progress = 100; 
-            } else if (isPastPhase || effectiveStatus === 'completed') {
-                progress = 100;
+                // KHUSUS FASE SAAT INI (di Cycle Aktif): Override dengan progress live dari project
+                if (selectedCycle === maxCycle && phaseName === project.currentPhase) {
+                    progress = Number(project.overallProgress) || 0;
+                    effectiveStatus = project.status || 'in-progress';
+                }
             }
             
             const isDateOverdue = new Date() > end;
             const style = getStyle(effectiveStatus, progress, isDateOverdue);
 
             return {
-                id: `phase-${p.id || i}_${p.phaseName}_${selectedCycle}`, 
-                name: p.phaseName || "Phase", 
+                id: `phase-${index}_${phaseName}_${selectedCycle}`, 
+                name: phaseName, 
                 type: 'task',
                 start, 
                 end, 
                 progress, 
-                isDisabled: true, // Read-only di Gantt
+                isDisabled: true, 
                 custom_status: effectiveStatus, 
                 custom_color: style.solid,
                 styles: { 
@@ -98,7 +92,7 @@ export function ProjectGantt({ project, onBack }: { project: any; onBack: () => 
                     backgroundSelectedColor: style.bg 
                 }
             };
-        }).sort((a: any, b: any) => (PHASE_ORDER.indexOf(a.name) + 1 || 99) - (PHASE_ORDER.indexOf(b.name) + 1 || 99));
+        });
     } catch (e) {
         console.error("Gantt Chart Calculation Error:", e);
         return []; 

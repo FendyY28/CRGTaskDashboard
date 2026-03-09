@@ -251,8 +251,12 @@ export class ProjectController {
 
   @Post(':id/next-cycle')
   @UseGuards(JwtAuthGuard)
-  async nextCycle(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req, req.body);
-    return this.projectService.nextCycle(id, userId);
-  }
+    async nextCycle(
+      @Param('id') id: string, 
+      @Request() req,
+      @Body() body?: { targetPhase?: string } // 🔥 TAMBAHKAN @Body() DI SINI
+    ) {
+      const userId = this.getUserId(req, body); // body dikirim ke helper juga untuk jaga-jaga
+      return this.projectService.nextCycle(id, userId, body); // 🔥 LEMPAR body KE SERVICE
+    }
 }

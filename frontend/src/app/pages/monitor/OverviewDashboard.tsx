@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { FolderKanban, CheckCircle2, Clock, LayoutDashboard, Trash2, Loader2, Rocket } from "lucide-react"; 
 import { Button } from "../../components/ui/button"; 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../components/ui/dialog";
-import { AddProjectSheet } from "../../components/project/AddProjectSheet";
-import { EditProjectSheet } from "../../components/project/EditProjectSheet"; 
+import { AddProjectSheet } from "../../components/project/add-project/AddProjectSheet";
+import { EditProjectSheet } from "../../components/project/edit-project/EditProjectSheet"; 
 import { useProjects } from "../../hooks/useProjects";
 import { PageHeader, DashboardKpiCard, DashboardCard } from "../../components/dashboard";
 import { PhaseBlock } from "../../components/features/monitor/PhaseBlock";
@@ -122,18 +122,18 @@ export function OverviewDashboard() {
           clickable={false} 
         />
         <DashboardKpiCard 
-          label={t('dashboard.completed')} 
-          count={dashboardStats.completedCount} 
-          icon={CheckCircle2} 
-          color="#059669" 
-          clickable={false} 
-        />
-        <DashboardKpiCard 
           label={t('dashboard.freshlyLive')} 
           count={dashboardStats.deliveredThisMonthCount} 
           icon={Rocket} 
           description={t('dashboard.launchedThisMonth')} 
           color="#8B5CF6" 
+          clickable={false} 
+        />
+        <DashboardKpiCard 
+          label={t('dashboard.completed')} 
+          count={dashboardStats.completedCount} 
+          icon={CheckCircle2} 
+          color="#059669" 
           clickable={false} 
         />
       </div>

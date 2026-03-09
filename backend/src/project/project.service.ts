@@ -440,7 +440,8 @@ export class ProjectService {
   // ==========================================================
   // 6. NEXT CYCLE MANAGEMENT (SMART AUTOMATION)
   // ==========================================================
-  async nextCycle(id: string, userId: string) {
+  // 🔥 Tambahkan opsional body parameter untuk menangkap targetPhase
+  async nextCycle(id: string, userId: string, body?: { targetPhase?: string }) {
     const oldProject = await this.prisma.project.findUnique({ 
         where: { id }, 
         include: { sdlcPhases: true } 
@@ -451,6 +452,9 @@ export class ProjectService {
     const currentCycle = oldProject.cycle || 1;
     const nextCycle = currentCycle + 1;
     
+    // Tentukan fase awal untuk cycle baru (Default: Requirement, atau sesuai permintaan Frontend)
+    const initialPhaseForNewCycle = body?.targetPhase || 'Requirement';
+
     // Smart Automation Dates
     const today = new Date();
     
@@ -458,9 +462,9 @@ export class ProjectService {
     const newGlobalDeadline = new Date(today);
     newGlobalDeadline.setMonth(newGlobalDeadline.getMonth() + 1);
     
-    // Deadline Fase Requirement: 1 Minggu ke depan
-    const newReqDeadline = new Date(today);
-    newReqDeadline.setDate(newReqDeadline.getDate() + 7);
+    // Deadline Fase Pertama (Bisa Requirement, bisa TF Meeting, dll): 1 Minggu ke depan
+    const newPhaseDeadline = new Date(today);
+    newPhaseDeadline.setDate(newPhaseDeadline.getDate() + 7);
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
         // KUNCI DATA LAMA (Archive)
@@ -475,8 +479,8 @@ export class ProjectService {
             data: { 
                 cycle: nextCycle, 
                 overallProgress: 0, 
-                currentPhase: 'Requirement', 
-                status: 'on-track',
+                currentPhase: initialPhaseForNewCycle, // 🔥 Dinamis
+                status: 'in-progress',
                 projectStartDate: today,
                 projectDeadline: newGlobalDeadline
             } 
@@ -484,16 +488,16 @@ export class ProjectService {
         
         // GENERATE 6 FASE BARU UNTUK CYCLE BARU
         for (const phaseName of this.MASTER_PHASES) {
-            const isReq = phaseName === 'Requirement';
+            const isInitial = phaseName === initialPhaseForNewCycle; // 🔥 Dinamis
             await tx.sDLCPhase.create({
                 data: { 
                     projectId: id, 
                     phaseName, 
                     cycle: nextCycle, 
-                    status: isReq ? 'in-progress' : 'pending',
+                    status: isInitial ? 'in-progress' : 'pending',
                     progress: 0, // Reset progress per fase
-                    startDate: isReq ? today : null, 
-                    deadline: isReq ? newReqDeadline : null 
+                    startDate: isInitial ? today : null, 
+                    deadline: isInitial ? newPhaseDeadline : null 
                 }
             });
         }
@@ -506,7 +510,7 @@ export class ProjectService {
 
     if (!updatedProject) throw new Error("Gagal memuat data project setelah cycle baru.");
 
-    await this.auditService.log(userId, "NEXT_CYCLE", `Project ${updatedProject.name} dinaikkan ke Cycle ${nextCycle}`);
+    await this.auditService.log(userId, "NEXT_CYCLE", `Project ${updatedProject.name} dinaikkan ke Cycle ${nextCycle} mulai di fase ${initialPhaseForNewCycle}`);
     return updatedProject;
   }
 }
