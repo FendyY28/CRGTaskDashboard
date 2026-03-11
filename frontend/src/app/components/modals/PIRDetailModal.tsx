@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
-import { Badge } from "../../ui/badge";
-import { Label } from "../../ui/label";
-import { Button } from "../../ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Badge } from "../ui/badge";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
 import { Lightbulb, User, Calendar, CheckCircle2, Loader2, AlertTriangle, Clock } from "lucide-react";
-import { DashboardSelect } from "../../dashboard/index";
-import { THEME } from "../../../constants/projectConstants";
-import { capitalize } from "../../../../lib/utils";
-import { usePIR } from "../../../hooks/usePIR";
+import { DashboardSelect } from "../dashboard/index";
+import { THEME } from "../../constants/projectConstants";
+import { capitalize } from "../../../lib/utils";
+import { usePIR } from "../../hooks/usePIR";
 import { toast } from "sonner";
-import type { ProjectIssue, ImprovementNote } from "../../../types";
+import type { ProjectIssue, ImprovementNote } from "../../types";
 
-import { ProtectAction } from "../../../components/auth/ProtectAction";
+import { ProtectAction } from "../auth/ProtectAction";
 import { useTranslation } from "react-i18next";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', {

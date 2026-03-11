@@ -1,4 +1,4 @@
-import { SDLC_PHASES, PROJECT_STATUS } from "../../../constants/projectConstants";
+import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../../constants/projectConstants";
 
 export const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -17,9 +17,9 @@ export const calcDate = (d: string, n: number, t: 'D' | 'M') => {
 
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case PROJECT_STATUS.ON_TRACK: return 'text-[#36A39D]';
-    case PROJECT_STATUS.OVERDUE: return 'text-red-600';
-    case PROJECT_STATUS.AT_RISK: return 'text-[#F9AD3C]';
+    case PROJECT_STATUS.ON_TRACK: return `text-[${THEME.TOSCA}]`;
+    case PROJECT_STATUS.OVERDUE: return 'text-red-600'; 
+    case PROJECT_STATUS.AT_RISK: return `text-[${THEME.BSI_YELLOW}]`;
     default: return 'text-gray-500';
   }
 };

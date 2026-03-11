@@ -1,4 +1,3 @@
-// src/lib/utils.ts
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -41,5 +40,31 @@ export const getUserIdFromToken = () => {
     return parsed.id || parsed.sub || parsed.userId || parsed.email || backupEmail || "system"; 
   } catch (e) {
     return localStorage.getItem('user_email') || "system";
+  }
+};
+
+// 🔥 BARU: Mengambil Role dari JWT Token
+export const getUserRoleFromToken = () => {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const backupRole = localStorage.getItem('user_role'); // Jika Anda menyimpan role di localStorage saat login
+
+    if (!token || token === "mock-jwt-token") return backupRole || null;
+    
+    const parts = token.split('.');
+    if (parts.length !== 3) return backupRole || null;
+
+    // Decode Base64 Payload
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    
+    const parsed = JSON.parse(jsonPayload);
+    
+    // Kembalikan role dari token, atau fallback ke localStorage
+    return parsed.role || backupRole || null; 
+  } catch (e) {
+    return localStorage.getItem('user_role') || null;
   }
 };

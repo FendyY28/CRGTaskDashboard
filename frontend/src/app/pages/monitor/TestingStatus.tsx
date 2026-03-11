@@ -7,7 +7,7 @@ import { useTestCases } from "../../hooks/useTestCases";
 import { toast } from "sonner";
 
 import { TestCaseRow } from "../../components/features/testing/TestCaseRow";
-import { TestingModals } from "../../components/features/testing/TestingModals";
+import { TestingModals } from "../../components/modals/TestingModals";
 import { ProtectAction } from "../../components/auth/ProtectAction";
 
 import { useTranslation } from "react-i18next";

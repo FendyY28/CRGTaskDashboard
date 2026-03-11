@@ -6,7 +6,7 @@ import { THEME } from "../../constants/projectConstants";
 import type { ProjectIssue, ImprovementNote } from "../../types";
 
 import { LogRow } from "../../components/features/report/LogRow";
-import { PIRDetailModal } from "../../components/features/report/PIRDetailModal";
+import { PIRDetailModal } from "../../components/modals/PIRDetailModal";
 import { IssueFormCard } from "../../components/features/report/IssueFormCard";
 import { IdeaFormCard } from "../../components/features/report/IdeaFormCard";
 import { LiveProjectsList } from "../../components/features/report/LiveProjectsList";

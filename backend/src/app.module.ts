@@ -7,7 +7,8 @@ import { PrismaService } from './prisma/prisma.service';
 import { ProjectModule } from './project/project.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { AuditModule } from './audit/audit.module'; // 👈 Import file sudah ada
+import { AuditModule } from './audit/audit.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -21,20 +22,17 @@ import { AuditModule } from './audit/audit.module'; // 👈 Import file sudah ad
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: config.get('MAIL_HOST'),
+          host: config.get('MAIL_HOST'), // smtp.gmail.com
           port: 587, 
-          secure: false, 
+          secure: false, // Port 587 wajib false, nanti naik ke TLS via STARTTLS
           auth: {
-            user: config.get('MAIL_USER'),
-            pass: config.get('MAIL_PASS'),
+            user: config.get('MAIL_USER'), // fendymagang@gmail.com
+            pass: config.get('MAIL_PASS'), // qhebrthvwyzldejy (App Password)
           },
-          family: 4, // IPv4 Force
           tls: {
-            ciphers: 'SSLv3',
+            // Mengizinkan pengiriman meskipun sertifikat lokal tidak divalidasi
             rejectUnauthorized: false, 
           },
-          debug: true, 
-          logger: true 
         },
         defaults: {
           from: `"BSI CRG Monitoring" <${config.get('MAIL_FROM')}>`,
@@ -42,12 +40,13 @@ import { AuditModule } from './audit/audit.module'; // 👈 Import file sudah ad
       }),
       inject: [ConfigService],
     }),
-
+    
     // 3. Module Internal Lainnya
     ProjectModule, 
     PrismaModule, 
     AuthModule,
-    AuditModule // 👈 WAJIB DITAMBAHKAN DI SINI!
+    AuditModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

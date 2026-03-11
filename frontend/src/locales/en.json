@@ -1,5 +1,6 @@
 {
   "header": {
+    "profileSettings": "Profile Settings",
     "menu": {
       "dashboard": "Dashboard",
       "analytics": "Analytics",
@@ -388,5 +389,90 @@
       "projects": "Projects",
       "issues": "Issues"
     }
+  },
+  "admin": {
+    "actions": {
+      "edit": "Edit Profile",
+      "resetPwd": "Reset Password",
+      "suspend": "Suspend Account",
+      "delete": "Delete Permanently"
+    },
+    "userManagement": {
+      "title": "User Management",
+      "subtitle": "Manage access and roles for your internal team.",
+      "addUserBtn": "Add User",
+      "searchPlaceholder": "Search name or email...",
+      "loading": "Loading Data...",
+      "table": {
+        "name": "User Name",
+        "role": "Role",
+        "joined": "Date Joined",
+        "actions": "Actions",
+        "noData": "No user data found."
+      },
+      "badge": {
+        "new": "New"
+      },
+      "modal": {
+        "title": "Create New Account",
+        "desc": "Create credentials for a new team member.",
+        "nameLabel": "Full Name",
+        "emailLabel": "Work Email",
+        "roleLabel": "Access Role",
+        "securityInfo": "Security Info:",
+        "defaultPwdText": "This account's password will be set to the default",
+        "pwdRequirement": "Users are required to change their password after logging in.",
+        "cancel": "Cancel",
+        "saving": "Processing...",
+        "save": "Save Account",
+        "saveChanges": "Save Changes",
+        "errorInvalidEmail": "Invalid email format!",
+        "errorEmailTaken": "Email is already registered or invalid",
+        "errorDefault": "An error occurred",
+        "editTitle": "Edit User Profile",
+        "editDesc": "Modify basic information and access rights for this user."
+      },
+      "confirm": {
+        "deleteTitle": "Delete User?",
+        "resetTitle": "Reset Password?",
+        "deleteDesc": "Are you sure you want to permanently delete this account?",
+        "resetDesc": "This account's password will be reset to the default (Bsi12345!).",
+        "deleteBtn": "Yes, Delete",
+        "resetBtn": "Yes, Reset"
+      },
+      "errors": {
+        "fetch": "Failed to load user data from the database."
+      },
+      "warnings": {
+        "deleteConfirm": "Are you sure you want to permanently delete this account?"
+      },
+      "success": {
+        "add": "User successfully added!",
+        "delete": "User successfully deleted!"
+      }
+    }
+  },
+  "settings": {
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your personal information and account security.",
+    "personalInfo": "Personal Information",
+    "personalInfoDesc": "Update your full name here.",
+    "nameLabel": "Full Name",
+    "emailLabel": "Email Address",
+    "emailHelper": "*Email is used as your login identity and cannot be changed.",
+    "roleLabel": "Access Role",
+    "saveBtn": "Save Changes",
+    "saving": "Saving...",
+    "security": "Security",
+    "securityDesc": "Change your password periodically.",
+    "currentPwd": "Current Password",
+    "newPwd": "New Password",
+    "confirmPwd": "Confirm Password",
+    "changePwdBtn": "Change Password",
+    "alerts": {
+      "passwordMismatch": "New password and confirmation do not match!"
+    }
   }
+}
 }

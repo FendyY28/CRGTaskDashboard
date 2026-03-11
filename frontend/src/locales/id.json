@@ -1,5 +1,6 @@
 {
   "header": {
+    "profileSettings": "Pengaturan Profil",
     "menu": {
       "dashboard": "Dasbor",
       "analytics": "Analitik",
@@ -387,6 +388,91 @@
       "count": "Jumlah",
       "projects": "Proyek",
       "issues": "Kendala"
+    }
+  },
+  "admin": {
+    "actions": {
+      "edit": "Edit Profil",
+      "resetPwd": "Reset Password",
+      "suspend": "Tangguhkan Akun",
+      "delete": "Hapus Permanen"
+    },
+    "userManagement": {
+      "title": "Manajemen Pengguna",
+      "subtitle": "Atur akses dan peran untuk tim internal Anda.",
+      "addUserBtn": "Tambah Pengguna",
+      "searchPlaceholder": "Cari nama atau email...",
+      "loading": "Memuat Data...",
+      "table": {
+        "name": "Nama Pengguna",
+        "role": "Peran",
+        "joined": "Tanggal Bergabung",
+        "actions": "Aksi",
+        "noData": "Data pengguna tidak ditemukan."
+      },
+      "badge": {
+        "new": "Baru"
+      },
+      "modal": {
+        "title": "Buat Akun Baru",
+        "desc": "Buat kredensial untuk anggota tim baru.",
+        "nameLabel": "Nama Lengkap",
+        "emailLabel": "Email",
+        "roleLabel": "Role Akses",
+        "securityInfo": "Info Keamanan:",
+        "defaultPwdText": "Password akun ini akan diatur ke default",
+        "pwdRequirement": "Pengguna diwajibkan mengganti password setelah login.",
+        "cancel": "Batal",
+        "saving": "Memproses...",
+        "save": "Simpan Akun",
+        "saveChanges": "Simpan Perubahan",
+        "errorInvalidEmail": "Format email tidak valid!",
+        "errorEmailTaken": "Email sudah terdaftar atau tidak valid",
+        "errorDefault": "Terjadi kesalahan",
+        "editTitle": "Edit Profil Pengguna",
+        "editDesc": "Ubah informasi dasar dan hak akses pengguna ini."
+      },
+      "confirm": {
+        "deleteTitle": "Hapus Pengguna?",
+        "resetTitle": "Reset Password?",
+        "deleteDesc": "Apakah Anda yakin ingin menghapus permanen akun ini?",
+        "resetDesc": "Password akun ini akan diubah menjadi default (Bsi12345!).",
+        "deleteBtn": "Ya, Hapus",
+        "resetBtn": "Ya, Reset"
+      },
+      "errors": {
+        "fetch": "Gagal memuat data pengguna dari database."
+      },
+      "warnings": {
+        "deleteConfirm": "Apakah Anda yakin ingin menghapus permanen akun ini?"
+      },
+      "success": {
+        "add": "Pengguna berhasil ditambahkan!",
+        "delete": "Pengguna berhasil dihapus!"
+      }
+    }
+  },
+  "settings": {
+    "profile": {
+      "title": "Pengaturan Profil",
+      "subtitle": "Kelola informasi personal dan keamanan akun Anda.",
+      "personalInfo": "Informasi Personal",
+      "personalInfoDesc": "Perbarui nama lengkap Anda di sini.",
+      "nameLabel": "Nama Lengkap",
+      "emailLabel": "Email",
+      "emailHelper": "*Email digunakan sebagai identitas login dan tidak dapat diubah.",
+      "roleLabel": "Role Akses",
+      "saveBtn": "Simpan Perubahan",
+      "saving": "Menyimpan...",
+      "security": "Keamanan",
+      "securityDesc": "Ganti password secara berkala.",
+      "currentPwd": "Password Saat Ini",
+      "newPwd": "Password Baru",
+      "confirmPwd": "Konfirmasi Password",
+      "changePwdBtn": "Ubah Password",
+      "alerts": {
+        "passwordMismatch": "Password baru dan konfirmasi tidak cocok!"
+      }
     }
   }
 }

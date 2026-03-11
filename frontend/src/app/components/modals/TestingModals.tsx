@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
-import { Button } from "../../ui/button";
-import { Textarea } from "../../ui/textarea";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
-import { Badge } from "../../ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { ArchiveX, AlertOctagon, StickyNote } from "lucide-react";
-import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../../constants/projectConstants";
-import { useTestCases } from "../../../hooks/useTestCases";
+import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../constants/projectConstants";
+import { useTestCases } from "../../hooks/useTestCases";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 

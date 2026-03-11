@@ -1,9 +1,9 @@
 import { 
   Injectable, 
-  ConflictException, 
   UnauthorizedException, 
   NotFoundException, 
-  BadRequestException 
+  BadRequestException,
+  ForbiddenException 
 } from '@nestjs/common'; 
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -16,60 +16,11 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private mailerService: MailerService,
-    private jwtService: JwtService // 👈 Inject JwtService
+    private jwtService: JwtService
   ) {}
 
   // ==========================================================
-  // 1. REGISTER
-  // ==========================================================
-  async register(data: any) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser && existingUser.isVerified) {
-      throw new ConflictException('Email sudah terdaftar dan aktif. Silakan login.');
-    }
-
-    const saltRounds = 10; 
-    const hashedPassword = await bcrypt.hash(data.password, saltRounds);
-    
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 3); 
-
-    if (existingUser) {
-      await this.prisma.user.update({
-        where: { email: data.email },
-        data: {
-          name: data.name,
-          password: hashedPassword,
-          verificationToken: token,
-          verificationTokenExpiresAt: expiresAt,
-        },
-      });
-    } else {
-      await this.prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          password: hashedPassword, 
-          role: 'OFFICER',
-          isVerified: false,
-          verificationToken: token,
-          verificationTokenExpiresAt: expiresAt,
-        },
-      });
-    }
-
-    const verificationLink = `http://localhost:5173/verify-email?token=${token}`;
-    await this.sendVerificationEmail(data.email, data.name, verificationLink, "Welcome to BSI CRG");
-
-    return { message: 'Registrasi berhasil! Cek email Anda.' };
-  }
-
-  // ==========================================================
-  // 2. VERIFY EMAIL
+  // 1. VERIFY EMAIL (Aktivasi Akun Baru)
   // ==========================================================
   async verifyEmail(token: string) {
     const user = await this.prisma.user.findFirst({
@@ -79,8 +30,9 @@ export class AuthService {
     if (!user) throw new BadRequestException('Token tidak valid atau sudah digunakan.');
 
     const now = new Date();
+    // ✅ Tambahkan pengecekan null untuk verificationTokenExpiresAt
     if (!user.verificationTokenExpiresAt || now > user.verificationTokenExpiresAt) {
-      throw new BadRequestException('Token sudah kedaluwarsa. Silakan daftar ulang.');
+      throw new BadRequestException('Token sudah kedaluwarsa. Silakan minta admin untuk mengirim ulang atau coba login.');
     }
 
     await this.prisma.user.update({
@@ -92,7 +44,7 @@ export class AuthService {
   }
 
   // ==========================================================
-  // 3. LOGIN (DIPERBAIKI: TOKEN ASLI)
+  // 2. LOGIN (DENGAN PENGECEKAN KEDALUWARSA 6 BULAN)
   // ==========================================================
   async login(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
@@ -117,55 +69,178 @@ export class AuthService {
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
     }
 
-    // ✅ GENERATE TOKEN ASLI BERISI ID USER
-    const payload = { sub: user.id, email: user.email, name: user.name };
+    // CEK PASSWORD EXPIRY (6 BULAN)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    if (user.passwordChangedAt && user.passwordChangedAt < sixMonthsAgo) {
+      throw new ForbiddenException('PASSWORD_EXPIRED'); 
+    }
+
+    const payload = { sub: user.id, email: user.email, name: user.name, role: user.role };
     const realToken = this.jwtService.sign(payload);
 
     return {
       message: 'Login berhasil',
-      access_token: realToken, // 👈 Token ini sekarang berisi ID User Anda!
-      user: { email: user.email, role: user.role, name: user.name }
+      access_token: realToken, 
+      user: { id: user.id, email: user.email, role: user.role, name: user.name }
     };
   }
 
-  // ... (forgotPassword, resetPassword, sendVerificationEmail, getPremiumTemplate tetap sama)
-
+  // ==========================================================
+  // 3. FORGOT PASSWORD (MINTA OTP)
+  // ==========================================================
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Email tidak terdaftar.');
 
-    const resetLink = `http://localhost:5173/reset-password?email=${email}`;
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(otpExpires.getMinutes() + 10); // Berlaku 10 menit
 
+    // Simpan OTP ke DB
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken: otp, verificationTokenExpiresAt: otpExpires },
+    });
+
+    // Kirim Email OTP
     await this.mailerService.sendMail({
       to: email,
-      subject: '🔒 Reset Password Request - BSI CRG',
+      subject: '🔐 Kode OTP Reset Password - BSI CRG',
       html: this.getPremiumTemplate(
         user.name, 
-        "Permintaan reset password diterima. Klik tombol di bawah ini:", 
-        resetLink, 
-        "Reset Password Sekarang",
-        "⚠️ Abaikan jika Anda tidak merasa meminta reset password."
+        `Anda meminta untuk mereset password Anda. Berikut adalah kode OTP Anda: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`, 
+        "#", 
+        "Gunakan Kode di Aplikasi",
+        "⚠️ Abaikan email ini jika Anda tidak merasa meminta reset password. Kode berlaku 10 menit."
       ),
     });
 
-    return { message: 'Link reset password telah dikirim ke email Anda.' };
+    return { message: 'Kode OTP telah dikirim ke email Anda.' };
   }
 
+  // ==========================================================
+  // 4. RESET PASSWORD (VERIFIKASI OTP & SAVE NEW PASSWORD)
+  // ==========================================================
   async resetPassword(data: any) {
+    // data berisi: { email, otp, password }
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
 
+    // Validasi OTP
+    const now = new Date();
+    if (
+      !user.verificationToken || 
+      user.verificationToken !== data.otp || 
+      !user.verificationTokenExpiresAt || 
+      now > user.verificationTokenExpiresAt
+    ) {
+      throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
+    }
+
+    // Hash Password Baru
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    await this.prisma.user.update({
+    // Update DB
+    const updatedUser = await this.prisma.user.update({
       where: { email: data.email },
-      data: { password: hashedPassword }, 
+      data: { 
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+        verificationToken: null, // Hapus OTP setelah sukses
+        verificationTokenExpiresAt: null
+      }, 
     });
+
+    await this.sendPasswordChangedNotification(updatedUser.email, updatedUser.name);
 
     return { message: 'Password berhasil diperbarui!' };
   }
+  // ==========================================================
+  // 5. CHANGE PASSWORD STEP 1: REQUEST OTP
+  // ==========================================================
+  async sendChangePasswordOTP(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
 
-  private async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(otpExpires.getMinutes() + 5); 
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        verificationToken: otp, 
+        verificationTokenExpiresAt: otpExpires 
+      },
+    });
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: '🔐 Kode Verifikasi Ganti Password - BSI CRG',
+      html: this.getPremiumTemplate(
+        user.name,
+        `Kode verifikasi Anda untuk mengganti password adalah: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`,
+        "#", 
+        "Gunakan Kode di Aplikasi",
+        "⚠️ Rahasiakan kode ini."
+      ),
+    });
+
+    return { message: 'Kode OTP telah dikirim ke email Anda.' };
+  }
+
+  // ==========================================================
+  // 6. CHANGE PASSWORD STEP 2: VERIFY OTP & UPDATE
+  // ==========================================================
+  async changePassword(userId: string, data: any) {
+    const { oldPassword, newPassword, otp } = data;
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    // ✅ FIX TS18047: Tambahkan pengecekan null untuk verificationTokenExpiresAt
+    const now = new Date();
+    if (
+      !user.verificationToken || 
+      user.verificationToken !== otp || 
+      !user.verificationTokenExpiresAt || 
+      now > user.verificationTokenExpiresAt
+    ) {
+      throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
+    }
+
+    // Cek Password Lama
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) throw new BadRequestException('Password saat ini salah.');
+
+    // Cek Password Default
+    if (newPassword === 'Bsi12345!') {
+      throw new BadRequestException('Tidak boleh menggunakan password default.');
+    }
+
+    // Update Password & Reset Timer 6 Bulan
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+        verificationToken: null, 
+        verificationTokenExpiresAt: null
+      },
+    });
+
+    await this.sendPasswordChangedNotification(user.email, user.name);
+    return { message: 'Password berhasil diubah!' };
+  }
+
+  // ==========================================================
+  // 7. HELPERS: EMAIL TEMPLATES & SENDING
+  // ==========================================================
+  public async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
     await this.mailerService.sendMail({
       to: to,
       subject: subject,
@@ -175,6 +250,21 @@ export class AuthService {
         link,
         "Verifikasi Akun Saya",
         "⏳ Penting: Link ini hangus dalam 3 menit."
+      ),
+    });
+  }
+
+  public async sendPasswordChangedNotification(to: string, name: string) {
+    const dateStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+    await this.mailerService.sendMail({
+      to: to,
+      subject: '🛡️ Notifikasi Keamanan: Password Berhasil Diubah',
+      html: this.getPremiumTemplate(
+        name,
+        `Kami ingin menginformasikan bahwa password akun BSI CRG Anda baru saja diubah pada <b>${dateStr} WIB</b>.<br><br>Jika ini adalah Anda, tidak ada tindakan lebih lanjut yang diperlukan.`,
+        "http://localhost:5173/login", 
+        "Masuk ke Akun Anda",
+        "🚨 PENTING: Jika Anda tidak merasa mengubah password, segera hubungi Administrator IT."
       ),
     });
   }
