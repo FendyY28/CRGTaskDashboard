@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Salin file package.json dan install dependency
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Salin seluruh kode backend Anda ke dalam container
 COPY . .
