@@ -24,7 +24,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # PENTING: Perhatikan kata "postgres-db". Di Docker, localhost diganti dengan nama service database!
       - DATABASE_URL=postgresql://postgres:superuser@postgres-db:5432/bsi_crg_db?schema=public
       - PORT=3000
     depends_on:

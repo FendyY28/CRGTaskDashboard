@@ -10,7 +10,6 @@ interface ProtectActionProps {
 export function ProtectAction({ children, fallback = null, requireRole }: ProtectActionProps) {
   const { role, canEdit } = useRBAC();
 
-  // 1. Jika butuh role spesifik (seperti HEAD untuk ActivityLog)
   if (requireRole) {
     if (role !== requireRole) {
       return <>{fallback}</>;
