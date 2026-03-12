@@ -178,14 +178,14 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
                 </div>
               </div>
               
-              {/* 🔥 TAMPILAN JIKA ISSUE SUDAH RESOLVED */}
+              {/* TAMPILAN JIKA ISSUE SUDAH RESOLVED */}
               {selectedItem.type === 'issue' && (selectedItem as ProjectIssue).status.toLowerCase() === 'resolved' && (
                   <div className="p-4 rounded-xl font-bold flex items-center gap-3 border shadow-sm" style={{ backgroundColor: THEME.BSI_GREEN + '10', borderColor: THEME.BSI_GREEN + '30', color: THEME.BSI_GREEN }}>
                       <CheckCircle2 className="h-5 w-5" /> {t('pirComponents.modal.statuses.issueResolvedText')}
                   </div>
               )}
 
-              {/* 🔥 TAMPILAN UPDATE STATUS & DELETE (UNTUK ISSUE BELUM RESOLVED & IMPROVEMENT) */}
+              {/* TAMPILAN UPDATE STATUS & DELETE (UNTUK ISSUE BELUM RESOLVED & IMPROVEMENT) */}
               {!(selectedItem.type === 'issue' && (selectedItem as ProjectIssue).status.toLowerCase() === 'resolved') && (
                 <ProtectAction>
                   <div className={`grid ${selectedItem.type === 'issue' ? 'grid-cols-2' : 'grid-cols-1'} gap-4 pt-4 border-t`} style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>

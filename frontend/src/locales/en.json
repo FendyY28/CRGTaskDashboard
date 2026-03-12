@@ -39,12 +39,24 @@
   "pir": {
     "title": "Post Implementation Review",
     "description": "Track post-deployment issues and gather optimization ideas for live projects.",
+    "sidebarTitle": "Live Projects",
+    "emptyState": "Please select a project from the left sidebar.",
+    "noLiveProjects": "No live projects available at the moment.",
     "criticalIssues": "Critical Issues",
     "inProgressIssues": "In-Progress Issues",
     "openIssues": "Open Issues",
     "improvements": "Improvements",
-    "noItems": "No items found.",
-    "loading": "Initializing PIR Module...",
+    "noItems": "No items found for this category.",
+    "loading": "Loading PIR Data...",
+    "stats": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "ideas": "Ideas"
+    },
+    "buttons": {
+      "reportIssue": "Report Issue",
+      "addIdea": "Add Idea"
+    },
     "tabs": {
       "open": "Open",
       "in-progress": "In Progress",
@@ -63,6 +75,28 @@
       "improvements": "Optimization Ideas",
       "inProgress": "In-Progress Logs",
       "open": "Open Issues Log"
+    },
+    "modalForm": {
+      "reportIssueTitle": "Report New Issue",
+      "addIdeaTitle": "Add New Idea",
+      "forProject": "For project:",
+      "labels": {
+        "issueTitle": "Issue / Problem Title",
+        "priority": "Priority",
+        "issueDesc": "Details & Replication Steps",
+        "ideaTitle": "Idea / Improvement Title",
+        "ideaDesc": "Recommendation Description"
+      },
+      "placeholders": {
+        "issueTitle": "e.g., Login failed during OTP...",
+        "issueDesc": "Explain the details of the issue experienced...",
+        "ideaTitle": "e.g., Add export to PDF button...",
+        "ideaDesc": "Explain the details of this improvement idea..."
+      },
+      "buttons": {
+        "saveIssue": "Save Report",
+        "saveIdea": "Submit Idea"
+      }
     }
   },
   "common": {
@@ -303,39 +337,6 @@
       "title": "Live Projects",
       "noProjects": "No live projects found."
     },
-    "issueForm": {
-      "title": "Report Issue",
-      "labels": {
-        "project": "Project",
-        "priority": "Priority",
-        "select": "Select..."
-      },
-      "placeholders": {
-        "summary": "Summary...",
-        "details": "Details..."
-      },
-      "toast": {
-        "loading": "Reporting issue...",
-        "success": "Issue reported successfully!",
-        "error": "Failed to report issue."
-      }
-    },
-    "ideaForm": {
-      "title": "Idea",
-      "labels": {
-        "select": "Select Project...",
-        "title": "Idea Title"
-      },
-      "placeholders": {
-        "title": "Short summary...",
-        "idea": "Detailed explanation..."
-      },
-      "toast": {
-        "loading": "Submitting optimization plan...",
-        "success": "Idea submitted successfully!",
-        "error": "Failed to submit idea."
-      }
-    },
     "modal": {
       "unknownDate": "Unknown Date",
       "improvementPlan": "Improvement Plan",
@@ -356,7 +357,7 @@
       },
       "buttons": {
         "deleteIssue": "Delete Issue",
-        "deleteImprovement": "Delete Idea", 
+        "deleteImprovement": "Delete Idea",
         "cancel": "Cancel",
         "confirm": "Confirm"
       },
@@ -399,6 +400,7 @@
     },
     "userManagement": {
       "title": "User Management",
+      "allRoles": "All Roles",
       "subtitle": "Manage access and roles for your internal team.",
       "addUserBtn": "Add User",
       "searchPlaceholder": "Search name or email...",
@@ -420,8 +422,8 @@
         "emailLabel": "Work Email",
         "roleLabel": "Access Role",
         "securityInfo": "Security Info:",
-        "defaultPwdText": "This account's password will be set to the default",
-        "pwdRequirement": "Users are required to change their password after logging in.",
+        "defaultPwdText": "System will generate a random secure password.",
+        "pwdRequirement": "Credentials will be sent directly to the user's email.",
         "cancel": "Cancel",
         "saving": "Processing...",
         "save": "Save Account",
@@ -430,15 +432,15 @@
         "errorEmailTaken": "Email is already registered or invalid",
         "errorDefault": "An error occurred",
         "editTitle": "Edit User Profile",
-        "editDesc": "Modify basic information and access rights for this user."
+        "editDesc": "Modify user access rights. Note: Personal identity is locked."
       },
       "confirm": {
         "deleteTitle": "Delete User?",
         "resetTitle": "Reset Password?",
         "deleteDesc": "Are you sure you want to permanently delete this account?",
-        "resetDesc": "This account's password will be reset to the default (Bsi12345!).",
+        "resetDesc": "A new random password will be generated for {{name}} and sent directly to their email address.",
         "deleteBtn": "Yes, Delete",
-        "resetBtn": "Yes, Reset"
+        "resetBtn": "Yes, Reset Password"
       },
       "errors": {
         "fetch": "Failed to load user data from the database."
@@ -447,32 +449,47 @@
         "deleteConfirm": "Are you sure you want to permanently delete this account?"
       },
       "success": {
-        "add": "User successfully added!",
-        "delete": "User successfully deleted!"
+        "add": "User added! Credentials sent to email.",
+        "reset": "Password reset! New credentials sent to email.",
+        "update": "Access rights updated successfully!"
       }
     }
   },
   "settings": {
-  "profile": {
-    "title": "Profile Settings",
-    "subtitle": "Manage your personal information and account security.",
-    "personalInfo": "Personal Information",
-    "personalInfoDesc": "Update your full name here.",
-    "nameLabel": "Full Name",
-    "emailLabel": "Email Address",
-    "emailHelper": "*Email is used as your login identity and cannot be changed.",
-    "roleLabel": "Access Role",
-    "saveBtn": "Save Changes",
-    "saving": "Saving...",
-    "security": "Security",
-    "securityDesc": "Change your password periodically.",
-    "currentPwd": "Current Password",
-    "newPwd": "New Password",
-    "confirmPwd": "Confirm Password",
-    "changePwdBtn": "Change Password",
-    "alerts": {
-      "passwordMismatch": "New password and confirmation do not match!"
+    "profile": {
+      "title": "Profile Settings",
+      "subtitle": "Manage your personal information and account security.",
+      "personalInfo": "Personal Information",
+      "personalInfoDesc": "Update your full name here.",
+      "nameLabel": "Full Name",
+      "emailLabel": "Email Address",
+      "emailHelper": "*Email is used as your login identity and cannot be changed.",
+      "roleLabel": "Access Role",
+      "saveBtn": "Save Changes",
+      "saving": "Saving...",
+      "security": "Security",
+      "securityDesc": "Change your password periodically.",
+      "currentPwd": "Current Password",
+      "newPwd": "New Password",
+      "confirmPwd": "Confirm Password",
+      "changePwdBtn": "Change Password",
+      "expiryLabel": "Password Expiry",
+      "daysRemaining": "Days Left",
+      "untilDate": "Valid Until",
+      "requestOtpBtn": "Request OTP Code",
+      "otpLabel": "OTP Code from Email",
+      "confirmChangeBtn": "Confirm Changes",
+      "alerts": {
+        "passwordMismatch": "New password and confirmation do not match!",
+        "passwordWeak": "Password must be at least 6 characters, contain an uppercase letter, and a special symbol.",
+        "successProfile": "Profile updated successfully!",
+        "errorUpdate": "Failed to update profile.",
+        "fillPasswordFirst": "Please fill in your current and new password first.",
+        "otpSent": "OTP code sent to your email!",
+        "otpError": "Failed to request OTP code.",
+        "passwordSuccess": "Password updated successfully!",
+        "passwordError": "Failed to change password."
+      }
     }
   }
-}
 }

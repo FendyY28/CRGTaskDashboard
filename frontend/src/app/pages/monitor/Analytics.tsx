@@ -59,7 +59,7 @@ export function Analytics() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12 text-left">
-      <div className="flex flex-col gap-1 mb-6">
+      <div className="flex flex-col gap-1 mb-8">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
           <BarChart3 className="h-6 w-6" style={{ color: THEME.TOSCA }} /> {t('analytics.title')}
         </h2>

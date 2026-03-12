@@ -26,7 +26,10 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
   
   const reporterName = isImp ? (item as ImprovementNote).reviewer : (item as ProjectIssue).reportedBy;
   const dateReported = isImp ? (item as ImprovementNote).createdDate : (item as ProjectIssue).reportedDate;
-  const title = isImp ? "Improvement Plan" : (item as ProjectIssue).title;
+  
+  // Ambil title asli dari data, jangan di-hardcode
+  const title = (item as any).title || (isImp ? "Improvement Plan" : "Unknown Issue");
+  
   const displayId = isImp ? (item as ImprovementNote).noteId : (item as ProjectIssue).issueId;
   const description = isImp ? (item as ImprovementNote).recommendations : (item as ProjectIssue).description;
 
@@ -40,7 +43,7 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
   return (
     <div 
       onClick={() => onClick(item)} 
-      className="p-4 rounded-xl border bg-white shadow-sm cursor-pointer transition-all duration-200 group hover:shadow-md border-l-4"
+      className="p-4 rounded-xl border bg-white shadow-sm cursor-pointer transition-all duration-200 group hover:shadow-md border-l-4 hover:border-l-[6px]"
       style={{ borderLeftColor: getSidebarColor(), borderColor: THEME.BSI_LIGHT_GRAY + '40' }} 
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -63,11 +66,10 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="font-bold" style={{ color: THEME.BSI_GREY }}>{displayId}</span>
-                  <span style={{ color: THEME.BSI_LIGHT_GRAY }}>•</span>
-                  <span className="font-medium" style={{ color: THEME.BSI_DARK_GRAY }}>{item.projectName}</span>
+                  {/* Nama project dihapus dari sini karena sudah jelas di header/sidebar */}
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:text-red-500" style={{ color: THEME.BSI_LIGHT_GRAY }} />
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: THEME.BSI_LIGHT_GRAY }} />
             </div>
             <p className="text-xs line-clamp-1 mt-2 pr-8 italic" style={{ color: THEME.BSI_GREY }}>{description}</p>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>

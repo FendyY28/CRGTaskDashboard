@@ -2,10 +2,14 @@ import { Injectable, ConflictException, NotFoundException, InternalServerErrorEx
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from '../auth/auth.service'; // 🔥 Import AuthService
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private authService: AuthService, // 🔥 Inject AuthService agar bisa pakai generator password & template email
+  ) {}
 
   // 1. GET ALL USERS
   async findAll() {
@@ -16,7 +20,6 @@ export class UserService {
         email: true,
         role: true,
         createdAt: true,
-        // isActive: true, // Tambahkan ini jika di schema.prisma ada field isActive
       },
       orderBy: {
         createdAt: 'desc',
@@ -24,7 +27,7 @@ export class UserService {
     });
   }
 
-  // 2. CREATE USER (Oleh Admin)
+  // 2. CREATE USER (Generate Random Password & Kirim Email)
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: createUserDto.email },
@@ -34,7 +37,8 @@ export class UserService {
       throw new ConflictException('Email ini sudah terdaftar!');
     }
 
-    const rawPassword = createUserDto.password || 'Bsi12345!'; 
+    // 🔥 Generate password acak, bukan lagi 'Bsi12345!'
+    const rawPassword = this.authService.generateRandomPassword(10);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(rawPassword, salt);
 
@@ -44,30 +48,46 @@ export class UserService {
         email: createUserDto.email,
         password: hashedPassword,
         role: createUserDto.role as any,
+        isVerified: true, // Karena dibuat oleh Admin
+        passwordChangedAt: new Date(), // Set expired agar user wajib ganti saat pertama login
       },
     });
+
+    // 🔥 Kirim Email Welcome berisi kredensial login
+    try {
+        await this.authService['mailerService'].sendMail({
+            to: newUser.email,
+            subject: '👋 Selamat Datang di BSI CRG - Kredensial Akun',
+            html: this.authService['getPremiumTemplate'](
+              newUser.name,
+              `Akun Anda telah berhasil dibuat oleh Administrator. Berikut adalah kredensial login Anda:<br><br>
+               <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: left;">
+                 <b>Email:</b> ${newUser.email}<br>
+                 <b>Password Sementara:</b> <span style="color: #36A39D; font-family: monospace; font-weight: bold;">${rawPassword}</span>
+               </div>`,
+              "http://localhost:5173/login",
+              "Masuk ke Aplikasi",
+              "🛡️ Harap segera ganti password Anda setelah masuk melalui menu Pengaturan Profil."
+            ),
+        });
+    } catch (error) {
+        console.error("Gagal mengirim email welcome:", error);
+        // Tetap lanjutkan proses karena user sudah terbuat di DB
+    }
 
     const { password, ...result } = newUser;
     return result;
   }
 
-  // 3. UPDATE USER PROFILE (Aksi Edit)
+  // 3. UPDATE USER PROFILE (Hanya Role)
   async update(id: string, updateData: Partial<CreateUserDto>) {
-    // Cek apakah user ada
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
 
-    // Jika email diubah, cek apakah email baru sudah dipakai orang lain
-    if (updateData.email && updateData.email !== user.email) {
-      const emailCheck = await this.prisma.user.findUnique({ where: { email: updateData.email } });
-      if (emailCheck) throw new ConflictException('Email sudah digunakan oleh pengguna lain.');
-    }
-
+    // Kita hanya mengizinkan update Role demi keamanan identitas
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
-        name: updateData.name,
-        email: updateData.email,
         role: updateData.role as any,
       },
     });
@@ -76,30 +96,12 @@ export class UserService {
     return result;
   }
 
-  // 4. RESET PASSWORD (Ke Default: Bsi12345!)
+  // 4. RESET PASSWORD 
   async resetPassword(id: string) {
-    const salt = await bcrypt.genSalt(10);
-    const defaultPassword = await bcrypt.hash('Bsi12345!', salt);
-
-    try {
-      await this.prisma.user.update({
-        where: { id },
-        data: { password: defaultPassword },
-      });
-      return { message: 'Password berhasil direset ke default: Bsi12345!' };
-    } catch (error) {
-      throw new NotFoundException('Gagal meriset password. User tidak ditemukan.');
-    }
+    return this.authService.adminResetPassword(id);
   }
 
-  // 5. SUSPEND / NONAKTIFKAN USER
-  async toggleStatus(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User tidak ditemukan.');
-    return { message: 'Status user berhasil diperbarui.' };
-  }
-
-  // 6. REMOVE / DELETE PERMANENT
+  // 5. REMOVE / DELETE PERMANENT
   async remove(id: string) {
     try {
       await this.prisma.user.delete({

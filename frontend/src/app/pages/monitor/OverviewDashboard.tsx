@@ -93,7 +93,7 @@ export function OverviewDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10 text-left">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
         <PageHeader 
           title={t('dashboard.title')} 
           description={t('dashboard.description')} 

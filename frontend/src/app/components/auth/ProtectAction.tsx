@@ -1,11 +1,10 @@
-// src/app/components/ui/ProtectAction.tsx
 import { type ReactNode } from "react";
 import { useRBAC } from "../../hooks/useRBAC";
 
 interface ProtectActionProps {
   children: ReactNode;
   fallback?: ReactNode;
-  requireRole?: "HEAD" | "OFFICER"; // 🔥 Tambahkan prop baru
+  requireRole?: "HEAD" | "OFFICER" | "ADMIN"; //  Tambahkan prop baru
 }
 
 export function ProtectAction({ children, fallback = null, requireRole }: ProtectActionProps) {

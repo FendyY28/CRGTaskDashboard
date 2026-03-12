@@ -30,7 +30,6 @@ export class AuthService {
     if (!user) throw new BadRequestException('Token tidak valid atau sudah digunakan.');
 
     const now = new Date();
-    // ✅ Tambahkan pengecekan null untuk verificationTokenExpiresAt
     if (!user.verificationTokenExpiresAt || now > user.verificationTokenExpiresAt) {
       throw new BadRequestException('Token sudah kedaluwarsa. Silakan minta admin untuk mengirim ulang atau coba login.');
     }
@@ -69,10 +68,11 @@ export class AuthService {
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
     }
 
-    // CEK PASSWORD EXPIRY (6 BULAN)
+    // --- CEK EXPIRED (6 BULAN) ---
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
+    // Jika passwordChangedAt lebih lama dari 6 bulan lalu, lempar error
     if (user.passwordChangedAt && user.passwordChangedAt < sixMonthsAgo) {
       throw new ForbiddenException('PASSWORD_EXPIRED'); 
     }
@@ -94,18 +94,15 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Email tidak terdaftar.');
 
-    // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date();
-    otpExpires.setMinutes(otpExpires.getMinutes() + 10); // Berlaku 10 menit
+    otpExpires.setMinutes(otpExpires.getMinutes() + 10); 
 
-    // Simpan OTP ke DB
     await this.prisma.user.update({
       where: { id: user.id },
       data: { verificationToken: otp, verificationTokenExpiresAt: otpExpires },
     });
 
-    // Kirim Email OTP
     await this.mailerService.sendMail({
       to: email,
       subject: '🔐 Kode OTP Reset Password - BSI CRG',
@@ -125,11 +122,9 @@ export class AuthService {
   // 4. RESET PASSWORD (VERIFIKASI OTP & SAVE NEW PASSWORD)
   // ==========================================================
   async resetPassword(data: any) {
-    // data berisi: { email, otp, password }
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
 
-    // Validasi OTP
     const now = new Date();
     if (
       !user.verificationToken || 
@@ -140,16 +135,14 @@ export class AuthService {
       throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
     }
 
-    // Hash Password Baru
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Update DB
     const updatedUser = await this.prisma.user.update({
       where: { email: data.email },
       data: { 
         password: hashedPassword,
         passwordChangedAt: new Date(),
-        verificationToken: null, // Hapus OTP setelah sukses
+        verificationToken: null, 
         verificationTokenExpiresAt: null
       }, 
     });
@@ -158,6 +151,7 @@ export class AuthService {
 
     return { message: 'Password berhasil diperbarui!' };
   }
+
   // ==========================================================
   // 5. CHANGE PASSWORD STEP 1: REQUEST OTP
   // ==========================================================
@@ -201,7 +195,6 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
-    // ✅ FIX TS18047: Tambahkan pengecekan null untuk verificationTokenExpiresAt
     const now = new Date();
     if (
       !user.verificationToken || 
@@ -212,16 +205,13 @@ export class AuthService {
       throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
     }
 
-    // Cek Password Lama
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) throw new BadRequestException('Password saat ini salah.');
 
-    // Cek Password Default
     if (newPassword === 'Bsi12345!') {
       throw new BadRequestException('Tidak boleh menggunakan password default.');
     }
 
-    // Update Password & Reset Timer 6 Bulan
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({
       where: { id: userId },
@@ -238,8 +228,57 @@ export class AuthService {
   }
 
   // ==========================================================
-  // 7. HELPERS: EMAIL TEMPLATES & SENDING
+  // 🎯 8. ADMIN RESET PASSWORD (KIRIM PASSWORD ACAK KE EMAIL)
   // ==========================================================
+  async adminResetPassword(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan.');
+
+    const newRawPassword = this.generateRandomPassword(10);
+    const hashedPassword = await bcrypt.hash(newRawPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        password: hashedPassword,
+        passwordChangedAt: new Date(), // 🔥 DIUBAH KE WAKTU SEKARANG AGAR BISA LANGSUNG LOGIN
+        verificationToken: null,
+        verificationTokenExpiresAt: null
+      },
+    });
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: '🔐 Kredensial Baru Akun BSI CRG',
+      html: this.getPremiumTemplate(
+        user.name,
+        `Administrator telah mengatur ulang password Anda. Gunakan kredensial sementara berikut untuk masuk:<br><br>
+         <div style="background: #f0fdfa; border: 1px dashed #36A39D; padding: 15px; font-size: 24px; font-family: monospace; font-weight: bold; color: #36A39D; letter-spacing: 2px; text-align: center;">
+           ${newRawPassword}
+         </div>`,
+        "http://localhost:5173/login", 
+        "Masuk Sekarang",
+        "🛡️ Demi keamanan, Anda dapat mengganti password ini kapan saja melalui menu Pengaturan Profil."
+      ),
+    });
+
+    return { success: true, message: 'Password baru telah dikirim ke email.' };
+  }
+
+  // ==========================================================
+  // 7. HELPERS: PASSWORD & EMAIL TEMPLATES
+  // ==========================================================
+  
+  public generateRandomPassword(length = 10): string {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = crypto.randomInt(0, charset.length);
+      password += charset.charAt(randomIndex);
+    }
+    return password;
+  }
+
   public async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
     await this.mailerService.sendMail({
       to: to,

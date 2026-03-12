@@ -32,7 +32,7 @@ export const useUsers = () => {
     }
   }, [t]);
 
-  // 2. TAMBAH USER BARU
+  // 2. TAMBAH USER BARU (Password otomatis oleh Backend)
   const addUser = async (payload: any) => {
     const res = await fetch(`${API_URL}/users`, {
       method: 'POST',
@@ -43,22 +43,23 @@ export const useUsers = () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal menambahkan user');
     
-    toast.success('Pengguna berhasil ditambahkan!');
+    // 🔥 Pesan sukses disesuaikan dengan alur email
+    toast.success(t('admin.userManagement.success.add', 'User berhasil dibuat. Kredensial telah dikirim ke email mereka.'));
     fetchUsers();
   };
 
-  // 3. EDIT USER
+  // 3. EDIT USER (Hanya Role)
   const updateUser = async (id: string, payload: any) => {
     const res = await fetch(`${API_URL}/users/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload), // Backend harus divalidasi agar hanya menerima field 'role'
     });
     
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal mengupdate user');
     
-    toast.success('Profil pengguna berhasil diperbarui!');
+    toast.success(t('admin.userManagement.success.update', 'Hak akses pengguna berhasil diperbarui!'));
     fetchUsers();
   };
 
@@ -75,51 +76,31 @@ export const useUsers = () => {
         throw new Error(data.message || 'Gagal menghapus user');
       }
       
-      toast.success('Pengguna berhasil dihapus permanen!');
+      toast.success(t('admin.userManagement.success.delete', 'Pengguna berhasil dihapus permanen!'));
       fetchUsers();
     } catch (error: any) {
       toast.error(error.message);
     }
   };
 
-  // 5. RESET PASSWORD KE DEFAULT (Oleh Admin)
+  // 5. RESET PASSWORD (Random generated & dikirim via Email)
   const resetPassword = async (id: string) => {
-    try {
-      const res = await fetch(`${API_URL}/users/${id}/reset-password`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-      });
-      
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Gagal reset password');
-      }
-      
-      toast.success('Password berhasil direset ke default!');
-    } catch (error: any) {
-      toast.error(error.message);
+  try {
+    const res = await fetch(`${API_URL}/auth/${id}/admin-reset-password`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    });
+    
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Gagal reset password');
     }
-  };
-
-  // 6. SUSPEND USER (Nonaktifkan Akun)
-  const suspendUser = async (id: string) => {
-    try {
-      const res = await fetch(`${API_URL}/users/${id}/suspend`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-      });
-      
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Gagal suspend user');
-      }
-      
-      toast.success('Akun pengguna berhasil dinonaktifkan!');
-      fetchUsers();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
+    
+    toast.success(t('admin.userManagement.success.reset'));
+  } catch (error: any) {
+    toast.error(error.message);
+  }
+};
 
   return { 
     users, 
@@ -128,7 +109,6 @@ export const useUsers = () => {
     addUser, 
     updateUser, 
     deleteUser, 
-    resetPassword, 
-    suspendUser 
+    resetPassword
   };
 };

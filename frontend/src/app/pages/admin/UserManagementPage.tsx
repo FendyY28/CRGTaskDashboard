@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Users, Search, Filter } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -35,35 +35,29 @@ export function UserManagementPage() {
   }, [fetchUsers]);
 
   // 🔥 FILTER DAN SORTING
-  const sortedAndFilteredUsers = users
-    .filter(u => {
-      // 1. Sembunyikan ADMIN
-      if (u.role === "ADMIN") return false;
+  const sortedAndFilteredUsers = useMemo(() => {
+    return users
+      .filter(u => {
+        if (u.role === "ADMIN") return false;
+        if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+        
+        const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                             u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                              
+        return matchesSearch;
+      })
+      .sort((a, b) => {
+        const roleOrder = { "HEAD": 1, "OFFICER": 2 };
+        const orderA = roleOrder[a.role as keyof typeof roleOrder] || 99;
+        const orderB = roleOrder[b.role as keyof typeof roleOrder] || 99;
 
-      // 2. Filter Dropdown Role
-      if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+        if (orderA !== orderB) return orderA - orderB;
 
-      // 3. Filter Pencarian Text
-      const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-                            
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      // 🎯 PRIORITAS 1: Sortir berdasarkan Role (HEAD di atas OFFICER)
-      const roleOrder = { "HEAD": 1, "OFFICER": 2 };
-      const orderA = roleOrder[a.role as keyof typeof roleOrder] || 99;
-      const orderB = roleOrder[b.role as keyof typeof roleOrder] || 99;
-
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-
-      // 🎯 PRIORITAS 2: Sortir berdasarkan Tanggal Join (Paling Baru di Atas)
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
-      return dateB - dateA;
-    });
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+  }, [users, roleFilter, searchTerm]);
 
   const handleEditClick = (user: any) => {
     setSelectedUser(user);
@@ -81,6 +75,7 @@ export function UserManagementPage() {
     if (confirmModal.type === "DELETE") {
       await deleteUser(userId);
     } else if (confirmModal.type === "RESET") {
+      // 🔥 Logic Reset Password memanggil fungsi di hook yang sudah kirim email
       if (resetPassword) await resetPassword(userId); 
     }
   };
@@ -90,7 +85,7 @@ export function UserManagementPage() {
       
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div className="text-left">
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
             <Users style={{ color: THEME.TOSCA }} className="h-6 w-6" /> 
             {t('admin.userManagement.title', 'Manajemen Pengguna')}
@@ -103,7 +98,7 @@ export function UserManagementPage() {
         <Button 
           onClick={() => setIsAddOpen(true)} 
           style={{ backgroundColor: THEME.TOSCA }}
-          className="text-white font-bold gap-2 rounded-xl shadow-md transition-all hover:scale-[1.02] hover:brightness-95 focus-visible:ring-0"
+          className="text-white font-bold gap-2 rounded-xl shadow-md transition-all hover:scale-[1.02] hover:brightness-95 focus-visible:ring-0 h-11 px-6"
         >
           <Plus className="h-4 w-4" /> {t('admin.userManagement.addUserBtn', 'Tambah Pengguna')}
         </Button>
@@ -117,7 +112,7 @@ export function UserManagementPage() {
             placeholder={t('admin.userManagement.searchPlaceholder', 'Cari nama atau email...')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`pl-9 h-10 bg-gray-50/50 border-gray-100 focus-visible:bg-white focus-visible:ring-0 focus-visible:border-[${THEME.TOSCA}] rounded-xl transition-all`}
+            className={`pl-9 h-10 bg-gray-50/50 border-gray-200 focus-visible:bg-white focus-visible:ring-0 focus-visible:border-[${THEME.TOSCA}] rounded-xl transition-all`}
           />
         </div>
         
@@ -128,7 +123,9 @@ export function UserManagementPage() {
               <SelectValue placeholder="Filter Role" />
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-100 shadow-xl rounded-xl">
-              <SelectItem value="ALL" className="font-semibold cursor-pointer">Semua Role</SelectItem>
+              <SelectItem value="ALL" className="font-semibold cursor-pointer">
+                {t('admin.userManagement.allRoles')}
+              </SelectItem>
               <SelectItem value="HEAD" className="font-semibold cursor-pointer">HEAD</SelectItem>
               <SelectItem value="OFFICER" className="font-semibold cursor-pointer">OFFICER</SelectItem>
             </SelectContent>
@@ -163,17 +160,19 @@ export function UserManagementPage() {
         onOpenChange={(isOpen) => setConfirmModal(prev => ({ ...prev, isOpen }))}
         onConfirm={handleConfirmAction}
         title={
-          confirmModal.type === "DELETE" ? t('admin.userManagement.confirm.deleteTitle', 'Hapus Pengguna?') : 
-          t('admin.userManagement.confirm.resetTitle', 'Reset Password?')
+          confirmModal.type === "DELETE" 
+            ? t('admin.userManagement.confirm.deleteTitle') 
+            : t('admin.userManagement.confirm.resetTitle')
         }
         description={
           confirmModal.type === "DELETE" 
-            ? t('admin.userManagement.confirm.deleteDesc', `Apakah Anda yakin ingin menghapus permanen akun ${confirmModal.user?.name || ''}?`) 
-            : t('admin.userManagement.confirm.resetDesc', `Password akun ${confirmModal.user?.name || ''} akan diubah menjadi default (Bsi12345!).`)
+            ? t('admin.userManagement.confirm.deleteDesc', { name: confirmModal.user?.name }) 
+            : t('admin.userManagement.confirm.resetDesc', { name: confirmModal.user?.name })
         }
         actionLabel={
-          confirmModal.type === "DELETE" ? t('admin.userManagement.confirm.deleteBtn', 'Ya, Hapus') : 
-          t('admin.userManagement.confirm.resetBtn', 'Ya, Reset')
+          confirmModal.type === "DELETE" 
+            ? t('admin.userManagement.confirm.deleteBtn') 
+            : t('admin.userManagement.confirm.resetBtn')
         }
         variant={confirmModal.type === "DELETE" ? "danger" : "primary"}
       />

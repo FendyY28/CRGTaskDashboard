@@ -6,7 +6,7 @@
       "analytics": "Analitik",
       "timeline": "Linimasa",
       "testing": "Pengujian",
-      "pir": "Tinjauan (PIR)"
+      "pir": "PIR"
     },
     "logout": "Keluar dari Sistem"
   },
@@ -15,9 +15,9 @@
     "title": "Linimasa & Pelacakan Proyek",
     "ganttView": "Tampilan Gantt: {{name}}",
     "backToTimeline": "Kembali ke Linimasa",
-    "description": "Pemantauan fase SDLC proyek dan hasil mingguan secara real-time.",
+    "description": "Pemantauan waktu nyata untuk fase SDLC proyek dan hasil mingguan.",
     "kpi": {
-      "onTrack": "Sesuai Jalur",
+      "onTrack": "Sesuai Target",
       "atRisk": "Beresiko",
       "overdue": "Terlambat",
       "activeProjects": "Proyek Aktif"
@@ -27,27 +27,39 @@
     "quickNavigation": "Navigasi Cepat",
     "logTeamActivity": "Catat Aktivitas Tim",
     "deleteModal": {
-      "titleLog": "Hapus Log Mingguan?",
+      "titleLog": "Hapus Catatan Mingguan?",
       "titleTask": "Hapus Tugas?",
-      "descLog": "Ini akan menghapus log dan semua tugas di dalamnya secara permanen. Tindakan ini tidak dapat dibatalkan.",
-      "descTask": "Tugas ini akan dihapus secara permanen. Progres akan dihitung ulang."
+      "descLog": "Ini akan menghapus catatan dan semua tugas di dalamnya secara permanen. Tindakan ini tidak dapat dibatalkan.",
+      "descTask": "Tugas ini akan dihapus secara permanen. Kemajuan akan dihitung ulang."
     },
     "toast": {
       "systemError": "Kesalahan sistem."
     }
   },
   "pir": {
-    "title": "Tinjauan Pasca Implementasi",
-    "description": "Pantau kendala pasca-rilis dan kumpulkan ide optimalisasi untuk proyek aktif.",
+    "title": "Tinjauan Pasca Implementasi (PIR)",
+    "description": "Pantau isu pasca-peluncuran dan kumpulkan ide optimasi untuk proyek yang sudah live.",
+    "sidebarTitle": "Proyek Live",
+    "emptyState": "Silakan pilih proyek di bilah samping kiri.",
+    "noLiveProjects": "Belum ada proyek yang live saat ini.",
     "criticalIssues": "Isu Kritis",
-    "inProgressIssues": "Isu Sedang Diproses",
+    "inProgressIssues": "Isu Sedang Dikerjakan",
     "openIssues": "Isu Terbuka",
-    "improvements": "Peningkatan",
-    "noItems": "Tidak ada item yang ditemukan.",
-    "loading": "Menyiapkan Modul PIR...",
+    "improvements": "Ide Optimasi",
+    "noItems": "Tidak ada data untuk kategori ini.",
+    "loading": "Memuat Data PIR...",
+    "stats": {
+      "open": "Terbuka",
+      "inProgress": "Dikerjakan",
+      "ideas": "Ide"
+    },
+    "buttons": {
+      "reportIssue": "Lapor Isu",
+      "addIdea": "Tambah Ide"
+    },
     "tabs": {
       "open": "Terbuka",
-      "in-progress": "Diproses",
+      "in-progress": "Dikerjakan",
       "resolved": "Selesai",
       "improvements": "Peningkatan"
     },
@@ -55,14 +67,36 @@
       "all": "Semua",
       "critical": "Kritis",
       "high": "Tinggi",
-      "medium": "Menengah",
+      "medium": "Sedang",
       "low": "Rendah"
     },
     "cardTitles": {
-      "resolved": "Arsip Terselesaikan",
-      "improvements": "Ide Optimisasi",
-      "inProgress": "Log Sedang Diproses",
+      "resolved": "Arsip Selesai",
+      "improvements": "Ide Optimasi",
+      "inProgress": "Log Pengerjaan",
       "open": "Log Isu Terbuka"
+    },
+    "modalForm": {
+      "reportIssueTitle": "Lapor Isu Baru",
+      "addIdeaTitle": "Tambah Ide Baru",
+      "forProject": "Untuk project:",
+      "labels": {
+        "issueTitle": "Judul Isu / Kendala",
+        "priority": "Prioritas",
+        "issueDesc": "Detail & Langkah Replikasi",
+        "ideaTitle": "Judul Ide / Improvement",
+        "ideaDesc": "Deskripsi Rekomendasi"
+      },
+      "placeholders": {
+        "issueTitle": "Contoh: Gagal login saat OTP...",
+        "issueDesc": "Jelaskan detail kendala yang dialami...",
+        "ideaTitle": "Contoh: Tambahkan tombol export PDF...",
+        "ideaDesc": "Jelaskan detail ide perbaikan ini..."
+      },
+      "buttons": {
+        "saveIssue": "Simpan Laporan",
+        "saveIdea": "Kirim Ide"
+      }
     }
   },
   "common": {
@@ -75,14 +109,14 @@
   "dashboard": {
     "initializing": "Menyiapkan Dasbor...",
     "title": "Ringkasan Dasbor",
-    "description": "Pemantauan proyek & statistik secara real-time.",
+    "description": "Pemantauan proyek & statistik waktu nyata.",
     "totalProjects": "Total Proyek",
     "newThisMonth": "+{{count}} bulan ini",
     "activeProjects": "Proyek Aktif",
-    "currentlyInProgress": "Sedang berlangsung",
+    "currentlyInProgress": "Sedang dikerjakan saat ini",
     "completed": "Selesai",
-    "freshlyLive": "Baru Saja Rilis",
-    "launchedThisMonth": "Dirilis bulan ini",
+    "freshlyLive": "Baru Saja Live",
+    "launchedThisMonth": "Diluncurkan bulan ini",
     "sdlcBreakdown": "Rincian Fase SDLC",
     "toast": {
       "deleting": "Menghapus proyek...",
@@ -93,8 +127,8 @@
     },
     "deleteModal": {
       "title": "Hapus Proyek?",
-      "desc1": "Hapus proyek ID:",
-      "desc2": "secara permanen? Tindakan ini tidak dapat dibatalkan.",
+      "desc1": "Hapus permanen ID proyek:",
+      "desc2": "? Tindakan ini tidak dapat dibatalkan.",
       "cancel": "Batal",
       "confirm": "Konfirmasi Hapus"
     }
@@ -102,31 +136,31 @@
   "testing": {
     "loading": "Menyiapkan Konsol UAT...",
     "title": "Konsol Eksekusi UAT",
-    "description": "Kelola dan jalankan User Acceptance Testing untuk proyek aktif.",
+    "description": "Kelola dan eksekusi Pengujian Penerimaan Pengguna (UAT) untuk proyek aktif.",
     "sidebarTitle": "Proyek UAT Aktif",
     "stats": {
       "pass": "Lulus",
       "fail": "Gagal",
-      "pending": "Menunggu",
+      "pending": "Tertunda",
       "qualityIndex": "Indeks Kualitas",
       "totalScenarios": "Total Skenario"
     },
     "buttons": {
       "showActive": "Tampilkan Aktif",
-      "takeoutCases": "Kasus Dikeluarkan",
+      "takeoutCases": "Skenario Dikeluarkan",
       "addTestCase": "Tambah Kasus Uji"
     },
     "suite": {
       "positive": "Pengujian Positif",
       "negative": "Pengujian Negatif",
-      "noActive": "Tidak ada item aktif di pengujian ini.",
-      "noTakenOut": "Tidak ada item yang dikeluarkan di pengujian ini."
+      "noActive": "Tidak ada item aktif di rangkaian ini.",
+      "noTakenOut": "Tidak ada item yang dikeluarkan di rangkaian ini."
     },
     "emptyState": "Pilih proyek untuk memulai eksekusi.",
     "toast": {
-      "resetting": "Mereset kasus uji...",
-      "resetSuccess": "Status kasus uji direset ke Menunggu.",
-      "resetFail": "Gagal mereset kasus uji."
+      "resetting": "Mengatur ulang kasus uji...",
+      "resetSuccess": "Status kasus uji diatur kembali ke Tertunda.",
+      "resetFail": "Gagal mengatur ulang kasus uji."
     },
     "actions": {
       "pass": "Lulus",
@@ -140,7 +174,7 @@
     "rowStatus": {
       "pass": "Lulus",
       "fail": "Gagal",
-      "pending": "Menunggu"
+      "pending": "Tertunda"
     },
     "row": {
       "system": "Sistem",
@@ -148,7 +182,7 @@
       "updated": "Diperbarui",
       "created": "Dibuat",
       "takenOut": "Dikeluarkan",
-      "viewTakeoutReason": "Lihat Alasan",
+      "viewTakeoutReason": "Lihat Alasan Dikeluarkan",
       "viewDefect": "Lihat Cacat",
       "viewNotes": "Lihat Catatan",
       "editNotes": "Edit Catatan",
@@ -159,7 +193,7 @@
     "modals": {
       "addTitle": "Buat Skenario Baru",
       "editTitle": "Edit Catatan Skenario",
-      "passTitle": "Validasi Sukses",
+      "passTitle": "Validasi Berhasil",
       "failTitle": "Catat Laporan Cacat",
       "takeoutTitle": "Keluarkan Skenario?",
       "takeoutDesc": "Berikan alasan mengapa skenario ini dikeluarkan.",
@@ -167,7 +201,7 @@
       "viewDefectTitle": "Log Cacat",
       "viewNotesTitle": "Catatan Internal",
       "noReason": "Tidak ada alasan yang diberikan.",
-      "noNotes": "Tidak ada informasi tambahan.",
+      "noNotes": "Tidak ada informasi tambahan yang diberikan.",
       "projectPrefix": "Proyek: ",
       "labels": {
         "title": "Judul",
@@ -183,12 +217,12 @@
       "placeholders": {
         "notes": "Tambahkan observasi teknis...",
         "description": "Hasil yang diharapkan vs Hasil aktual...",
-        "reason": "Misal, Fitur usang, logika berubah..."
+        "reason": "Misal: Fitur tidak digunakan lagi, logika berubah..."
       },
       "buttons": {
         "cancel": "Batal",
         "confirmChanges": "Konfirmasi Perubahan",
-        "confirmTakeout": "Konfirmasi",
+        "confirmTakeout": "Konfirmasi Pengeluaran",
         "gotIt": "Mengerti"
       },
       "toast": {
@@ -201,7 +235,7 @@
         "updateFail": "Gagal memperbarui kasus uji.",
         "takeoutReasonReq": "Harap berikan alasan pengeluaran.",
         "takeoutProcessing": "Memproses pengeluaran...",
-        "takeoutSuccess": "Skenario dipindahkan ke keranjang keluar.",
+        "takeoutSuccess": "Skenario dipindahkan ke tempat sampah.",
         "takeoutFail": "Gagal mengeluarkan skenario."
       }
     }
@@ -218,22 +252,22 @@
       "projectDeadline": "Tenggat Proyek",
       "initialPhaseSetup": "Pengaturan Fase Awal",
       "startingPhase": "Fase Awal",
-      "progress": "Progres",
+      "progress": "Kemajuan",
       "phaseStart": "Mulai Fase",
       "phaseDeadline": "Tenggat Fase",
       "initialStatus": "Status Awal"
     },
     "placeholders": {
-      "projectName": "mis. Revamp Mobile Banking",
+      "projectName": "misal: Perombakan Mobile Banking",
       "projectCode": "Otomatis atau Kustom",
       "picName": "Nama PIC"
     },
     "errors": {
       "nameExists": "Nama proyek sudah ada.",
       "codeExists": "Kode proyek sudah terdaftar.",
-      "deadlineBeforeStart": "Tenggat harus setelah Tanggal Mulai.",
-      "phaseDeadlineBeforeStart": "Tenggat Fase harus setelah Mulai Fase.",
-      "phaseBeforeProject": "Fase tidak bisa dimulai sebelum Proyek.",
+      "deadlineBeforeStart": "Tenggat waktu harus setelah Tanggal Mulai.",
+      "phaseDeadlineBeforeStart": "Tenggat Fase harus setelah Tanggal Mulai Fase.",
+      "phaseBeforeProject": "Fase tidak bisa mulai sebelum Proyek.",
       "loadValidationFailed": "Gagal memuat data validasi.",
       "saveFailed": "Gagal menyimpan proyek.",
       "systemError": "Terjadi kesalahan sistem."
@@ -248,7 +282,7 @@
       "submit": "Buat Proyek"
     },
     "statuses": {
-      "on-track": "Sesuai Jalur",
+      "on-track": "Sesuai Target",
       "at-risk": "Beresiko",
       "overdue": "Terlambat",
       "completed": "Selesai"
@@ -269,11 +303,11 @@
       "end": "Selesai",
       "projectStart": "Mulai Proyek",
       "projectDeadline": "Tenggat Proyek",
-      "globalStatus": "Status Proyek Global"
+      "globalStatus": "Status Proyek Keseluruhan"
     },
     "warnings": {
-      "saveFirst": "Silakan klik \"Simpan Perubahan\" dahulu untuk konfirmasi status Live di database.",
-      "noteAutoSave": "Catatan: Perubahan saat ini akan disimpan otomatis sebelum diarsipkan."
+      "saveFirst": "Harap klik \"Simpan Perubahan\" terlebih dahulu untuk mengonfirmasi status Live di database.",
+      "noteAutoSave": "Catatan: Perubahan saat ini akan disimpan secara otomatis sebelum pengarsipan."
     },
     "errors": {
       "nameUsed": "Nama sudah digunakan.",
@@ -283,8 +317,8 @@
     },
     "buttons": {
       "startCycle": "Mulai Siklus {{cycle}}",
-      "saveChangesFirst": "Simpan Perubahan Dahulu",
-      "setLiveFirst": "Set Live 100% Dahulu",
+      "saveChangesFirst": "Simpan Perubahan Dulu",
+      "setLiveFirst": "Atur Live 100% Dulu",
       "cancel": "Batal",
       "saving": "Menyimpan...",
       "saveChanges": "Simpan Perubahan",
@@ -294,47 +328,14 @@
       "title": "Siklus Berikutnya?",
       "desc1": "Ini akan mengarsipkan",
       "desc2": "dan memulai",
-      "desc3": "dari fase Requirement.",
+      "desc3": "dari fase Kebutuhan.",
       "cycleText": "Siklus {{cycle}}"
     }
   },
   "pirComponents": {
     "liveProjects": {
-      "title": "Proyek Aktif (Live)",
-      "noProjects": "Tidak ada proyek aktif yang ditemukan."
-    },
-    "issueForm": {
-      "title": "Lapor Kendala",
-      "labels": {
-        "project": "Proyek",
-        "priority": "Prioritas",
-        "select": "Pilih..."
-      },
-      "placeholders": {
-        "summary": "Ringkasan...",
-        "details": "Detail..."
-      },
-      "toast": {
-        "loading": "Melaporkan kendala...",
-        "success": "Kendala berhasil dilaporkan!",
-        "error": "Gagal melaporkan kendala."
-      }
-    },
-    "ideaForm": {
-      "title": "Ide",
-      "labels": {
-        "select": "Pilih Proyek...",
-        "title": "Judul Ide"
-      },
-      "placeholders": {
-        "title": "Ringkasan singkat...",
-        "idea": "Penjelasan detail..."
-      },
-      "toast": {
-        "loading": "Mengirim rencana optimalisasi...",
-        "success": "Ide berhasil dikirim!",
-        "error": "Gagal mengirim ide."
-      }
+      "title": "Proyek Live",
+      "noProjects": "Tidak ada proyek live yang ditemukan."
     },
     "modal": {
       "unknownDate": "Tanggal Tidak Diketahui",
@@ -342,20 +343,20 @@
       "projectLabel": "Proyek:",
       "labels": {
         "reporter": "Pelapor",
-        "submitted": "Dikirim",
+        "submitted": "Dikirimkan",
         "description": "Deskripsi",
         "updateStatus": "Perbarui Status",
         "dangerZone": "Zona Berbahaya"
       },
       "statuses": {
         "resolved": "SELESAI",
-        "inProgress": "DIPROSES",
+        "inProgress": "SEDANG DIKERJAKAN",
         "open": "TERBUKA",
         "unknown": "TIDAK DIKETAHUI",
-        "issueResolvedText": "Kendala Terselesaikan."
+        "issueResolvedText": "Isu Selesai."
       },
       "buttons": {
-        "deleteIssue": "Hapus Kendala",
+        "deleteIssue": "Hapus Isu",
         "deleteImprovement": "Hapus Ide",
         "cancel": "Batal",
         "confirm": "Konfirmasi"
@@ -363,10 +364,10 @@
       "toast": {
         "updateLoading": "Memperbarui status...",
         "updateSuccess": "Status diperbarui ke {{status}}",
-        "updateError": "Gagal memperbarui status.",
-        "deleteLoading": "Menghapus...",
-        "deleteSuccess": "Berhasil dihapus.",
-        "deleteError": "Gagal menghapus."
+        "updateError": "Pembaruan status gagal.",
+        "deleteLoading": "Menghapus isu...",
+        "deleteSuccess": "Isu berhasil dihapus.",
+        "deleteError": "Gagal menghapus isu."
       }
     },
     "common": {
@@ -375,31 +376,32 @@
   },
   "analytics": {
     "title": "Analitik & Laporan",
-    "description": "Ringkasan eksekutif kesehatan proyek, fase SDLC, dan pelacakan isu.",
+    "description": "Ringkasan eksekutif tentang kesehatan proyek, fase SDLC, dan pelacakan masalah.",
     "charts": {
       "projectStatus": "Status Kesehatan Proyek",
-      "averageProgress": "Rata-rata Progres per Fase",
+      "averageProgress": "Rata-rata Kemajuan per Fase",
       "testingQuality": "Kualitas UAT (Lulus vs Gagal)",
-      "topDefects": "Proyek dengan Defect Tertinggi",
-      "issuePriority": "Isu Aktif Berdasarkan Prioritas",
-      "issueResolution": "Status Penyelesaian Kendala"
+      "topDefects": "Proyek Paling Gagal (UAT)",
+      "issuePriority": "Isu Live Berdasarkan Prioritas",
+      "issueResolution": "Status Penyelesaian Isu"
     },
     "labels": {
       "count": "Jumlah",
       "projects": "Proyek",
-      "issues": "Kendala"
+      "issues": "Isu"
     }
   },
   "admin": {
     "actions": {
       "edit": "Edit Profil",
-      "resetPwd": "Reset Password",
+      "resetPwd": "Setel Ulang Kata Sandi",
       "suspend": "Tangguhkan Akun",
       "delete": "Hapus Permanen"
     },
     "userManagement": {
       "title": "Manajemen Pengguna",
-      "subtitle": "Atur akses dan peran untuk tim internal Anda.",
+      "allRoles": "Semua Role",
+      "subtitle": "Kelola akses dan peran untuk tim internal Anda.",
       "addUserBtn": "Tambah Pengguna",
       "searchPlaceholder": "Cari nama atau email...",
       "loading": "Memuat Data...",
@@ -408,7 +410,7 @@
         "role": "Peran",
         "joined": "Tanggal Bergabung",
         "actions": "Aksi",
-        "noData": "Data pengguna tidak ditemukan."
+        "noData": "Tidak ada data pengguna ditemukan."
       },
       "badge": {
         "new": "Baru"
@@ -417,11 +419,11 @@
         "title": "Buat Akun Baru",
         "desc": "Buat kredensial untuk anggota tim baru.",
         "nameLabel": "Nama Lengkap",
-        "emailLabel": "Email",
-        "roleLabel": "Role Akses",
+        "emailLabel": "Email Kerja",
+        "roleLabel": "Peran Akses",
         "securityInfo": "Info Keamanan:",
-        "defaultPwdText": "Password akun ini akan diatur ke default",
-        "pwdRequirement": "Pengguna diwajibkan mengganti password setelah login.",
+        "defaultPwdText": "Sistem akan membuatkan password acak yang aman secara otomatis.",
+        "pwdRequirement": "Kredensial akan dikirimkan langsung ke email pengguna.",
         "cancel": "Batal",
         "saving": "Memproses...",
         "save": "Simpan Akun",
@@ -430,48 +432,63 @@
         "errorEmailTaken": "Email sudah terdaftar atau tidak valid",
         "errorDefault": "Terjadi kesalahan",
         "editTitle": "Edit Profil Pengguna",
-        "editDesc": "Ubah informasi dasar dan hak akses pengguna ini."
+        "editDesc": "Ubah hak akses pengguna. Catatan: Identitas pribadi dikunci."
       },
       "confirm": {
         "deleteTitle": "Hapus Pengguna?",
-        "resetTitle": "Reset Password?",
-        "deleteDesc": "Apakah Anda yakin ingin menghapus permanen akun ini?",
-        "resetDesc": "Password akun ini akan diubah menjadi default (Bsi12345!).",
+        "resetTitle": "Setel Ulang Kata Sandi?",
+        "deleteDesc": "Apakah Anda yakin ingin menghapus akun ini secara permanen?",
+        "resetDesc": "Password acak baru akan dibuat untuk {{name}} dan dikirimkan langsung ke alamat email mereka.",
         "deleteBtn": "Ya, Hapus",
-        "resetBtn": "Ya, Reset"
+        "resetBtn": "Ya, Reset Password"
       },
       "errors": {
         "fetch": "Gagal memuat data pengguna dari database."
       },
       "warnings": {
-        "deleteConfirm": "Apakah Anda yakin ingin menghapus permanen akun ini?"
+        "deleteConfirm": "Apakah Anda yakin ingin menghapus akun ini secara permanen?"
       },
       "success": {
-        "add": "Pengguna berhasil ditambahkan!",
-        "delete": "Pengguna berhasil dihapus!"
+        "add": "User berhasil ditambah! Kredensial telah dikirim ke email.",
+        "reset": "Password direset! Kredensial baru telah dikirim ke email.",
+        "update": "Hak akses berhasil diperbarui!"
       }
     }
   },
   "settings": {
     "profile": {
       "title": "Pengaturan Profil",
-      "subtitle": "Kelola informasi personal dan keamanan akun Anda.",
-      "personalInfo": "Informasi Personal",
+      "subtitle": "Kelola informasi pribadi dan keamanan akun Anda.",
+      "personalInfo": "Informasi Pribadi",
       "personalInfoDesc": "Perbarui nama lengkap Anda di sini.",
       "nameLabel": "Nama Lengkap",
-      "emailLabel": "Email",
-      "emailHelper": "*Email digunakan sebagai identitas login dan tidak dapat diubah.",
-      "roleLabel": "Role Akses",
+      "emailLabel": "Alamat Email",
+      "emailHelper": "*Email digunakan sebagai identitas masuk Anda dan tidak dapat diubah.",
+      "roleLabel": "Peran Akses",
       "saveBtn": "Simpan Perubahan",
       "saving": "Menyimpan...",
       "security": "Keamanan",
-      "securityDesc": "Ganti password secara berkala.",
-      "currentPwd": "Password Saat Ini",
-      "newPwd": "Password Baru",
-      "confirmPwd": "Konfirmasi Password",
-      "changePwdBtn": "Ubah Password",
+      "securityDesc": "Ubah kata sandi Anda secara berkala.",
+      "currentPwd": "Kata Sandi Saat Ini",
+      "newPwd": "Kata Sandi Baru",
+      "confirmPwd": "Konfirmasi Kata Sandi",
+      "changePwdBtn": "Ubah Kata Sandi",
+      "expiryLabel": "Masa Berlaku Sandi",
+      "daysRemaining": "Hari Lagi",
+      "untilDate": "Berlaku Hingga",
+      "requestOtpBtn": "Minta Kode OTP",
+      "otpLabel": "Kode OTP dari Email",
+      "confirmChangeBtn": "Konfirmasi Perubahan",
       "alerts": {
-        "passwordMismatch": "Password baru dan konfirmasi tidak cocok!"
+        "passwordMismatch": "Kata sandi baru dan konfirmasi tidak cocok!",
+        "passwordWeak": "Kata sandi minimal 6 karakter, mengandung huruf besar, dan simbol khusus.",
+        "successProfile": "Profil berhasil diperbarui!",
+        "errorUpdate": "Gagal memperbarui profil.",
+        "fillPasswordFirst": "Harap isi kata sandi saat ini dan yang baru terlebih dahulu.",
+        "otpSent": "Kode OTP telah dikirim ke email Anda!",
+        "otpError": "Gagal meminta kode OTP.",
+        "passwordSuccess": "Kata sandi berhasil diperbarui!",
+        "passwordError": "Gagal mengubah kata sandi."
       }
     }
   }

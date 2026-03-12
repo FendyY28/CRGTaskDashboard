@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { User, Lock, Save, Loader2, Mail, ShieldCheck, KeyRound, ArrowRight, Clock, AlertTriangle } from "lucide-react";
+import { User, Save, Loader2, Mail, ShieldCheck, KeyRound, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -149,7 +149,7 @@ export function ProfileSettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          {/* 🔥 CARD TANPA ANIMASI PULSE */}
+          {/* CARD TANPA ANIMASI PULSE */}
           <div 
             className={`p-6 rounded-3xl border shadow-sm flex items-center justify-between transition-all duration-500 ${
               passwordTimer.isWarning ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'
@@ -285,7 +285,7 @@ export function ProfileSettingsPage() {
                         maxLength={6}
                       />
                     </div>
-                    <Button type="submit" disabled={isSavingPassword} className="w-full bg-gray-900 hover:bg-black text-white rounded-xl shadow-lg transition-all h-11 text-sm font-bold">
+                    <Button style={{backgroundColor : THEME.TOSCA}} type="submit" disabled={isSavingPassword} className="w-full text-white rounded-xl shadow-lg transition-all h-11 text-sm font-bold">
                       {isSavingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <ArrowRight className="mr-2 h-4 w-4" />}
                       {t('settings.profile.confirmChangeBtn', 'Konfirmasi Perubahan')}
                     </Button>

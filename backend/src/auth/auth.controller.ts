@@ -4,6 +4,7 @@ import {
   Patch, 
   Body, 
   Req, 
+  Param,
   UseGuards, 
   BadRequestException 
 } from '@nestjs/common';
@@ -38,19 +39,19 @@ export class AuthController {
     return this.authService.login(data);
   }
 
-  // 4. Lupa Password (Kirim link reset)
+  // 4. Lupa Password (Mandiri - Kirim kode OTP ke email)
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.authService.forgotPassword(email);
   }
 
-  // 5. Reset Password (Eksekusi perubahan via link)
+  // 5. Reset Password (Mandiri - Eksekusi perubahan via OTP)
   @Post('reset-password')
   async resetPassword(@Body() data: any) {
     return this.authService.resetPassword(data);
   }
 
-  // --- FITUR GANTI PASSWORD DENGAN VERIFIKASI OTP (SECURE) ---
+  // FITUR GANTI PASSWORD DENGAN VERIFIKASI OTP (SECURE)
 
   // 6. Minta Kode OTP (Langkah pertama sebelum ganti password)
   @UseGuards(JwtAuthGuard)
@@ -68,5 +69,14 @@ export class AuthController {
     const userId = req.user.id; 
     // Body wajib berisi: { oldPassword, newPassword, otp }
     return this.authService.changePassword(userId, body);
+  }
+
+  // 8. ADMIN RESET PASSWORD (KHUSUS MANAGEMENT USER)
+  // Endpoint ini dipanggil ketika Admin melakukan reset dari dashboard.
+  // Akan men-generate password acak dan mengirimnya via email.
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/admin-reset-password')
+  async adminResetPassword(@Param('id') id: string) {
+    return this.authService.adminResetPassword(id);
   }
 }

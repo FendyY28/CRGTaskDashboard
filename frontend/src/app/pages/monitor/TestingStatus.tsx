@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "../../components/ui/card";
-import { ShieldCheck, PlayCircle, LayoutList, Plus, ArchiveX } from "lucide-react";
+import { ShieldCheck, LayoutList, Plus, ArchiveX } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../constants/projectConstants";
 import { useTestCases } from "../../hooks/useTestCases";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { TestCaseRow } from "../../components/features/testing/TestCaseRow";
 import { TestingModals } from "../../components/modals/TestingModals";
 import { ProtectAction } from "../../components/auth/ProtectAction";
+import { ProjectSidebar } from "../../components/layouts/ProjectSidebar"; 
 
 import { useTranslation } from "react-i18next";
 
@@ -89,8 +90,8 @@ export function TestingStatus() {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-left">
-      <div className="flex flex-col gap-1">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-left relative">
+      <div className="flex flex-col gap-1 mb-8 pb-2">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
           <ShieldCheck className="h-6 w-6" style={{ color: THEME.TOSCA }} /> {t('testing.title')}
         </h2>
@@ -98,25 +99,18 @@ export function TestingStatus() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar Projects */}
-        <aside className="lg:col-span-1 space-y-4">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">{t('testing.sidebarTitle')}</h3>
-          <div className="space-y-2">
-            {projects.map(project => (
-              <div 
-                key={project.id} 
-                onClick={() => { setSelectedProject(project); fetchTestCases(project.id); }} 
-                className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 ${selectedProject?.id === project.id ? 'bg-white shadow-md ring-1' : 'bg-white border-gray-100 shadow-sm'}`}
-                style={selectedProject?.id === project.id ? { borderColor: THEME.TOSCA, boxShadow: `0 0 0 1px ${THEME.TOSCA}1A` } : {}}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-sm font-bold truncate" style={{ color: selectedProject?.id === project.id ? THEME.TOSCA : '#1F2937' }}>{project.name}</h4>
-                  {selectedProject?.id === project.id && <PlayCircle className="h-4 w-4" style={{ color: THEME.TOSCA }} />}
-                </div>
-              </div>
-            ))}
-          </div>
-        </aside>
+        
+        {/* 🔥 PANGGIL GENERIC SIDEBAR DI SINI */}
+        <ProjectSidebar 
+          title={t('testing.sidebarTitle')}
+          projects={projects}
+          selectedProject={selectedProject}
+          onProjectSelect={(project) => {
+            setSelectedProject(project);
+            fetchTestCases(project.id);
+          }}
+          emptyStateText={t('pir.noLiveProjects') /* atau text empty state lain jika ada */}
+        />
 
         {/* Main Content */}
         <main className="lg:col-span-3 space-y-6">
@@ -193,12 +187,12 @@ export function TestingStatus() {
         </main>
       </div>
 
-        <TestingModals 
-          modal={activeModal} 
-          selProject={selectedProject} 
-          onClose={() => setActiveModal({ type: null })} 
-          onSuccess={() => fetchTestCases(selectedProject.id)}
-        />
+      <TestingModals 
+        modal={activeModal} 
+        selProject={selectedProject} 
+        onClose={() => setActiveModal({ type: null })} 
+        onSuccess={() => fetchTestCases(selectedProject.id)}
+      />
     </div>
   );
 }

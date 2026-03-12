@@ -16,7 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // 1. Ambil Semua User
+  // 1. Ambil Semua User (Admin Only View)
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
@@ -24,34 +24,30 @@ export class UserController {
   }
 
   // 2. Buat User Baru
+  // Password akan di-generate otomatis di Service dan dikirim ke email
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
-  // 3. Update Profil (Edit)
+  // 3. Update Profil User
+  // Identitas (Nama/Email) dikunci di Service, hanya Role yang bisa diubah
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: Partial<CreateUserDto>) {
     return this.userService.update(id, updateUserDto);
   }
 
-  // 4. Reset Password ke Default
+  // 4. Reset Password User
+  // Memicu pembuatan password acak baru dan pengiriman via email
   @UseGuards(JwtAuthGuard)
   @Patch(':id/reset-password')
   resetPassword(@Param('id') id: string) {
     return this.userService.resetPassword(id);
   }
 
-  // 5. Toggle Suspend/Active
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id/status')
-  toggleStatus(@Param('id') id: string) {
-    return this.userService.toggleStatus(id);
-  }
-
-  // 6. Hapus User Permanen
+  // 5. Hapus User Permanen
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
