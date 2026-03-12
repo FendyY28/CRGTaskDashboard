@@ -377,6 +377,18 @@
   "analytics": {
     "title": "Analitik & Laporan",
     "description": "Ringkasan eksekutif tentang kesehatan proyek, fase SDLC, dan pelacakan masalah.",
+    "filter": {
+      "allProjects": "Semua Proyek",
+      "selected": "{{count}} Terpilih",
+      "title": "Filter Grafik",
+      "reset": "RESET",
+      "searchPlaceholder": "Cari proyek...",
+      "noProjects": "Tidak ada proyek",
+      "notFound": "Proyek tidak ditemukan"
+    },
+    "empty": {
+      "noDefects": "Tidak ada cacat terdeteksi"
+    },
     "charts": {
       "projectStatus": "Status Kesehatan Proyek",
       "averageProgress": "Rata-rata Kemajuan per Fase",
@@ -440,7 +452,7 @@
         "deleteDesc": "Apakah Anda yakin ingin menghapus akun ini secara permanen?",
         "resetDesc": "Password acak baru akan dibuat untuk {{name}} dan dikirimkan langsung ke alamat email mereka.",
         "deleteBtn": "Ya, Hapus",
-        "resetBtn": "Ya, Reset Password"
+        "resetBtn": "Ya, Setel Ulang"
       },
       "errors": {
         "fetch": "Gagal memuat data pengguna dari database."

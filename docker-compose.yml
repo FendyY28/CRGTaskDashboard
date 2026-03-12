@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. DATABASE (PostgreSQL)
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: bsi_crg_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: superuser
+      POSTGRES_DB: bsi_crg_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # 2. BACKEND (NestJS)
+  backend:
+    build:
+      context: ./backend      # Mencari Dockerfile di folder backend
+    container_name: bsi_crg_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # PENTING: Perhatikan kata "postgres-db". Di Docker, localhost diganti dengan nama service database!
+      - DATABASE_URL=postgresql://postgres:superuser@postgres-db:5432/bsi_crg_db?schema=public
+      - PORT=3000
+    depends_on:
+      - postgres-db           # Backend nunggu database nyala dulu
+
+  # 3. FRONTEND (React / Vite)
+  frontend:
+    build:
+      context: ./frontend     # Mencari Dockerfile di folder frontend
+    container_name: bsi_crg_frontend
+    restart: always
+    ports:
+      - "5173:80"             # Akses di browser lewat port 5173, diteruskan ke port 80 di Nginx
+    depends_on:
+      - backend               # Frontend nunggu backend nyala dulu
+
+volumes:
+  pg_data:

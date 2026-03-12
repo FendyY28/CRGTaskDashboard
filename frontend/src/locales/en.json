@@ -377,6 +377,18 @@
   "analytics": {
     "title": "Analytics & Reports",
     "description": "Executive overview of project health, SDLC phases, and issue tracking.",
+    "filter": {
+      "allProjects": "All Projects",
+      "selected": "{{count}} Selected",
+      "title": "Filter Chart",
+      "reset": "RESET",
+      "searchPlaceholder": "Search projects...",
+      "noProjects": "No projects available",
+      "notFound": "Project not found"
+    },
+    "empty": {
+      "noDefects": "No defects detected"
+    },
     "charts": {
       "projectStatus": "Project Health Status",
       "averageProgress": "Average Progress by Phase",

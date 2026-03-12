@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { THEME } from "../constants/projectConstants";
 
-export function useAnalyticsData() {
+// 🔥 TERIMA PARAMETER array string berisi ID project yang difilter
+export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [issues, setIssues] = useState<any[]>([]);
-  const [testCases, setTestCases] = useState<any[]>([]);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [allIssues, setAllIssues] = useState<any[]>([]);
+  const [allTestCases, setAllTestCases] = useState<any[]>([]);
 
   // Label Dinamis
   const openLbl = t('pir.tabs.open') || 'Open';
@@ -15,6 +16,7 @@ export function useAnalyticsData() {
   const resolvedLbl = t('pir.tabs.resolved') || 'Resolved';
   const takeoutLbl = t('testing.row.takenOut') || 'Takeout';
 
+  // 1. FETCH SEMUA DATA SEKALI SAJA SAAT MOUNT
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
@@ -27,9 +29,9 @@ export function useAnalyticsData() {
           }).then(res => res.flat())
         ]);
 
-        setProjects(Array.isArray(prjRes) ? prjRes : []);
-        setIssues(Array.isArray(issRes) ? issRes : []);
-        setTestCases(Array.isArray(tcRes) ? tcRes : []);
+        setAllProjects(Array.isArray(prjRes) ? prjRes : []);
+        setAllIssues(Array.isArray(issRes) ? issRes : []);
+        setAllTestCases(Array.isArray(tcRes) ? tcRes : []);
       } catch (error) {
         console.error("Failed to fetch analytics data", error);
       }
@@ -37,9 +39,31 @@ export function useAnalyticsData() {
     fetchAnalyticsData();
   }, []);
 
+  // 2. 🔥 DATA MENTAH YANG SUDAH DIFILTER (Ini yang akan dipakai oleh semua chart)
+  const { projects, issues, testCases } = useMemo(() => {
+    // Jika tidak ada filter (kosong), kembalikan semua data
+    if (!selectedProjectIds || selectedProjectIds.length === 0) {
+      return { projects: allProjects, issues: allIssues, testCases: allTestCases };
+    }
+
+    // Jika ada filter, saring data berdasarkan ID project yang dipilih
+    return {
+      projects: allProjects.filter(p => selectedProjectIds.includes(p.id)),
+      issues: allIssues.filter(i => selectedProjectIds.includes(i.projectId)), // Pastikan property 'projectId' sesuai DB
+      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)), // Pastikan property 'projectId' sesuai DB
+    };
+  }, [allProjects, allIssues, allTestCases, selectedProjectIds]);
+
+
+  // 3. KALKULASI CHART (Memakai data yang sudah difilter di atas)
+  
   const statusData = useMemo(() => {
     const counts = { 'on-track': 0, 'at-risk': 0, 'overdue': 0, 'completed': 0 };
-    projects.forEach(p => { if (counts[p.status as keyof typeof counts] !== undefined) counts[p.status as keyof typeof counts]++; });
+    projects.forEach(p => { 
+      if (counts[p.status as keyof typeof counts] !== undefined) {
+        counts[p.status as keyof typeof counts]++; 
+      }
+    });
     return [
       { name: 'On Track', value: counts['on-track'], color: THEME.TOSCA },
       { name: 'At Risk', value: counts['at-risk'], color: THEME.BSI_YELLOW },
@@ -121,11 +145,9 @@ export function useAnalyticsData() {
     ].filter(d => d.value > 0);
   }, [issues, openLbl, inProgressLbl, resolvedLbl]);
 
-  // 6. Data Modul/Proyek dengan UAT Gagal Terbanyak (Top 5)
   const topDefectsData = useMemo(() => {
     const projectFailMap: Record<string, number> = {};
 
-    // Hitung jumlah UAT yang gagal per proyek
     testCases.forEach(tc => {
       if (!tc.isDeleted && tc.status === 'fail') {
         const pId = tc.projectId || 'Unknown';
@@ -134,25 +156,25 @@ export function useAnalyticsData() {
       }
     });
 
-    // Ubah jadi array, urutkan dari yang gagalnya paling banyak, dan ambil top 5
     const sortedFails = Object.entries(projectFailMap)
       .map(([id, fails]) => {
-        // Cari nama proyek dari array projects agar lebih mudah dibaca (jika ID-nya cocok)
-        const projectMatch = projects.find(p => String(p.id) === String(id));
+        // 🔥 Perbaikan: Cari nama project dari allProjects agar tetap ketemu meskipun project tsb tidak sedang difilter
+        const projectMatch = allProjects.find(p => String(p.id) === String(id));
         const projectName = projectMatch ? projectMatch.name : `PRJ-${id}`;
         
-        // Memotong nama proyek yang terlalu panjang agar muat di grafik
         const shortName = projectName.length > 15 ? projectName.substring(0, 15) + '...' : projectName;
-
         return { name: shortName, Fails: fails };
       })
       .sort((a, b) => b.Fails - a.Fails)
-      .slice(0, 5); // Hanya tampilkan 5 teratas
+      .slice(0, 5); 
 
     return sortedFails;
-  }, [testCases, projects]);
+  }, [testCases, allProjects]);
 
   return { 
+    // 🔥 Kirim list semua project ke UI untuk dropdown
+    availableProjects: allProjects.map(p => ({ id: p.id, name: p.name })),
+    
     statusData, averageProgressData, phaseData, 
     uatData, issueData, issueResolutionData, 
     openLbl, inProgressLbl, topDefectsData
