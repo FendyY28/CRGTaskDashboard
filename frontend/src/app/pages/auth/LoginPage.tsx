@@ -180,15 +180,6 @@ export function LoginPage() {
           {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</> : <>Secure Login <ChevronRight className="ml-1 h-4 w-4" /></>}
         </Button>
 
-        {/* Link Register */}
-        <div className="text-center pt-4">
-          <p className="text-xs text-gray-500 font-medium">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-[#36A39D] font-bold hover:underline transition-colors">
-              Register here
-            </Link>
-          </p>
-        </div>
       </form>
     </AuthLayout>
   );

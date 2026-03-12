@@ -89,7 +89,7 @@ export function ForgotPasswordPage() {
               <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
                 id="email" type="email" placeholder="name@bankbsi.id" 
-                className={`pl-10 focus:border-[${THEME.TOSCA}] focus:ring-[${THEME.TOSCA}]`} required disabled={ui.loading}
+                className="pl-10" required disabled={ui.loading}
                 value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} 
               />
             </div>
@@ -102,12 +102,25 @@ export function ForgotPasswordPage() {
             </div>
           )}
 
-          <Button type="submit" className={`w-full text-white h-12 text-sm font-bold rounded-xl shadow-lg mt-4 transition-all active:scale-[0.98] bg-[${THEME.TOSCA}] hover:bg-[${THEME.BSI_GREEN}] shadow-[${THEME.TOSCA}]/20`} disabled={ui.loading || !formData.email}>
+          <Button 
+            type="submit" 
+            className="w-full text-white h-12 text-sm font-bold rounded-xl shadow-lg mt-4 transition-all active:scale-[0.98]" 
+            disabled={ui.loading || !formData.email}
+            style={{ 
+                backgroundColor: THEME.TOSCA,
+                boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
+            }}
+          >
             {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <>Send OTP Code <ChevronRight className="ml-1 h-4 w-4" /></>}
           </Button>
 
           <div className="text-center pt-2">
-            <Link to="/login" className={`inline-flex items-center text-xs text-gray-400 font-bold transition-colors group hover:text-[${THEME.TOSCA}]`}>
+            <Link 
+                to="/login" 
+                className="inline-flex items-center text-xs text-gray-400 font-bold transition-colors group"
+                onMouseOver={(e) => (e.currentTarget.style.color = THEME.TOSCA)}
+                onMouseOut={(e) => (e.currentTarget.style.color = '')}
+            >
               <ArrowLeft className="mr-2 h-3 w-3 transition-transform group-hover:-translate-x-1" />
               Back to Login
             </Link>
@@ -120,12 +133,13 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleResetPassword} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
           
           <div className="space-y-2 text-left">
-            <Label className={`text-[10px] font-bold uppercase tracking-widest ml-1 text-[${THEME.TOSCA}]`}>6-Digit OTP Code</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1" style={{ color: THEME.TOSCA }}>6-Digit OTP Code</Label>
             <div className="relative">
-              <KeyRound className={`absolute left-3.5 top-3.5 h-4 w-4 text-[${THEME.TOSCA}]`} />
+              <KeyRound className="absolute left-3.5 top-3.5 h-4 w-4" style={{ color: THEME.TOSCA }} />
               <DashboardInput 
                 type="text" maxLength={6} placeholder="••••••" required disabled={ui.loading}
-                className={`pl-10 font-bold tracking-[0.5em] text-center border-[${THEME.TOSCA}]/30 focus:border-[${THEME.TOSCA}] focus:ring-[${THEME.TOSCA}]`} 
+                className="pl-10 font-black tracking-[0.5em] text-center" 
+                style={{ borderColor: `${THEME.TOSCA}4D` }}
                 value={formData.otp} onChange={(e) => setFormData({...formData, otp: e.target.value})} 
               />
             </div>
@@ -137,7 +151,7 @@ export function ForgotPasswordPage() {
               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
                 type="password" placeholder="••••••••" required disabled={ui.loading} 
-                className={`pl-10 focus:border-[${THEME.TOSCA}] focus:ring-[${THEME.TOSCA}]`}
+                className="pl-10"
                 value={formData.newPassword} onChange={(e) => setFormData({...formData, newPassword: e.target.value})} 
               />
             </div>
@@ -149,7 +163,7 @@ export function ForgotPasswordPage() {
               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
                 type="password" placeholder="••••••••" required disabled={ui.loading} 
-                className={`pl-10 focus:border-[${THEME.TOSCA}] focus:ring-[${THEME.TOSCA}]`}
+                className="pl-10"
                 value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
               />
             </div>
@@ -162,12 +176,26 @@ export function ForgotPasswordPage() {
             </div>
           )}
 
-          <Button type="submit" className={`w-full text-white h-12 text-sm font-bold rounded-xl shadow-lg mt-2 transition-all active:scale-[0.98] bg-[${THEME.TOSCA}] hover:bg-[${THEME.BSI_GREEN}] shadow-[${THEME.TOSCA}]/20`} disabled={ui.loading || !formData.otp || !formData.newPassword}>
+          <Button 
+            type="submit" 
+            className="w-full text-white h-12 text-sm font-bold rounded-xl shadow-lg mt-2 transition-all active:scale-[0.98]" 
+            disabled={ui.loading || !formData.otp || !formData.newPassword}
+            style={{ 
+                backgroundColor: THEME.TOSCA,
+                boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
+            }}
+          >
             {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</> : <>Reset Password</>}
           </Button>
 
           <div className="text-center pt-2">
-            <button type="button" onClick={() => setStep(1)} className={`text-xs text-gray-400 font-bold transition-colors hover:text-[${THEME.TOSCA}]`}>
+            <button 
+                type="button" 
+                onClick={() => setStep(1)} 
+                className="text-xs text-gray-400 font-bold transition-colors"
+                onMouseOver={(e) => (e.currentTarget.style.color = THEME.TOSCA)}
+                onMouseOut={(e) => (e.currentTarget.style.color = '')}
+            >
               Cancel
             </button>
           </div>
@@ -177,15 +205,25 @@ export function ForgotPasswordPage() {
       {/* TAHAP 3: SUKSES */}
       {step === 3 && (
         <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-          <div className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center border bg-[${THEME.TOSCA}]/10 border-[${THEME.TOSCA}]/20`}>
-            <ShieldCheck className={`h-10 w-10 text-[${THEME.TOSCA}]`} />
+          <div 
+            className="mx-auto w-20 h-20 rounded-full flex items-center justify-center border"
+            style={{ backgroundColor: `${THEME.TOSCA}1A`, borderColor: `${THEME.TOSCA}33` }}
+          >
+            <ShieldCheck className="h-10 w-10" style={{ color: THEME.TOSCA }} />
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-500 font-medium leading-relaxed">
               You can now use your new password to log in to the CRG Dashboard.
             </p>
           </div>
-          <Button asChild className={`w-full text-white font-bold rounded-xl h-12 shadow-lg bg-[${THEME.TOSCA}] hover:bg-[${THEME.BSI_GREEN}] shadow-[${THEME.TOSCA}]/20`}>
+          <Button 
+            asChild 
+            className="w-full text-white font-bold rounded-xl h-12 shadow-lg"
+            style={{ 
+                backgroundColor: THEME.TOSCA,
+                boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
+            }}
+          >
             <Link to="/login">Proceed to Login</Link>
           </Button>
         </div>
