@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../services/api";
-import type { Project } from "../types"; // 🚀 Import interface kamu
+import type { Project } from "../types";
 
 export const useProjects = () => {
-  // Ganti any[] jadi Project[]
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

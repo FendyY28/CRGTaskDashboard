@@ -148,8 +148,7 @@ export function ProfileSettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          {/* CARD TANPA ANIMASI PULSE */}
+        <div className="md:col-span-2 space-y-6">\
           <div 
             className={`p-6 rounded-3xl border shadow-sm flex items-center justify-between transition-all duration-500 ${
               passwordTimer.isWarning ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'

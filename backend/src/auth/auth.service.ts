@@ -19,9 +19,7 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  // ==========================================================
   // 1. VERIFY EMAIL (Aktivasi Akun Baru)
-  // ==========================================================
   async verifyEmail(token: string) {
     const user = await this.prisma.user.findFirst({
       where: { verificationToken: token },
@@ -42,9 +40,7 @@ export class AuthService {
     return { message: 'Email berhasil diverifikasi! Silakan login.' };
   }
 
-  // ==========================================================
   // 2. LOGIN (DENGAN PENGECEKAN KEDALUWARSA 6 BULAN)
-  // ==========================================================
   async login(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
 
@@ -68,7 +64,7 @@ export class AuthService {
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
     }
 
-    // --- CEK EXPIRED (6 BULAN) ---
+    // CEK EXPIRED (6 BULAN)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -87,9 +83,7 @@ export class AuthService {
     };
   }
 
-  // ==========================================================
   // 3. FORGOT PASSWORD (MINTA OTP)
-  // ==========================================================
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Email tidak terdaftar.');
@@ -118,9 +112,7 @@ export class AuthService {
     return { message: 'Kode OTP telah dikirim ke email Anda.' };
   }
 
-  // ==========================================================
   // 4. RESET PASSWORD (VERIFIKASI OTP & SAVE NEW PASSWORD)
-  // ==========================================================
   async resetPassword(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
@@ -152,9 +144,7 @@ export class AuthService {
     return { message: 'Password berhasil diperbarui!' };
   }
 
-  // ==========================================================
   // 5. CHANGE PASSWORD STEP 1: REQUEST OTP
-  // ==========================================================
   async sendChangePasswordOTP(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
@@ -186,9 +176,7 @@ export class AuthService {
     return { message: 'Kode OTP telah dikirim ke email Anda.' };
   }
 
-  // ==========================================================
   // 6. CHANGE PASSWORD STEP 2: VERIFY OTP & UPDATE
-  // ==========================================================
   async changePassword(userId: string, data: any) {
     const { oldPassword, newPassword, otp } = data;
 
@@ -227,9 +215,7 @@ export class AuthService {
     return { message: 'Password berhasil diubah!' };
   }
 
-  // ==========================================================
-  // 🎯 8. ADMIN RESET PASSWORD (KIRIM PASSWORD ACAK KE EMAIL)
-  // ==========================================================
+  // 8. ADMIN RESET PASSWORD (KIRIM PASSWORD ACAK KE EMAIL)
   async adminResetPassword(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
@@ -241,7 +227,7 @@ export class AuthService {
       where: { id: userId },
       data: { 
         password: hashedPassword,
-        passwordChangedAt: new Date(), // 🔥 DIUBAH KE WAKTU SEKARANG AGAR BISA LANGSUNG LOGIN
+        passwordChangedAt: new Date(), 
         verificationToken: null,
         verificationTokenExpiresAt: null
       },
@@ -265,10 +251,7 @@ export class AuthService {
     return { success: true, message: 'Password baru telah dikirim ke email.' };
   }
 
-  // ==========================================================
   // 7. HELPERS: PASSWORD & EMAIL TEMPLATES
-  // ==========================================================
-  
   public generateRandomPassword(length = 10): string {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#";
     let password = "";

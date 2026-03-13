@@ -24,7 +24,6 @@ export function RegisterPage() {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    // FIX TYPE TIMER: Gunakan ReturnType bawaan TS agar tidak perlu 'any'
     let timer: ReturnType<typeof setInterval>; 
 
     if (cooldown > 0) {

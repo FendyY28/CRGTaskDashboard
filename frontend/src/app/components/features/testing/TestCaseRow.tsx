@@ -116,7 +116,6 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
               </ProtectAction>
             ) : (
               <div className="flex items-center gap-2">
-                {/* 🔥 Badge status di bawah otomatis ganti bahasa berdasarkan dictionary rowStatus */}
                 <Badge className="shadow-none px-3 capitalize font-bold rounded-md" style={{ backgroundColor: s.badgeBg, color: s.badgeText, border: `1px solid ${s.border}` }}>{getStatusText(item.status)}</Badge>
 
                 <ProtectAction>

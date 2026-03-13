@@ -128,7 +128,6 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <button className="h-12 flex items-center gap-3 px-2 hover:bg-gray-50 transition-colors focus:outline-none group cursor-pointer border-none bg-transparent rounded-lg relative">
                   
-                  {/* 🔥 ICON TANPA ANIMASI BOUNCE */}
                   {isPasswordExpiring && (
                     <div 
                       onClick={handleWarningClick}

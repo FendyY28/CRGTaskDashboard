@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { THEME } from "../constants/projectConstants";
 
-// 🔥 TERIMA PARAMETER array string berisi ID project yang difilter
 export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
   const [allProjects, setAllProjects] = useState<any[]>([]);
@@ -39,7 +38,6 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
     fetchAnalyticsData();
   }, []);
 
-  // 2. 🔥 DATA MENTAH YANG SUDAH DIFILTER (Ini yang akan dipakai oleh semua chart)
   const { projects, issues, testCases } = useMemo(() => {
     // Jika tidak ada filter (kosong), kembalikan semua data
     if (!selectedProjectIds || selectedProjectIds.length === 0) {
@@ -49,14 +47,13 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
     // Jika ada filter, saring data berdasarkan ID project yang dipilih
     return {
       projects: allProjects.filter(p => selectedProjectIds.includes(p.id)),
-      issues: allIssues.filter(i => selectedProjectIds.includes(i.projectId)), // Pastikan property 'projectId' sesuai DB
-      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)), // Pastikan property 'projectId' sesuai DB
+      issues: allIssues.filter(i => selectedProjectIds.includes(i.projectId)),
+      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)), 
     };
   }, [allProjects, allIssues, allTestCases, selectedProjectIds]);
 
 
   // 3. KALKULASI CHART (Memakai data yang sudah difilter di atas)
-  
   const statusData = useMemo(() => {
     const counts = { 'on-track': 0, 'at-risk': 0, 'overdue': 0, 'completed': 0 };
     projects.forEach(p => { 
@@ -158,7 +155,6 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
 
     const sortedFails = Object.entries(projectFailMap)
       .map(([id, fails]) => {
-        // 🔥 Perbaikan: Cari nama project dari allProjects agar tetap ketemu meskipun project tsb tidak sedang difilter
         const projectMatch = allProjects.find(p => String(p.id) === String(id));
         const projectName = projectMatch ? projectMatch.name : `PRJ-${id}`;
         
@@ -172,7 +168,6 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   }, [testCases, allProjects]);
 
   return { 
-    // 🔥 Kirim list semua project ke UI untuk dropdown
     availableProjects: allProjects.map(p => ({ id: p.id, name: p.name })),
     
     statusData, averageProgressData, phaseData, 

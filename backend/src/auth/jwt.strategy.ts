@@ -8,7 +8,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: 'BSI_CRG_SECRET_KEY_2026', // 🔑 Harus sama dengan Module!
+      secretOrKey: 'BSI_CRG_SECRET_KEY_2026',
     });
   }
 

@@ -12,9 +12,7 @@ export class ProjectService {
 
   private readonly MASTER_PHASES = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
 
-  // ==========================================================
   // 1. BASIC CRUD (FIND)
-  // ==========================================================
   async findAll() {
     return this.prisma.project.findMany({
       include: { 
@@ -46,9 +44,7 @@ export class ProjectService {
     });
   }
 
-  // ==========================================================
   // 2. CREATE PROJECT
-  // ==========================================================
   async create(data: any, userId: string) {
     const generatedId = `PRJ-${Date.now().toString().slice(-4)}`; 
     const initialPhase = data.currentPhase || "Requirement";
@@ -82,9 +78,8 @@ export class ProjectService {
     await this.auditService.log(userId, "CREATE_PROJECT", `Membuat project baru: ${newProject.name}`);
     return newProject;
   }
-  // ==========================================================
+
   // 3. UPDATE PROJECT
-  // ==========================================================
   async update(id: string, requestData: any, userId: string) {
     const oldProject = await this.prisma.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
     if (!oldProject) throw new NotFoundException("Project not found");
@@ -154,9 +149,7 @@ export class ProjectService {
     return updatedProject;
   }
 
-  // ==========================================================
   // 4. DELETE PROJECT
-  // ==========================================================
   async remove(id: string, userId: string) { 
     const project = await this.prisma.project.findUnique({ where: { id }});
     const deleted = await this.prisma.project.delete({ where: { id } }); 
@@ -164,9 +157,7 @@ export class ProjectService {
     return deleted;
   }
 
-  // ==========================================================
   // 5. ISSUES & IMPROVEMENTS
-  // ==========================================================
   async findAllIssues() {
     return this.prisma.issue.findMany({
       include: { project: { select: { name: true } } },
@@ -242,9 +233,7 @@ export class ProjectService {
     return deletedImp;
   }
 
-  // ==========================================================
   // 6. WEEKLY PROGRESS (TIMELINE)
-  // ==========================================================
   async addLog(data: any, userId: string) {
     const taskList = Array.isArray(data.tasks) ? data.tasks : [data.tasks];
     const log = await this.prisma.weeklyProgress.create({
@@ -426,8 +415,6 @@ export class ProjectService {
       }); 
 
       // Catat ke Audit Log Activity
-      // Jika tc.takeoutReason ada (karena di-update di fungsi updateTestCase sebelumnya),
-      // kita bisa memasukkannya ke detail log.
       await this.auditService.log(
           userId, 
           "TAKEOUT_TEST_CASE", 
@@ -437,10 +424,7 @@ export class ProjectService {
       return tc;
   }
 
-  // ==========================================================
   // 6. NEXT CYCLE MANAGEMENT (SMART AUTOMATION)
-  // ==========================================================
-  // 🔥 Tambahkan opsional body parameter untuk menangkap targetPhase
   async nextCycle(id: string, userId: string, body?: { targetPhase?: string }) {
     const oldProject = await this.prisma.project.findUnique({ 
         where: { id }, 
@@ -479,7 +463,7 @@ export class ProjectService {
             data: { 
                 cycle: nextCycle, 
                 overallProgress: 0, 
-                currentPhase: initialPhaseForNewCycle, // 🔥 Dinamis
+                currentPhase: initialPhaseForNewCycle, 
                 status: 'in-progress',
                 projectStartDate: today,
                 projectDeadline: newGlobalDeadline
@@ -488,7 +472,7 @@ export class ProjectService {
         
         // GENERATE 6 FASE BARU UNTUK CYCLE BARU
         for (const phaseName of this.MASTER_PHASES) {
-            const isInitial = phaseName === initialPhaseForNewCycle; // 🔥 Dinamis
+            const isInitial = phaseName === initialPhaseForNewCycle; 
             await tx.sDLCPhase.create({
                 data: { 
                     projectId: id, 

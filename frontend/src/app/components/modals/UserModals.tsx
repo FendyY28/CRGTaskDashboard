@@ -72,8 +72,6 @@ export function AddUserModal({ open, onOpenChange, onSubmitAction }: AddUserModa
       } catch (apiErr: any) {
         throw new Error(apiErr.response?.data?.message || t('admin.userManagement.modal.errorEmailTaken', 'Email sudah terdaftar atau tidak valid'));
       }
-
-      // 🔥 Payload dikirim tanpa password statis. 
       // Backend akan men-generate random password dan mengirimnya ke email user.
       await onSubmitAction(form);
       onOpenChange(false);
@@ -172,7 +170,6 @@ export function EditUserModal({ open, onOpenChange, userData, onSubmitAction }: 
     setUi({ loading: true, error: "" });
     
     try {
-      // 🔥 Sesuai permintaan: Hanya mengirim 'role' karena Name & Email tidak boleh diubah Admin
       await onSubmitAction(userData.id, { role: form.role });
       onOpenChange(false);
     } catch (err: any) {

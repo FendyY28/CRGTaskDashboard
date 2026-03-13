@@ -54,9 +54,7 @@ export function ProjectGantt({ project, onBack }: { project: any; onBack: () => 
             let end = dbPhase?.deadline ? new Date(dbPhase.deadline) : new Date(start.getTime() + 86400000 * 7); 
             if (end <= start) end = new Date(start.getTime() + 86400000); 
 
-            // ==========================================
             // LOGIKA SUPER SIMPLE (BACA MURNI DARI DB)
-            // ==========================================
             let progress = 0;
             let effectiveStatus = 'pending';
 

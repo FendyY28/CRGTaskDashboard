@@ -67,11 +67,11 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout title={layoutTitle} subtitle={layoutSubtitle}>
       {ui.success ? (
-        /* --- TAMPILAN SUKSES --- */
+        /* TAMPILAN SUKSES */
         <div className="text-center py-4 animate-in fade-in zoom-in-95 duration-500">
           <div 
             className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6"
-            style={{ backgroundColor: `${THEME.TOSCA}15` }} // Tosca dengan opacity rendah
+            style={{ backgroundColor: `${THEME.TOSCA}15` }} 
           >
             <CheckCircle2 className="h-10 w-10 animate-bounce" style={{ color: THEME.TOSCA }} />
           </div>
@@ -81,7 +81,7 @@ export function ResetPasswordPage() {
           </p>
         </div>
       ) : (
-        /* --- TAMPILAN FORM --- */
+        /* TAMPILAN FORM */
         <form onSubmit={handleReset} className="space-y-5 animate-in fade-in duration-300">
           
           {/* Input Password Baru */}

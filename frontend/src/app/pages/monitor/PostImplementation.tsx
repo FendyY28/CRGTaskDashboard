@@ -132,7 +132,7 @@ export function PostImplementation() {
               {/* HEADER PROJECT STATS & ACTION BUTTONS */}
               <Card className="border-none shadow-sm ring-1 ring-gray-200 bg-white rounded-2xl overflow-hidden">
                 <CardContent className="p-6">
-                  {/* Flex Header Card: Title di Kiri, Buttons di Kanan */}
+                  {/* Title di Kiri, Buttons di Kanan */}
                   <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
                     
                     {/* Bagian Kiri: Title & Stats */}
@@ -157,7 +157,7 @@ export function PostImplementation() {
                       </div>
                     </div>
 
-                    {/* 🔥 Bagian Kanan: Tombol Action (Pindah ke sini) */}
+                    {/* Tombol Action (Pindah ke sini) */}
                     <ProtectAction>
                       <div className="flex items-center gap-3 shrink-0">
                         <Button 

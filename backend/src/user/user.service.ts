@@ -2,13 +2,13 @@ import { Injectable, ConflictException, NotFoundException, InternalServerErrorEx
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
-import { AuthService } from '../auth/auth.service'; // 🔥 Import AuthService
+import { AuthService } from '../auth/auth.service'; 
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
-    private authService: AuthService, // 🔥 Inject AuthService agar bisa pakai generator password & template email
+    private authService: AuthService, 
   ) {}
 
   // 1. GET ALL USERS
@@ -37,7 +37,7 @@ export class UserService {
       throw new ConflictException('Email ini sudah terdaftar!');
     }
 
-    // 🔥 Generate password acak, bukan lagi 'Bsi12345!'
+    // Generate password acak, bukan lagi 'Bsi12345!'
     const rawPassword = this.authService.generateRandomPassword(10);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(rawPassword, salt);
@@ -53,7 +53,7 @@ export class UserService {
       },
     });
 
-    // 🔥 Kirim Email Welcome berisi kredensial login
+    // Kirim Email Welcome berisi kredensial login
     try {
         await this.authService['mailerService'].sendMail({
             to: newUser.email,

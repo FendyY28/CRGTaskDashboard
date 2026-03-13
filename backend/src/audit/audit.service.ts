@@ -10,7 +10,7 @@ export class AuditService {
       // 1. Cek apakah User ID valid/ada di database
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-      // 2. Jika user TIDAK ADA, kita skip audit log (daripada server crash)
+      // 2. Jika user tidak ada, kita skip audit log (daripada server crash)
       if (!user) {
         console.warn(`⚠️ [AUDIT WARNING] User ID '${userId}' tidak ditemukan. Log dilewati agar server tidak crash.`);
         return; 

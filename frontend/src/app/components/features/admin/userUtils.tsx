@@ -1,7 +1,5 @@
 import { ShieldAlert, ShieldCheck, Briefcase } from "lucide-react";
 import { Badge } from "../../ui/badge";
-
-// 🔥 Import THEME dari konstan
 import { THEME } from "../../../constants/projectConstants"; 
 
 export const formatDate = (isoString: string, locale: string = 'id-ID') => {
@@ -38,7 +36,6 @@ export const RoleBadge = ({ role }: { role: string }) => {
           style={{ backgroundColor: `${THEME.TOSCA}1A`, color: THEME.TOSCA }} 
           className="border-none shadow-none"
         >
-          {/* 🔥 Ganti jadi Briefcase dan warnanya Tosca */}
           <Briefcase className="w-3 h-3 mr-1"/> OFFICER
         </Badge>
       );

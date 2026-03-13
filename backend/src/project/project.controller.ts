@@ -22,9 +22,7 @@ export class ProjectController {
   ) {}
 
   /**
-   * =====================================================================
-   * HELPER: DETEKSI USER SAKTI
-   * =====================================================================
+   * HELPER: DETEKSI USER
    * Logika:
    * 1. Cek apakah Frontend menitipkan ID lewat Body (performedBy)? -> PAKAI INI.
    * 2. Cek apakah ada Token Login (req.user)? -> Pakai ini.
@@ -46,16 +44,11 @@ export class ProjectController {
        return bodyData.performedBy;
     }
 
-    // ⛔ JANGAN PERNAH RETURN ID HARDCODED DI SINI
-    // Lebih baik error daripada pakai ID yang tidak ada di DB
     console.error("❌ [SECURITY ALERT] User ID tidak ditemukan di Token maupun Body!");
     throw new BadRequestException("Sesi Anda tidak valid. Silakan Logout dan Login ulang.");
   }
 
-  // ===========================================================================
   // 1. GENERAL & DASHBOARD ENDPOINTS
-  // ===========================================================================
-
   @Get()
   findAll() {
     return this.projectService.findAll();
@@ -64,10 +57,8 @@ export class ProjectController {
   @Post()
   @UseGuards(JwtAuthGuard) 
   async create(@Body() data: any, @Request() req) {
-    // 1. Deteksi Siapa Pelakunya
     const userId = this.getUserId(req, data);
 
-    // 2. Bersihkan sampah "performedBy" agar Prisma tidak error
     delete data.performedBy;
 
     if (data.email) {
@@ -83,10 +74,7 @@ export class ProjectController {
     return this.projectService.getTestingStatus();
   }
 
-  // ===========================================================================
   // 2. PIR (ISSUES & IMPROVEMENTS)
-  // ===========================================================================
-
   @Get('issue')
   findAllIssues() {
     return this.projectService.findAllIssues();
@@ -130,10 +118,7 @@ export class ProjectController {
     return this.projectService.removeImprovement(+id, userId);
   }
 
-  // ===========================================================================
   // 3. LOGS & TASKS ENDPOINTS
-  // ===========================================================================
-
   @Post('log')
   @UseGuards(JwtAuthGuard) 
   async addLog(@Body() logData: any, @Request() req) {
@@ -175,10 +160,7 @@ export class ProjectController {
     return this.projectService.removeTask(+id, userId);
   }
 
-  // ===========================================================================
   // 4. TEST CASES ENDPOINTS
-  // ===========================================================================
-
   @Post('test-cases')
   @UseGuards(JwtAuthGuard) 
   createTestCase(@Body() data: any, @Request() req) {
@@ -206,9 +188,7 @@ export class ProjectController {
     return this.projectService.deleteTestCase(testCaseId, userId);
   }
 
-  // ===========================================================================
   // 5. PARAMETERIZED ROUTES
-  // ===========================================================================
 
   @Get(':id/test-cases')
   getTestCases(@Param('id') projectId: string) {
@@ -245,9 +225,7 @@ export class ProjectController {
     return this.projectService.remove(id, userId);
   }
 
-  // ===========================================================================
   // 6. CYCLE MANAGEMENT
-  // ===========================================================================
 
   @Post(':id/next-cycle')
   @UseGuards(JwtAuthGuard)

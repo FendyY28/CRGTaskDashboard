@@ -43,7 +43,6 @@ export const useUsers = () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Gagal menambahkan user');
     
-    // 🔥 Pesan sukses disesuaikan dengan alur email
     toast.success(t('admin.userManagement.success.add', 'User berhasil dibuat. Kredensial telah dikirim ke email mereka.'));
     fetchUsers();
   };

@@ -23,7 +23,7 @@ export const DashboardCard = ({ color, title, icon: Icon, headerAction, children
         {Icon && <Icon className="h-5 w-5" style={{ color: color }} />}
         <div className="flex flex-col">
           {typeof title === 'string' ? (
-            // 🔥 Teks diperbesar (text-xl) dan warnanya persis mengikuti warna prop "color"
+            // Teks diperbesar (text-xl) dan warnanya persis mengikuti warna prop "color"
             <CardTitle className="text-lg font-bold uppercase tracking-wide" style={{ color: color }}>
               {title}
             </CardTitle>

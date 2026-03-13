@@ -14,7 +14,6 @@
         <Card className="w-full max-w-md border-none shadow-2xl ring-1 ring-gray-100 rounded-[2rem] bg-white overflow-hidden relative z-10">
           <CardContent className="p-10">
             
-            {/* Bagian Header & Logo (Sekarang hanya ditulis SATU KALI di sini) */}
             <div className="flex flex-col items-center mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <img src={BSILogo} alt="BSI Logo" className="h-24 w-auto object-contain" />
@@ -30,13 +29,11 @@
               </div>
             </div>
 
-            {/* Form spesifik dari masing-masing halaman akan masuk ke sini */}
             {children}
 
           </CardContent>
         </Card>
         
-        {/* Footer dinamis (Hanya ditulis SATU KALI di sini) */}
         <p className="fixed bottom-6 text-[10px] font-bold text-gray-400 tracking-widest uppercase opacity-70">
           © {new Date().getFullYear()} Bank Syariah Indonesia • CRG Division
         </p>

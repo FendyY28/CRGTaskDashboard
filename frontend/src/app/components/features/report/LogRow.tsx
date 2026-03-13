@@ -27,7 +27,6 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
   const reporterName = isImp ? (item as ImprovementNote).reviewer : (item as ProjectIssue).reportedBy;
   const dateReported = isImp ? (item as ImprovementNote).createdDate : (item as ProjectIssue).reportedDate;
   
-  // Ambil title asli dari data, jangan di-hardcode
   const title = (item as any).title || (isImp ? "Improvement Plan" : "Unknown Issue");
   
   const displayId = isImp ? (item as ImprovementNote).noteId : (item as ProjectIssue).issueId;
@@ -66,7 +65,6 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="font-bold" style={{ color: THEME.BSI_GREY }}>{displayId}</span>
-                  {/* Nama project dihapus dari sini karena sudah jelas di header/sidebar */}
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: THEME.BSI_LIGHT_GRAY }} />

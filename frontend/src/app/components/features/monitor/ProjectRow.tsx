@@ -28,7 +28,6 @@ export const ProjectRow = memo(({ proj, onEdit, onDelete }: ProjectRowProps) => 
         <StatusBadge value={proj.status} />
       </div>
 
-      {/* ✅ Bungkus bagian aksi dengan ProtectAction */}
       <ProtectAction>
         <div className="flex items-center gap-1 border-l pl-3 ml-2 border-gray-200">
           <Button 

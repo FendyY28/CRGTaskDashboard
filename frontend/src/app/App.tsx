@@ -22,12 +22,10 @@ const TestingStatus = lazy(() => import("./pages/monitor/TestingStatus").then(mo
 const PostImplementation = lazy(() => import("./pages/monitor/PostImplementation").then(module => ({ default: module.PostImplementation })));
 const Analytics = lazy(() => import("./pages/monitor/Analytics").then(module => ({ default: module.Analytics })));
 
-// 🔥 IMPORT PROFILE SETTINGS PAGE
 const ProfileSettingsPage = lazy(() => import("./pages/profile/ProfileSettingsPage").then(module => ({ default: module.ProfileSettingsPage })));
 
 const UserManagementPage = lazy(() => import("./pages/admin/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
 
-// KOMPONEN LOADING LAYAR PENUH
 const PageFallback = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-[#36A39D]">
     <Loader2 className="h-8 w-8 animate-spin mb-4" />
@@ -35,7 +33,6 @@ const PageFallback = () => (
   </div>
 );
 
-// LAYOUT COMPONENT
 const DashboardLayout = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-gray-900">
