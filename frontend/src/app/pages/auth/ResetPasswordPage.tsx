@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, ShieldCheck, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-
-// UI Components
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
-
-// Utils & Services
 import { api } from "../../services/api";
 import { THEME } from "../../constants/projectConstants";
 

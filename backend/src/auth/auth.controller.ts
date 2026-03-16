@@ -79,4 +79,12 @@ export class AuthController {
   async adminResetPassword(@Param('id') id: string) {
     return this.authService.adminResetPassword(id);
   }
+
+  // 9. Konfirmasi Admin Reset (User klik link dari email)
+  // 🚨 TIDAK pakai @UseGuards karena dieksekusi dari link luar
+  @Post('confirm-admin-reset')
+  async confirmAdminReset(@Body('token') token: string) {
+    if (!token) throw new BadRequestException('Token tidak ditemukan.');
+    return this.authService.confirmAdminResetPassword(token);
+  }
 }

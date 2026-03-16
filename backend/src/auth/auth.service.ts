@@ -19,7 +19,6 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  // 1. VERIFY EMAIL (Aktivasi Akun Baru)
   async verifyEmail(token: string) {
     const user = await this.prisma.user.findFirst({
       where: { verificationToken: token },
@@ -40,7 +39,6 @@ export class AuthService {
     return { message: 'Email berhasil diverifikasi! Silakan login.' };
   }
 
-  // 2. LOGIN (DENGAN PENGECEKAN KEDALUWARSA 6 BULAN)
   async login(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
 
@@ -64,12 +62,14 @@ export class AuthService {
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
     }
 
-    // CEK EXPIRED (6 BULAN)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const expirationDate = new Date(user.passwordChangedAt);
+    expirationDate.setMonth(expirationDate.getMonth() + 6);
 
-    // Jika passwordChangedAt lebih lama dari 6 bulan lalu, lempar error
-    if (user.passwordChangedAt && user.passwordChangedAt < sixMonthsAgo) {
+    const now = new Date();
+    const diffTime = expirationDate.getTime() - now.getTime();
+    const daysUntilExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiration <= 0) {
       throw new ForbiddenException('PASSWORD_EXPIRED'); 
     }
 
@@ -79,11 +79,17 @@ export class AuthService {
     return {
       message: 'Login berhasil',
       access_token: realToken, 
-      user: { id: user.id, email: user.email, role: user.role, name: user.name }
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        name: user.name,
+        daysUntilExpiration,
+        passwordChangedAt: user.passwordChangedAt
+      }
     };
   }
 
-  // 3. FORGOT PASSWORD (MINTA OTP)
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Email tidak terdaftar.');
@@ -99,20 +105,19 @@ export class AuthService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: '🔐 Kode OTP Reset Password - BSI CRG',
+      subject: 'Kode OTP Reset Password - BSI CRG',
       html: this.getPremiumTemplate(
         user.name, 
         `Anda meminta untuk mereset password Anda. Berikut adalah kode OTP Anda: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`, 
         "#", 
         "Gunakan Kode di Aplikasi",
-        "⚠️ Abaikan email ini jika Anda tidak merasa meminta reset password. Kode berlaku 10 menit."
+        "Abaikan email ini jika Anda tidak merasa meminta reset password. Kode berlaku 10 menit."
       ),
     });
 
     return { message: 'Kode OTP telah dikirim ke email Anda.' };
   }
 
-  // 4. RESET PASSWORD (VERIFIKASI OTP & SAVE NEW PASSWORD)
   async resetPassword(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
@@ -144,7 +149,6 @@ export class AuthService {
     return { message: 'Password berhasil diperbarui!' };
   }
 
-  // 5. CHANGE PASSWORD STEP 1: REQUEST OTP
   async sendChangePasswordOTP(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
@@ -163,20 +167,19 @@ export class AuthService {
 
     await this.mailerService.sendMail({
       to: user.email,
-      subject: '🔐 Kode Verifikasi Ganti Password - BSI CRG',
+      subject: 'Kode Verifikasi Ganti Password - BSI CRG',
       html: this.getPremiumTemplate(
         user.name,
         `Kode verifikasi Anda untuk mengganti password adalah: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`,
         "#", 
         "Gunakan Kode di Aplikasi",
-        "⚠️ Rahasiakan kode ini."
+        "Rahasiakan kode ini."
       ),
     });
 
     return { message: 'Kode OTP telah dikirim ke email Anda.' };
   }
 
-  // 6. CHANGE PASSWORD STEP 2: VERIFY OTP & UPDATE
   async changePassword(userId: string, data: any) {
     const { oldPassword, newPassword, otp } = data;
 
@@ -196,10 +199,6 @@ export class AuthService {
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) throw new BadRequestException('Password saat ini salah.');
 
-    if (newPassword === 'Bsi12345!') {
-      throw new BadRequestException('Tidak boleh menggunakan password default.');
-    }
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({
       where: { id: userId },
@@ -215,16 +214,56 @@ export class AuthService {
     return { message: 'Password berhasil diubah!' };
   }
 
-  // 8. ADMIN RESET PASSWORD (KIRIM PASSWORD ACAK KE EMAIL)
   async adminResetPassword(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan.');
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); 
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        verificationToken: token,
+        verificationTokenExpiresAt: expiresAt
+      },
+    });
+
+    const confirmLink = `http://localhost:5173/confirm-reset?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Konfirmasi Reset Password Akun BSI CRG',
+      html: this.getPremiumTemplate(
+        user.name,
+        `Administrator baru saja meminta reset password untuk akun Anda. Jika Anda menyetujuinya, silakan klik tombol di bawah ini.`,
+        confirmLink, 
+        "Konfirmasi & Reset Password",
+        "PENTING: Jika Anda tidak merasa meminta atau tidak menyetujui reset ini, abaikan email ini. Link berlaku selama 24 jam."
+      ),
+    });
+
+    return { success: true, message: 'Email konfirmasi reset telah dikirim ke user.' };
+  }
+
+  async confirmAdminResetPassword(token: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { verificationToken: token }
+    });
+
+    if (!user) throw new BadRequestException('Token tidak valid atau sudah digunakan.');
+
+    const now = new Date();
+    if (!user.verificationTokenExpiresAt || now > user.verificationTokenExpiresAt) {
+      throw new BadRequestException('Token reset password sudah kedaluwarsa. Silakan minta admin mereset ulang.');
+    }
 
     const newRawPassword = this.generateRandomPassword(10);
     const hashedPassword = await bcrypt.hash(newRawPassword, 10);
 
     await this.prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: { 
         password: hashedPassword,
         passwordChangedAt: new Date(), 
@@ -233,25 +272,31 @@ export class AuthService {
       },
     });
 
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'ADMIN_RESET_PASSWORD',
+        details: 'User confirmed admin password reset',
+        userName: user.name,
+        userId: user.id
+      }
+    });
+
     await this.mailerService.sendMail({
       to: user.email,
-      subject: '🔐 Kredensial Baru Akun BSI CRG',
+      subject: 'Kredensial Baru Akun BSI CRG',
       html: this.getPremiumTemplate(
         user.name,
-        `Administrator telah mengatur ulang password Anda. Gunakan kredensial sementara berikut untuk masuk:<br><br>
-         <div style="background: #f0fdfa; border: 1px dashed #36A39D; padding: 15px; font-size: 24px; font-family: monospace; font-weight: bold; color: #36A39D; letter-spacing: 2px; text-align: center;">
-           ${newRawPassword}
-         </div>`,
+        `Anda telah menyetujui permintaan reset password. Gunakan kredensial sementara berikut untuk masuk:<br><br>
+         <div style="background: #f0fdfa; border: 1px dashed #36A39D; padding: 15px; font-size: 24px; font-family: monospace; font-weight: bold; color: #36A39D; letter-spacing: 2px; text-align: center;"><b>${newRawPassword}</b></div>`,
         "http://localhost:5173/login", 
         "Masuk Sekarang",
-        "🛡️ Demi keamanan, Anda dapat mengganti password ini kapan saja melalui menu Pengaturan Profil."
+        "Demi keamanan, kami menyarankan Anda untuk segera mengganti password ini setelah berhasil masuk."
       ),
     });
 
-    return { success: true, message: 'Password baru telah dikirim ke email.' };
+    return { success: true, message: 'Password baru berhasil dibuat dan dikirim ke email.' };
   }
 
-  // 7. HELPERS: PASSWORD & EMAIL TEMPLATES
   public generateRandomPassword(length = 10): string {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#";
     let password = "";
@@ -271,7 +316,7 @@ export class AuthService {
         "Terima kasih telah bergabung. Silakan klik tombol di bawah ini untuk mengaktifkan akun Anda.",
         link,
         "Verifikasi Akun Saya",
-        "⏳ Penting: Link ini hangus dalam 3 menit."
+        "Penting: Link ini hangus dalam 3 menit."
       ),
     });
   }
@@ -280,13 +325,13 @@ export class AuthService {
     const dateStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
     await this.mailerService.sendMail({
       to: to,
-      subject: '🛡️ Notifikasi Keamanan: Password Berhasil Diubah',
+      subject: 'Notifikasi Keamanan: Password Berhasil Diubah',
       html: this.getPremiumTemplate(
         name,
         `Kami ingin menginformasikan bahwa password akun BSI CRG Anda baru saja diubah pada <b>${dateStr} WIB</b>.<br><br>Jika ini adalah Anda, tidak ada tindakan lebih lanjut yang diperlukan.`,
         "http://localhost:5173/login", 
         "Masuk ke Akun Anda",
-        "🚨 PENTING: Jika Anda tidak merasa mengubah password, segera hubungi Administrator IT."
+        "PENTING: Jika Anda tidak merasa mengubah password, segera hubungi Administrator IT."
       ),
     });
   }
@@ -300,7 +345,7 @@ export class AuthService {
             <div style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; font-weight: bold;">CRG Monitoring System</div>
           </div>
           <div style="padding: 40px; text-align: center;">
-            <div style="font-size: 20px; font-weight: bold; color: #1f2937; margin-bottom: 15px;">Hi, ${name} 👋</div>
+            <div style="font-size: 20px; font-weight: bold; color: #1f2937; margin-bottom: 15px;">Hi, ${name}</div>
             <p style="font-size: 15px; line-height: 1.6; color: #4b5563; margin-bottom: 30px;">${message}</p>
             <a href="${btnLink}" target="_blank" style="background-color: #F9AD3C; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;">${btnText}</a>
             <br><br>

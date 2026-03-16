@@ -8,6 +8,8 @@ import { Footer } from "./components/layouts/Footer";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 import { AdminRoute } from "./components/routes/AdminRoute";
+import ConfirmReset from './pages/auth/ConfirmReset';
+import { PasswordWarningModal } from "./components/modals/PasswordWarningModal";
 
 // LAZY LOADING HALAMAN AUTH
 const LoginPage = lazy(() => import("./pages/auth/LoginPage").then(module => ({ default: module.LoginPage })));
@@ -43,6 +45,7 @@ const DashboardLayout = () => {
         </Suspense>
       </main>
       <Footer />
+      <PasswordWarningModal />
     </div>
   );
 };
@@ -58,6 +61,7 @@ export default function App() {
             
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/confirm-reset" element={<ConfirmReset />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -72,10 +76,8 @@ export default function App() {
                 <Route path="/post-implementation" element={<PostImplementation />} />
                 <Route path="/analytics" element={<Analytics />} />
                 
-                {/* 🔥 ROUTE UNTUK SEMUA USER */}
                 <Route path="/settings/profile" element={<ProfileSettingsPage />} />
                 
-                {/* ROUTE KHUSUS ADMIN */}
                 <Route element={<AdminRoute />}>
                   <Route path="/users" element={<UserManagementPage />} />
                 </Route>

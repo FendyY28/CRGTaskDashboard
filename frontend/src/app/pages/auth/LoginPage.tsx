@@ -11,7 +11,8 @@ import { api } from "../../services/api";
 const AUTH_KEYS = { 
   TOKEN: "auth_token", 
   ROLE: "user_role",
-  REMEMBER_ME: "remember_me_data" 
+  REMEMBER_ME: "remember_me_data",
+  PWD_DAYS_LEFT: "pwdDaysLeft" // Key baru untuk sisa hari password
 };
 
 const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
@@ -60,17 +61,22 @@ export function LoginPage() {
     setUi(prev => ({ ...prev, loading: true, error: "", isResend: false }));
     
     try {
-      // Menggunakan api.post yang sudah bersih
       const result = await api.post("/auth/login", { 
         email: form.email, 
         password: form.password 
       });
 
-      // Login Sukses
+      // Simpan data login utama
       localStorage.setItem(AUTH_KEYS.TOKEN, result.access_token);
       localStorage.setItem(AUTH_KEYS.ROLE, result.user.role);
       localStorage.setItem("user_name", result.user.name);
       localStorage.setItem("user_email", result.user.email);
+      localStorage.setItem("password_changed_at", result.user.passwordChangedAt);
+
+      // SIMPAN SISA HARI KEDALUWARSA PASSWORD
+      if (result.user.daysUntilExpiration !== undefined) {
+        localStorage.setItem(AUTH_KEYS.PWD_DAYS_LEFT, result.user.daysUntilExpiration.toString());
+      }
 
       if (form.rememberMe) {
         localStorage.setItem(AUTH_KEYS.REMEMBER_ME, JSON.stringify({
@@ -98,7 +104,6 @@ export function LoginPage() {
   };
 
   return (
-    // Bungkus HANYA dengan AuthLayout (BSI Logo & Footer otomatis terpasang)
     <AuthLayout 
       title="Welcome Back" 
       subtitle="Sign in to access CRG Monitoring System"
