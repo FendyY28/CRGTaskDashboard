@@ -7,12 +7,29 @@ export function PasswordWarningModal() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const daysStr = localStorage.getItem('pwdDaysLeft');
-    if (daysStr) {
-      const days = parseInt(daysStr, 10);
-      setPwdDaysLeft(days);
+    // 1. Ambil tanggal terakhir kali password diubah dari database/login
+    const changedAtStr = localStorage.getItem('password_changed_at');
+    
+    if (changedAtStr) {
+      const lastChanged = new Date(changedAtStr);
       
-      if (days <= 7) {
+      // 2. Tambahkan 180 hari (Sama persis dengan rumus di halaman Profile)
+      const expiryDate = new Date(lastChanged);
+      expiryDate.setDate(expiryDate.getDate() + 180); 
+
+      // 3. Hitung selisih hari dengan hari ini secara real-time
+      const today = new Date();
+      const diffTime = expiryDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      const finalDays = diffDays > 0 ? diffDays : 0;
+      setPwdDaysLeft(finalDays);
+      
+      // 4. Cek apakah user sudah menekan "Nanti Saja" di sesi browser ini
+      const isSnoozed = sessionStorage.getItem('snooze_pwd_warning');
+      
+      // 5. Tampilkan modal hanya jika <= 7 hari DAN belum di-snooze
+      if (finalDays <= 7 && !isSnoozed) {
         setShowModal(true);
       }
     }
@@ -21,7 +38,9 @@ export function PasswordWarningModal() {
   const handleClose = () => {
     if (pwdDaysLeft !== null && pwdDaysLeft > 3) {
       setShowModal(false);
-      localStorage.removeItem('pwdDaysLeft'); 
+      // Simpan ke sessionStorage agar tidak mengganggu user terus-menerus 
+      // tiap kali dia pindah menu, tapi akan muncul lagi kalau dia tutup browser.
+      sessionStorage.setItem('snooze_pwd_warning', 'true'); 
     }
   };
 
@@ -59,7 +78,7 @@ export function PasswordWarningModal() {
           <button
             onClick={() => {
               setShowModal(false);
-              navigate('/profile'); 
+              navigate('/settings/profile'); // <-- pastikan path navigasinya mengarah tepat ke profile settings
             }}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg shadow-md transition ${isCritical ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'}`}
           >
