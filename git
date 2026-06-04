@@ -1,0 +1,47 @@
+[33m3d7b919[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Renewed CV
+[33mdeb9a29[m Perubahan pada sistem RESET PASSWORD untuk ADMIN
+[33m6d48f5f[m Cleanup comments
+[33m029b096[m delete docker
+[33md9db929[m Menghapus .env
+[33m19d6f2c[m Install library
+[33ma017fac[m Updated gitignore
+[33m392d4db[m Rename footer.tsx to Footer.tsx
+[33mec455f4[m Rename header.tsx to Header.tsx
+[33m818427e[m Updated for .env
+[33m114641f[m Fix README
+[33m3fb039a[m Fix UI
+[33m8cc1da9[m English ver README.md
+[33m047bc18[m Perubahan README.md
+[33ma6f8147[m docs: finalize docker and readme instructions
+[33m0e8dc16[m Update README.md
+[33m170d9ca[m Update README.md
+[33m1cbe318[m Update README.md
+[33mcd9c856[m Update README.md
+[33ma5fbb33[m Update README.md
+[33mfb71e64[m Update
+[33mf4ad16e[m README Update
+[33mdd3e26a[m Sorting projects in Analytics Page, Docker Setup
+[33m4bfbd62[m Completed User Management (Password dikirim email), Adjustments for ADMIN
+[33m7c79c92[m Readded ResetPasswordPage
+[33mb5d45ff[m Verify using OTP, User Management and Profile Page, UI adjusments
+[33mb7274f0[m Rework (New Cycle), Perbaikan UI, Clean code Edit, Add Project
+[33m1d8da5d[m Analytics Page, Footer changed
+[33mb605c36[m Ubah comment
+[33m8bcf860[m Ubah comment
+[33mbdda6b8[m Lengkapin localization
+[33mb8770dc[m Improvement Feature Completed
+[33mcf06381[m Removed Profiile & Settings
+[33m3b62bd1[m Pembuangan variabel yg tidak jadi dipakai
+[33md34833e[m Localization tiap page
+[33m749c3c6[m Bersihin Comment
+[33m90bebfb[m Perbaikan UI PIR
+[33m11ecb36[m Implemented RBAC on Timeline and Testing page
+[33mbe75ddc[m Sebelumnya juga memisahkan task timeline (Clean code)
+[33mc682f0b[m Update Role-based access
+[33mbd8af77[m SRP for PIR and Testing Page
+[33mff3f13a[m Refactor UI menjadi lebih readable with color template
+[33ma2add46[m Implement Clean code on EditProjectSheet.tsx
+[33m6c186d2[m Clean Code Part 1, Folder Directory (SRP for a few File)
+[33med5c2d4[m Perfected Gantt Chart (?)
+[33mb6e7210[m Optimized Code
+[33m0e09a85[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m New logs
