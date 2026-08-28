@@ -1,48 +1,73 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ⚙️ BSI CRG Task Dashboard - Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend RESTful API service built with **NestJS**, **Prisma ORM**, and **PostgreSQL** for the BSI CRG Task & Project Monitoring Dashboard.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Getting Started
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
+### 1. Install Dependencies
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+### 2. Environment Variables (.env)
+Create a `.env` file in the root of the `backend/` directory:
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/crg_dashboard?schema=public"
+PORT=3000
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+MAIL_HOST="smtp.gmail.com"
+MAIL_USER="your_email@gmail.com"
+MAIL_PASS="your_gmail_app_password"
+MAIL_FROM="your_email@gmail.com"
 ```
+
+### 3. Database Migration & Seeding
+```bash
+# Run migrations
+npx prisma migrate dev --name init
+
+# Seed database with super admin & sample projects
+npx prisma db seed
+```
+
+### 4. Run Development Server
+```bash
+npm run start:dev
+```
+Server will be available at `http://localhost:3000`.
+
+---
+
+## 📡 API Endpoints Overview
+
+| Module | Method | Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Auth** | `POST` | `/auth/login` | Login and obtain JWT token |
+| | `GET` | `/auth/me` | Get authenticated user profile & password expiry |
+| | `POST` | `/auth/forgot-password` | Request password reset OTP via email |
+| | `POST` | `/auth/reset-password` | Reset password using OTP code |
+| | `POST` | `/auth/request-change-password-otp` | Request OTP to change password |
+| | `PATCH`| `/auth/change-password` | Verify OTP and update password |
+| **Projects** | `GET` | `/project` | Get all projects with timeline & task relations |
+| | `POST` | `/project` | Create a new project |
+| | `PATCH`| `/project/:id` | Update project details / advance SDLC phase |
+| | `DELETE`| `/project/:id` | Delete a project (cascade) |
+| | `POST` | `/project/cycle/:id` | Advance project to next cycle |
+| **Timeline** | `POST` | `/project/log` | Add weekly progress log |
+| | `PATCH`| `/project/task/:id/toggle` | Toggle task completion |
+| **QA / UAT** | `GET` | `/project/:id/test-cases` | Get test cases for a project |
+| | `POST` | `/project/test-case` | Create test case |
+| | `PATCH`| `/project/test-case/:id` | Update test case & defects |
+| **PIR** | `GET` | `/project/issue` | Get all live issues |
+| | `POST` | `/project/issue` | Report a live issue |
+| | `POST` | `/project/improvement` | Add an improvement note |
+| **Audit** | `GET` | `/audit` | Get recent activity audit logs |
+| **Users** | `GET` | `/users` | Get user list (Admin only) |
+| | `POST` | `/users` | Create user (Admin only) |
+| | `PATCH`| `/users/:id/reset-password` | Admin reset password |
+
 
 ## Run tests
 
