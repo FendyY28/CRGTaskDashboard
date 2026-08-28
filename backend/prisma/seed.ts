@@ -1,11 +1,13 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting seeding...');
 
-  // 1. BERSIHKAN DATABASE (Hapus Child dulu baru Parent)
+  // 1. CLEAN UP DATABASE (Delete children first, then parents)
+  await prisma.auditLog.deleteMany();
   await prisma.defect.deleteMany();
   await prisma.testCase.deleteMany();
   await prisma.task.deleteMany();
@@ -14,9 +16,31 @@ async function main() {
   await prisma.issue.deleteMany();
   await prisma.improvement.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.user.deleteMany();
   
   console.log('🧹 Database cleaned.');
 
+  // -----------------------------------------------------------------------
+  // SEED ADMIN USER
+  // -----------------------------------------------------------------------
+  const saltRounds = 10;
+  const password = 'password123'; // Use a more secure password in production
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      name: 'Super Admin',
+      password: hashedPassword,
+      role: 'ADMIN', // This is the crucial part
+      isVerified: true, // Automatically verify the admin
+    },
+  });
+
+  console.log('👤 Admin user created:');
+  console.log(`   Email: ${adminUser.email}`);
+  console.log(`   Password: ${password}`);
+  
   // -----------------------------------------------------------------------
   // PROJECT 1: MOBILE BANKING (Data Lengkap)
   // -----------------------------------------------------------------------

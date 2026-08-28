@@ -503,5 +503,16 @@
         "passwordError": "Failed to change password."
       }
     }
+  },
+  "passwordModal": {
+    "warningTitle": "Password Expiry Reminder",
+    "criticalTitle": "Password Change Required!",
+    "expiredToday": "Expires Today",
+    "daysRemaining": "{{count}} days remaining",
+    "warningDesc": "In accordance with BSI security policy, passwords must be rotated every 180 days. Your password will expire on {{date}}.",
+    "criticalDesc": "Your account password is expiring very soon. Please update your password now to keep your account secure and prevent access lockout.",
+    "snooze": "Remind Me Later",
+    "dismiss": "Close",
+    "changeNow": "Change Password Now"
   }
 }

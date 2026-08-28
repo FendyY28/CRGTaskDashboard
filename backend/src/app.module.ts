@@ -23,15 +23,11 @@ import { UserModule } from './user/user.module';
       useFactory: async (config: ConfigService) => ({
         transport: {
           host: config.get('MAIL_HOST'), // smtp.gmail.com
-          port: 587, 
-          secure: false, // Port 587 wajib false, nanti naik ke TLS via STARTTLS
+          port: 587,
+          secure: false, // true for 465, false for other ports
           auth: {
             user: config.get('MAIL_USER'), // fendymagang@gmail.com
             pass: config.get('MAIL_PASS'), // qhebrthvwyzldejy (App Password)
-          },
-          tls: {
-            // Mengizinkan pengiriman meskipun sertifikat lokal tidak divalidasi
-            rejectUnauthorized: false, 
           },
         },
         defaults: {

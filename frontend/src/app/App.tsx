@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 
 import { Header } from "./components/layouts/Header";
 import { Footer } from "./components/layouts/Footer";
+import { PasswordWarningModal } from "./components/modals/PasswordWarningModal";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 import { AdminRoute } from "./components/routes/AdminRoute";
@@ -43,6 +44,7 @@ const DashboardLayout = () => {
         </Suspense>
       </main>
       <Footer />
+      <PasswordWarningModal />
     </div>
   );
 };

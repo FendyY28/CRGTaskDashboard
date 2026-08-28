@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { MailerService } from '@nestjs-modules/mailer';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from '../auth/auth.service'; 
 
@@ -8,6 +9,7 @@ import { AuthService } from '../auth/auth.service';
 export class UserService {
   constructor(
     private prisma: PrismaService,
+    private mailerService: MailerService,
     private authService: AuthService, 
   ) {}
 
@@ -55,7 +57,7 @@ export class UserService {
 
     // Kirim Email Welcome berisi kredensial login
     try {
-        await this.authService['mailerService'].sendMail({
+        await this.mailerService.sendMail({
             to: newUser.email,
             subject: '👋 Selamat Datang di BSI CRG - Kredensial Akun',
             html: this.authService['getPremiumTemplate'](

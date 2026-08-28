@@ -79,11 +79,32 @@ export class AuthService {
     return {
       message: 'Login berhasil',
       access_token: realToken, 
-      user: { id: user.id, email: user.email, role: user.role, name: user.name }
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        name: user.name,
+        passwordChangedAt: user.passwordChangedAt
+      }
     };
   }
 
-  // 3. FORGOT PASSWORD (MINTA OTP)
+  // 2.1 GET PROFILE (DENGAN TANGGAL GANTI PASSWORD ASLI DARI DB)
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        passwordChangedAt: true,
+        createdAt: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User tidak ditemukan.');
+    return user;
+  }
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Email tidak terdaftar.');

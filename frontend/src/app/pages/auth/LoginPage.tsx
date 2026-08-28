@@ -71,6 +71,9 @@ export function LoginPage() {
       localStorage.setItem(AUTH_KEYS.ROLE, result.user.role);
       localStorage.setItem("user_name", result.user.name);
       localStorage.setItem("user_email", result.user.email);
+      if (result.user?.passwordChangedAt) {
+        localStorage.setItem("password_changed_at", result.user.passwordChangedAt);
+      }
 
       if (form.rememberMe) {
         localStorage.setItem(AUTH_KEYS.REMEMBER_ME, JSON.stringify({

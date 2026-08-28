@@ -503,5 +503,16 @@
         "passwordError": "Gagal mengubah kata sandi."
       }
     }
+  },
+  "passwordModal": {
+    "warningTitle": "Pengingat Masa Berlaku Password",
+    "criticalTitle": "Wajib Ganti Password!",
+    "expiredToday": "Kedaluwarsa Hari Ini",
+    "daysRemaining": "Tersisa {{count}} hari lagi",
+    "warningDesc": "Sesuai kebijakan keamanan BSI, password wajib diperbarui setiap 180 hari. Password Anda akan kedaluwarsa pada tanggal {{date}}.",
+    "criticalDesc": "Masa berlaku password akun Anda akan segera habis. Harap segera perbarui password Anda untuk menjaga keamanan akun dan mencegah pemblokiran akses.",
+    "snooze": "Nanti Saja",
+    "dismiss": "Tutup",
+    "changeNow": "Ganti Password Sekarang"
   }
 }

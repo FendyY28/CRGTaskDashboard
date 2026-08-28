@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LogOut, 
@@ -9,8 +8,7 @@ import {
   ClipboardCheck,
   BarChart3,
   Users,
-  User,
-  AlertTriangle
+  User
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,7 +31,6 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const [isPasswordExpiring, setIsPasswordExpiring] = useState(false);
 
   const userData = {
     name: localStorage.getItem("user_name") || "Guest User",
@@ -41,31 +38,8 @@ export function Header() {
     role: getUserRoleFromToken() || "OFFICER", 
   };
 
-  useEffect(() => {
-    const lastChanged = localStorage.getItem("password_changed_at");
-    const referenceDate = lastChanged ? new Date(lastChanged) : new Date();
-
-    const expiryDate = new Date(referenceDate);
-    expiryDate.setDate(expiryDate.getDate() + 180);
-    
-    const now = new Date();
-    const diff = expiryDate.getTime() - now.getTime();
-    const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    
-    if (daysLeft <= 7) {
-      setIsPasswordExpiring(true);
-    } else {
-      setIsPasswordExpiring(false);
-    }
-  }, [location.pathname]);
-
   const getInitials = (name: string) => {
     return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
-  };
-
-  const handleWarningClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate('/settings/profile');
   };
 
   const baseNavItems = [
@@ -127,17 +101,6 @@ export function Header() {
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button className="h-12 flex items-center gap-3 px-2 hover:bg-gray-50 transition-colors focus:outline-none group cursor-pointer border-none bg-transparent rounded-lg relative">
-                  
-                  {isPasswordExpiring && (
-                    <div 
-                      onClick={handleWarningClick}
-                      className="bg-red-100 p-1.5 rounded-full flex items-center justify-center border border-red-200 shadow-sm hover:bg-red-200 transition-colors z-10" 
-                      title="Password akan segera kadaluarsa! Klik untuk ganti."
-                    >
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                    </div>
-                  )}
-
                   <div className="text-right hidden md:block">
                     <p className="text-sm font-bold text-gray-900 leading-none mb-1 capitalize">{userData.name}</p>
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">{userData.role}</p>
