@@ -10,8 +10,12 @@
 
   export const AuthLayout = ({ title, subtitle, children }: AuthLayoutProps) => {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4 font-sans">
-        <Card className="w-full max-w-md border-none shadow-2xl ring-1 ring-gray-100 rounded-[2rem] bg-white overflow-hidden relative z-10">
+      <div className="min-h-screen relative flex items-center justify-center p-4 font-sans bg-gradient-to-br from-[#00A39D]/15 via-[#FFFDF9] to-[#F8AD3C]/20 overflow-hidden">
+        {/* Background ambient orbs */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#00A39D]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#F8AD3C]/25 rounded-full blur-3xl pointer-events-none" />
+
+        <Card className="w-full max-w-md border border-white/60 shadow-2xl ring-1 ring-black/5 rounded-[2rem] bg-white/95 backdrop-blur-md overflow-hidden relative z-10">
           <CardContent className="p-10">
             
             <div className="flex flex-col items-center mb-8">

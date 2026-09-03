@@ -2,10 +2,11 @@ import { useState, memo } from "react";
 import { TableCell, TableRow } from "../../ui/table";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
-import { ChevronDown, ChevronUp, CheckCircle2, Loader2, X, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, Loader2, X, Trash2, Plus } from "lucide-react";
 import { PROJECT_STATUS, THEME } from "../../../constants/projectConstants"; 
 import { api } from "../../../services/api"; 
 import type { WeeklyProgress } from "../../../types";
+import { useTranslation } from "react-i18next";
 
 import { ProtectAction } from "../../auth/ProtectAction"; 
 
@@ -20,20 +21,42 @@ interface WeeklyRowProps {
 }
 
 export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDeleteLog, onRequestDeleteTask }: WeeklyRowProps) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskName, setNewTaskName] = useState("");
+  const [isSavingTask, setIsSavingTask] = useState(false);
+
   const color = projectStatus.includes('track') || projectStatus === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
   const handleCheck = async (tid: number, e: React.MouseEvent) => {
     e.stopPropagation(); 
     setLoadingId(tid);
     try { 
-      await api.patch(`/project/task/${tid}/toggle`); 
+      const completedBy = localStorage.getItem('user_name') || undefined;
+      await api.patch(`/project/task/${tid}/toggle`, { completedBy }); 
       onTaskToggle(); 
     } catch (err: any) { 
       alert(err.message || "Update failed"); 
     } finally { 
       setLoadingId(null); 
+    }
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskName.trim() || isSavingTask) return;
+    setIsSavingTask(true);
+    try {
+      await api.post(`/project/log/${week.id}/task`, { taskName: newTaskName.trim() });
+      setNewTaskName("");
+      setIsAddingTask(false);
+      onTaskToggle();
+    } catch (err: any) {
+      alert(err.message || "Gagal menambah tugas");
+    } finally {
+      setIsSavingTask(false);
     }
   };
 
@@ -116,7 +139,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className={`text-[10px] font-bold`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_GREY, borderColor: isDone ? THEME.TOSCA + '40' : THEME.BSI_LIGHT_GRAY + '50' }}>{isDone ? 'DONE' : 'WIP'}</Badge>
                         
-                        {/*  Sembunyikan icon hapus Task (X) */}
+                        {/* Sembunyikan icon hapus Task (X) */}
                         <ProtectAction>
                           <Button
                               variant="ghost" size="icon"
@@ -130,6 +153,55 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                   </div>
                 );
               }) : <div className="text-center text-xs py-2 italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>No tasks assigned.</div>}
+
+              {/* Form / Tombol Tambah Tugas Tambahan */}
+              <ProtectAction>
+                {!isAddingTask ? (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setIsAddingTask(true); }}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-xl border border-dashed border-gray-300 hover:border-[#38A79C] hover:bg-[#38A79C]/5 text-gray-500 hover:text-[#38A79C] transition-all cursor-pointer w-full mt-1"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>{t('timeline.projectCard.addTask', 'Tambah Tugas Baru')}</span>
+                  </button>
+                ) : (
+                  <form
+                    onSubmit={handleAddTask}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 p-2 bg-white border border-[#38A79C]/50 rounded-xl shadow-xs animate-in fade-in duration-200 mt-1"
+                  >
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newTaskName}
+                      onChange={(e) => setNewTaskName(e.target.value)}
+                      placeholder={t('timeline.projectCard.taskPlaceholder', 'Ketik nama tugas baru...')}
+                      className="flex-1 text-xs border-none bg-transparent focus:outline-none text-gray-800 placeholder-gray-400 px-2"
+                      disabled={isSavingTask}
+                    />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={!newTaskName.trim() || isSavingTask}
+                        className="h-7 text-xs px-3 bg-[#38A79C] hover:bg-[#38A79C]/90 text-white rounded-lg cursor-pointer"
+                      >
+                        {isSavingTask ? <Loader2 className="h-3 w-3 animate-spin" /> : t('common.save', 'Simpan')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); setIsAddingTask(false); setNewTaskName(""); }}
+                        className="h-7 text-xs px-2 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </ProtectAction>
             </div>
           </TableCell>
         </TableRow>

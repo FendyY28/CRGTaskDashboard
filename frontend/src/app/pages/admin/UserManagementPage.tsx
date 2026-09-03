@@ -86,26 +86,25 @@ export function UserManagementPage() {
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-            <Users style={{ color: THEME.TOSCA }} className="h-6 w-6" /> 
+          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+            <Users className="h-6 w-6 text-white" /> 
             {t('admin.userManagement.title', 'Manajemen Pengguna')}
           </h2>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-sm text-white/90 font-medium drop-shadow-xs">
             {t('admin.userManagement.subtitle', 'Atur akses dan role untuk tim internal Anda.')}
           </p>
         </div>
         
         <Button 
           onClick={() => setIsAddOpen(true)} 
-          style={{ backgroundColor: THEME.TOSCA }}
-          className="text-white font-bold gap-2 rounded-xl shadow-md transition-all hover:scale-[1.02] hover:brightness-95 focus-visible:ring-0 h-11 px-6"
+          className="bg-gradient-to-r from-[#F8AD3C] to-[#F59E0B] hover:brightness-110 text-white font-extrabold gap-2 rounded-xl shadow-lg shadow-amber-950/20 transition-all hover:scale-[1.02] border border-amber-300/30 focus-visible:ring-0 h-11 px-6 cursor-pointer"
         >
           <Plus className="h-4 w-4" /> {t('admin.userManagement.addUserBtn', 'Tambah Pengguna')}
         </Button>
       </div>
 
       {/* TOOLBAR (SEARCH & FILTER) */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl shadow-teal-950/5 border border-white/60 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative flex-1 w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 

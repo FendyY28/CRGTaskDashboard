@@ -52,4 +52,4 @@ export const ProjectRow = memo(({ proj, onEdit, onDelete }: ProjectRowProps) => 
   </div>
 ));
 
-ProjectRow.displayName = "ProjectRow";
+ProjectRow.displayName = "ProjectRow";

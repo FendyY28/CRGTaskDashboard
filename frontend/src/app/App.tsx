@@ -28,17 +28,24 @@ const ProfileSettingsPage = lazy(() => import("./pages/profile/ProfileSettingsPa
 const UserManagementPage = lazy(() => import("./pages/admin/UserManagementPage").then(module => ({ default: module.UserManagementPage })));
 
 const PageFallback = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] text-[#36A39D]">
-    <Loader2 className="h-8 w-8 animate-spin mb-4" />
-    <p className="font-bold tracking-widest uppercase text-xs text-gray-400">Loading Module...</p>
+  <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#00827D] via-[#009B95] to-[#E68A15] text-white">
+    <Loader2 className="h-8 w-8 animate-spin mb-4 text-white" />
+    <p className="font-bold tracking-widest uppercase text-xs text-white/80">Loading Module...</p>
   </div>
 );
 
 const DashboardLayout = () => {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-gray-900">
+    <div className="min-h-screen relative flex flex-col font-sans text-gray-900 bg-gradient-to-br from-[#00827D] via-[#009B95] to-[#E68A15] overflow-x-hidden">
+      {/* Dynamic BSI Ambient Glow Layers for depth */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[35rem] h-[35rem] bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -right-32 w-[35rem] h-[35rem] bg-[#F8AD3C]/25 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 left-1/4 w-[40rem] h-[40rem] bg-[#005D59]/30 rounded-full blur-3xl" />
+      </div>
+
       <Header />
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 relative z-[1]">
         <Suspense fallback={<PageFallback />}>
           <Outlet />
         </Suspense>

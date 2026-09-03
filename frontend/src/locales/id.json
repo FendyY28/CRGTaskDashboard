@@ -1,4 +1,17 @@
 {
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "confirm": "Konfirmasi",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "close": "Tutup",
+    "search": "Cari",
+    "loading": "Memuat...",
+    "all": "Semua",
+    "status": "Status",
+    "action": "Aksi"
+  },
   "header": {
     "profileSettings": "Pengaturan Profil",
     "menu": {
@@ -6,9 +19,38 @@
       "analytics": "Analitik",
       "timeline": "Linimasa",
       "testing": "Pengujian",
-      "pir": "PIR"
+      "pir": "PIR",
+      "users": "Pengguna"
     },
     "logout": "Keluar dari Sistem"
+  },
+  "gantt": {
+    "title": "Linimasa Gantt",
+    "cycleLabel": "Siklus",
+    "activeCycle": "Aktif",
+    "archiveCycle": "Arsip Riwayat",
+    "cycleRange": "Rentang Siklus: {{start}} - {{end}}",
+    "viewMode": {
+      "day": "Hari",
+      "week": "Minggu",
+      "month": "Bulan"
+    },
+    "tooltip": {
+      "status": "Status",
+      "progress": "Kemajuan",
+      "timeline": "Linimasa",
+      "onTrack": "SESUAI TARGET",
+      "atRisk": "BERESIKO",
+      "overdue": "TERLAMBAT",
+      "completed": "SELESAI",
+      "notStarted": "BELUM DIMULAI"
+    },
+    "noData": "Tidak ada data linimasa untuk Siklus {{cycle}}",
+    "checkCycle1": "Lihat Siklus 1",
+    "legend": {
+      "phasesTitle": "Fase SDLC:",
+      "statusTitle": "Kondisi Fase:"
+    }
   },
   "timeline": {
     "loading": "Memuat Linimasa...",
@@ -26,6 +68,63 @@
     "noProjectsFound": "Tidak ada proyek yang ditemukan untuk filter yang dipilih.",
     "quickNavigation": "Navigasi Cepat",
     "logTeamActivity": "Catat Aktivitas Tim",
+    "projectCard": {
+      "viewGantt": "Lihat Gantt",
+      "overallProgress": "Kemajuan Keseluruhan",
+      "phasesDone": "{{completed}} dari 6 fase selesai",
+      "sdlcRoadmap": "Peta Jalan SDLC",
+      "weeklyLogs": "Catatan Mingguan",
+      "activityLog": "Log Aktivitas",
+      "completedCount": "{{count}} selesai",
+      "seeAll": "Lihat Semua ({{count}})",
+      "noWeeklyLogs": "Belum ada pembaruan mingguan.",
+      "unassigned": "Belum Ditugaskan",
+      "addTask": "Tambah Tugas Baru",
+      "taskPlaceholder": "Ketik nama tugas baru...",
+      "tableHeaders": {
+        "phaseStep": "Langkah Fase",
+        "timeline": "Linimasa",
+        "status": "Status",
+        "period": "Periode",
+        "tasks": "Tugas",
+        "progress": "Kemajuan",
+        "percent": "%"
+      },
+      "modal": {
+        "title": "Log Aktivitas: {{name}}",
+        "description": "Total {{count}} tugas yang telah diselesaikan",
+        "searchPlaceholder": "Cari tugas, ID, periode, atau nama PIC...",
+        "noSearchResults": "Tidak ada aktivitas yang sesuai pencarian \"{{query}}\""
+      }
+    },
+    "gantt": {
+      "title": "Linimasa Gantt",
+      "cycleLabel": "Siklus",
+      "activeCycle": "Aktif",
+      "archiveCycle": "Arsip Riwayat",
+      "cycleRange": "Rentang Siklus: {{start}} - {{end}}",
+      "viewMode": {
+        "day": "Hari",
+        "week": "Minggu",
+        "month": "Bulan"
+      },
+      "tooltip": {
+        "status": "Status",
+        "progress": "Kemajuan",
+        "timeline": "Linimasa",
+        "onTrack": "SESUAI TARGET",
+        "atRisk": "BERESIKO",
+        "overdue": "TERLAMBAT",
+        "completed": "SELESAI",
+        "notStarted": "BELUM DIMULAI"
+      },
+      "noData": "Tidak ada data linimasa untuk Siklus {{cycle}}",
+      "checkCycle1": "Lihat Siklus 1",
+      "legend": {
+        "phasesTitle": "Fase SDLC:",
+        "statusTitle": "Status:"
+      }
+    },
     "deleteModal": {
       "titleLog": "Hapus Catatan Mingguan?",
       "titleTask": "Hapus Tugas?",
@@ -97,14 +196,22 @@
         "saveIssue": "Simpan Laporan",
         "saveIdea": "Kirim Ide"
       }
+    },
+    "search": {
+      "placeholder": "Cari judul, ID, atau pelapor di tab ini...",
+      "noResults": "Tidak ada hasil untuk \"{{query}}\""
+    },
+    "pagination": {
+      "showing": "Menampilkan",
+      "of": "dari",
+      "data": "data",
+      "rows": "Baris:",
+      "perPage": "/ hal",
+      "first": "Pertama",
+      "previous": "Sebelumnya",
+      "next": "Selanjutnya",
+      "last": "Terakhir"
     }
-  },
-  "common": {
-    "cancel": "Batal",
-    "confirm": "Konfirmasi",
-    "delete": "Hapus",
-    "status": "Status",
-    "action": "Aksi"
   },
   "dashboard": {
     "initializing": "Menyiapkan Dasbor...",
@@ -138,6 +245,7 @@
     "title": "Konsol Eksekusi UAT",
     "description": "Kelola dan eksekusi Pengujian Penerimaan Pengguna (UAT) untuk proyek aktif.",
     "sidebarTitle": "Proyek UAT Aktif",
+    "noUatProjects": "Belum ada proyek UAT aktif saat ini.",
     "stats": {
       "pass": "Lulus",
       "fail": "Gagal",
@@ -322,7 +430,8 @@
       "cancel": "Batal",
       "saving": "Menyimpan...",
       "saveChanges": "Simpan Perubahan",
-      "yesStart": "Ya, Mulai!"
+      "yesStart": "Ya, Mulai!",
+      "yesRollback": "Ya, Rework"
     },
     "nextCycleModal": {
       "title": "Siklus Berikutnya?",
@@ -330,6 +439,19 @@
       "desc2": "dan memulai",
       "desc3": "dari fase Kebutuhan.",
       "cycleText": "Siklus {{cycle}}"
+    },
+    "rollbackModal": {
+      "title": "Rework Fase",
+      "desc": "Anda akan memundurkan fase proyek dari",
+      "descSuffix": "Tindakan ini akan mengarsipkan status saat ini (Siklus {{cycle}}) dan memulai Siklus {{nextCycle}} untuk fase tersebut.",
+      "historyNote": "Ketika anda menekan tombol konfirmasi ini, akan tersimpan di History."
+    },
+    "phaseNotes": {
+      "title": "Catatan Fase",
+      "addNote": "Tambah",
+      "placeholder": "Sedang mengerjakan apa di fase ini? Contoh: Finalisasi dokumen SRS, testing skenario negatif...",
+      "noNotes": "Belum ada catatan untuk fase ini.",
+      "confirmDelete": "Apakah Anda yakin ingin menghapus catatan ini?"
     }
   },
   "pirComponents": {
@@ -463,7 +585,8 @@
       "success": {
         "add": "User berhasil ditambah! Kredensial telah dikirim ke email.",
         "reset": "Password direset! Kredensial baru telah dikirim ke email.",
-        "update": "Hak akses berhasil diperbarui!"
+        "update": "Hak akses berhasil diperbarui!",
+        "delete": "Pengguna berhasil dihapus permanen!"
       }
     }
   },

@@ -110,7 +110,7 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#36A39D] hover:bg-[#2b8580] text-white font-bold gap-2 px-6 rounded-xl shadow-md shadow-[#36A39D]/20 transition-all hover:scale-[1.02]">
+        <Button className="bg-gradient-to-r from-[#F8AD3C] to-[#F59E0B] hover:brightness-110 text-white font-extrabold gap-2 px-6 rounded-xl shadow-lg shadow-amber-950/20 transition-all hover:scale-[1.03] border border-amber-300/30 cursor-pointer">
           <Plus className="h-5 w-5" /> {t('addProject.triggerBtn')}
         </Button>
       </DialogTrigger>

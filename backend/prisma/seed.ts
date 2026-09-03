@@ -122,11 +122,11 @@ async function main() {
         create: [
           { 
             issueId: 'ISS-001', 
-            title: 'Network Timeout during Peak Hours', // ✅ FIX: Field title ditambahkan
+            title: 'Network Timeout during Peak Hours',
             priority: 'high', 
             description: 'Server timeout during peak hours between 10AM - 12PM', 
             impactArea: 'Performance', 
-            reportedBy: 'DevOps Team', 
+            reportedBy: 'Budi Santoso', 
             reportedDate: new Date('2025-12-15'), 
             status: 'open' 
           }
@@ -134,7 +134,7 @@ async function main() {
       },
       improvements: {
         create: [
-          { noteId: 'IMP-001', reviewer: 'QA Lead', developer: 'Backend Lead', feedback: 'Code refactoring needed for Payment Module', recommendations: 'Use Microservices', priority: 'medium', createdDate: new Date() }
+          { noteId: 'IMP-001', reviewer: 'Dewi Rahayu', developer: 'Ahmad Fauzi', feedback: 'Code refactoring needed for Payment Module', recommendations: 'Use Microservices', priority: 'medium', createdDate: new Date() }
         ]
       }
     },
@@ -165,11 +165,11 @@ async function main() {
         create: [
           { 
             issueId: 'ISS-002', 
-            title: 'Footer Link Broken', // ✅ FIX: Field title ditambahkan
+            title: 'Footer Link Broken',
             priority: 'low', 
             description: 'The social media links in the footer are pointing to 404 pages.', 
             impactArea: 'Functionality', 
-            reportedBy: 'Marketing Team', 
+            reportedBy: 'Sari Wulandari', 
             status: 'open' 
           }
         ]

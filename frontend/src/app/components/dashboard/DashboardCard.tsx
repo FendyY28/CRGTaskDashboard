@@ -14,11 +14,11 @@ export interface DashboardCardProps {
 }
 
 export const DashboardCard = ({ color, title, icon: Icon, headerAction, children, className, contentClassName }: DashboardCardProps) => (
-  <Card className={cn("border-none shadow-md bg-white overflow-hidden rounded-2xl ring-1 ring-gray-100", className)}>
+  <Card className={cn("border border-white/60 shadow-xl shadow-teal-950/5 bg-white/95 backdrop-blur-md overflow-hidden rounded-2xl ring-1 ring-black/5", className)}>
     {/* Ini adalah border atasnya */}
     <div className="p-1" style={{ background: color }} /> 
     
-    <CardHeader className="py-4 px-5 border-b border-gray-100 flex flex-row justify-between items-center bg-white sticky top-0 z-10">
+    <CardHeader className="py-4 px-6 border-b border-gray-100/80 flex flex-row justify-between items-center bg-white/90 backdrop-blur-xs sticky top-0 z-10">
       <div className="flex items-center gap-2 text-gray-800">
         {Icon && <Icon className="h-5 w-5" style={{ color: color }} />}
         <div className="flex flex-col">
@@ -34,7 +34,7 @@ export const DashboardCard = ({ color, title, icon: Icon, headerAction, children
       </div>
       {headerAction}
     </CardHeader>
-    <CardContent className={cn("p-5 bg-white", contentClassName)}>
+    <CardContent className={cn("p-6 bg-white/90", contentClassName)}>
       {children}
     </CardContent>
   </Card>

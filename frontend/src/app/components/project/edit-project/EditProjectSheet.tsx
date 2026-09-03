@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Loader2, FolderEdit, User, Activity, PlayCircle, BarChart3, Rocket, AlertCircle } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -13,6 +13,7 @@ import { capitalize } from "../../../../lib/utils";
 import { useTranslation } from "react-i18next";
 import { getToday, toFormDate, calcDate, getStatusColor, PHASES_ARRAY, STATUS_OPTIONS_ARRAY, INITIAL_FORM_STATE } from "./editProjectUtils";
 import { NextCycleModal, RollbackModal } from "../../modals/EditProjectModals";
+import { PhaseNotes } from "../../features/monitor/PhaseNotes";
 
 export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated }: any) {
   const { t } = useTranslation();
@@ -28,6 +29,19 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
   const [existingNames, setExistingNames] = useState<string[]>([]);
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [form, setForm] = useState(INITIAL_FORM_STATE);
+
+  // Derive ID dan catatan fase aktif dari data project
+  const { activePhaseId, phaseNotes } = useMemo(() => {
+    if (!project?.sdlcPhases) return { activePhaseId: null, phaseNotes: [] };
+    const curCycle = project.cycle || 1;
+    const activePhase = project.sdlcPhases.find(
+      (p: any) => p.phaseName === (form.currentPhase || project.currentPhase) && p.cycle === curCycle
+    );
+    return {
+      activePhaseId: activePhase?.id ?? null,
+      phaseNotes: activePhase?.notes ?? [],
+    };
+  }, [project?.sdlcPhases, project?.cycle, form.currentPhase]);
 
   useEffect(() => {
     if (!open) {
@@ -86,7 +100,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
       if (k === "currentPhase" && v !== p.currentPhase) {
         n.phaseStartDate = v === SDLC_PHASES.REQUIREMENT ? getToday() : (p.phaseDeadline || getToday());
         n.phaseDeadline = calcDate(n.phaseStartDate, 7, 'D');
-        n.overallProgress = "0"; n.phaseStatus = PROJECT_STATUS.IN_PROGRESS;
+        n.overallProgress = "0"; n.phaseStatus = PROJECT_STATUS.ON_TRACK;
         if (v === SDLC_PHASES.REQUIREMENT) { n.projectStartDate = n.phaseStartDate; n.projectDeadline = calcDate(n.phaseStartDate, 2, 'M'); n.status = PROJECT_STATUS.ON_TRACK; }
       }
       return n;
@@ -240,7 +254,13 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   {errs.ph && <p className="text-[10px] text-red-500"><AlertCircle className="w-2.5 h-2.5 inline" /> {t(`editProject.errors.${errs.ph}`)}</p>}
                 </div>
               </div>
-              
+
+              {/* PHASE NOTES — Catatan & Riwayat Progres per Fase */}
+              <PhaseNotes
+                phaseId={activePhaseId}
+                initialNotes={phaseNotes}
+                onRefresh={onProjectUpdated}
+              />
               {isFormValidButUnsaved && <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100"><AlertCircle className="h-3 w-3" /> {t('editProject.warnings.saveFirst')}</div>}
             </div>
 

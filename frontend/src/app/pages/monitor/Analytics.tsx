@@ -103,22 +103,22 @@ export function Analytics() {
       {/* HEADER & FILTER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="h-6 w-6" style={{ color: THEME.TOSCA }} /> {t('analytics.title')}
+          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+            <BarChart3 className="h-6 w-6 text-white" /> {t('analytics.title')}
           </h2>
-          <p className="text-sm font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('analytics.description')}</p>
+          <p className="text-sm font-medium text-white/90 drop-shadow-xs">{t('analytics.description')}</p>
         </div>
 
         {/* CUSTOM PREMIUM FILTER DROPDOWN */}
         <div className="relative" ref={filterRef}>
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 shadow-sm rounded-xl font-bold transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-200"
+            className="flex items-center gap-2 h-11 px-5 bg-white/95 backdrop-blur-md border border-white/60 shadow-lg shadow-teal-950/5 rounded-xl font-bold transition-all hover:bg-white hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-white/40 cursor-pointer"
             style={selectedProjects.length > 0 ? { 
               borderColor: THEME.TOSCA, 
               color: THEME.TOSCA, 
-              backgroundColor: `${THEME.TOSCA}0A` 
-            } : { color: '#4B5563' }}
+              backgroundColor: '#FFFFFF' 
+            } : { color: '#1F2937' }}
           >
             <Filter className="h-4 w-4" />
             {selectedProjects.length === 0 

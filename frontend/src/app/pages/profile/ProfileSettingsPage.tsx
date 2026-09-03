@@ -136,13 +136,13 @@ export function ProfileSettingsPage() {
   const inputClass = `h-11 bg-gray-50/50 border-gray-200 focus-visible:bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[${THEME.TOSCA}] transition-all duration-300 rounded-xl`;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10 text-left">
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-          <User style={{ color: THEME.TOSCA }} className="h-6 w-6" /> 
+        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+          <User className="h-6 w-6 text-white" /> 
           {t('settings.profile.title')}
         </h2>
-        <p className="text-sm text-gray-500 font-medium mt-1">
+        <p className="text-sm text-white/90 font-medium mt-1 drop-shadow-xs">
           {t('settings.profile.subtitle')}
         </p>
       </div>
@@ -150,8 +150,8 @@ export function ProfileSettingsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <div 
-            className={`p-6 rounded-3xl border shadow-sm flex items-center justify-between transition-all duration-500 ${
-              passwordTimer.isWarning ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'
+            className={`p-6 rounded-3xl border border-white/60 shadow-xl shadow-teal-950/5 bg-white/95 backdrop-blur-md flex items-center justify-between transition-all duration-500 ${
+              passwordTimer.isWarning ? 'bg-red-50/95 border-red-200' : ''
             }`}
           >
             <div className="flex items-center gap-4">
@@ -180,7 +180,7 @@ export function ProfileSettingsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl shadow-teal-950/5 border border-white/60 overflow-hidden">
             <div 
               style={{ backgroundColor: `${THEME.TOSCA}08`, borderBottomColor: `${THEME.TOSCA}1A` }}
               className="border-b p-6 flex items-center gap-3"
@@ -219,8 +219,7 @@ export function ProfileSettingsPage() {
                 <Button 
                   type="submit" 
                   disabled={isSavingProfile} 
-                  style={{ backgroundColor: THEME.TOSCA }}
-                  className="hover:brightness-95 text-white rounded-xl px-6 shadow-md transition-all h-11"
+                  className="bg-gradient-to-r from-[#F8AD3C] to-[#F59E0B] hover:brightness-110 text-white font-extrabold rounded-xl px-6 shadow-lg shadow-amber-950/20 transition-all h-11 border border-amber-300/30 cursor-pointer hover:scale-[1.02]"
                 >
                   {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
                   {t('settings.profile.saveBtn')}
@@ -231,7 +230,7 @@ export function ProfileSettingsPage() {
         </div>
 
         <div className="md:col-span-1">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden sticky top-6">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl shadow-teal-950/5 border border-white/60 overflow-hidden sticky top-24">
              <div className="bg-amber-50/50 border-b border-amber-100 p-5 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <ShieldCheck className="h-5 w-5 text-amber-600" />

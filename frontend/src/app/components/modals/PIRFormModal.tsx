@@ -41,7 +41,6 @@ export function PIRFormModal({
       await addIssue({ 
         ...issueForm, 
         projectId: selectedProject.id, 
-        issueId: `ISS-${Date.now().toString().slice(-4)}`,
         impactArea: "General",
         reportedBy: userName,
         reportedDate: new Date().toISOString(),
@@ -63,7 +62,6 @@ export function PIRFormModal({
       await addImprovement({ 
         ...impForm, 
         projectId: selectedProject.id, 
-        noteId: `IMP-${Date.now().toString().slice(-4)}`,
         reviewer: userName, 
         developer: "Team", 
         recommendations: impForm.description, 

@@ -12,11 +12,52 @@ export class ProjectService {
 
   private readonly MASTER_PHASES = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
 
+  // Helper Auto Sequential Code: 001 -> 002 -> 003 ... 999 -> 1000, 1001
+  private formatSeqId(prefix: string, num: number): string {
+    if (num < 1000) {
+      return `${prefix}-${num.toString().padStart(3, '0')}`;
+    }
+    return `${prefix}-${num}`;
+  }
+
+  private async nextId(prefix: string, model: 'project' | 'task' | 'issue' | 'improvement'): Promise<string> {
+    let idList: (string | null | undefined)[] = [];
+    if (model === 'project') {
+      const rows = await this.prisma.project.findMany({ select: { id: true } });
+      idList = rows.map(r => r.id);
+    } else if (model === 'task') {
+      const rows = await this.prisma.task.findMany({ select: { taskId: true } });
+      idList = rows.map(r => r.taskId);
+    } else if (model === 'issue') {
+      const rows = await this.prisma.issue.findMany({ select: { issueId: true } });
+      idList = rows.map(r => r.issueId);
+    } else if (model === 'improvement') {
+      const rows = await this.prisma.improvement.findMany({ select: { noteId: true } });
+      idList = rows.map(r => r.noteId);
+    }
+
+    const regex = new RegExp(`^${prefix}-(\\d{1,6})$`);
+    let maxNum = 0;
+    for (const idStr of idList) {
+      const match = idStr?.match(regex);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+    return this.formatSeqId(prefix, maxNum + 1);
+  }
+
   // 1. BASIC CRUD (FIND)
   async findAll() {
     return this.prisma.project.findMany({
       include: { 
-        sdlcPhases: true,
+        sdlcPhases: { 
+          include: { notes: { orderBy: { createdAt: 'desc' } } },
+          orderBy: [{ cycle: 'asc' }, { id: 'asc' }]
+        },
         issues: true, 
         improvements: true,
         weeklyProgress: { 
@@ -32,7 +73,10 @@ export class ProjectService {
     return this.prisma.project.findUnique({
       where: { id },
       include: { 
-        sdlcPhases: { orderBy: [{ cycle: 'asc' }, { id: 'asc' }] },
+        sdlcPhases: { 
+          include: { notes: { orderBy: { createdAt: 'desc' } } },
+          orderBy: [{ cycle: 'asc' }, { id: 'asc' }] 
+        },
         weeklyProgress: { 
           include: { tasks: { orderBy: { id: 'asc' } } }, 
           orderBy: { id: 'desc' } 
@@ -46,7 +90,7 @@ export class ProjectService {
 
   // 2. CREATE PROJECT
   async create(data: any, userId: string) {
-    const generatedId = `PRJ-${Date.now().toString().slice(-4)}`; 
+    const generatedId = await this.nextId('PRJ', 'project'); 
     const initialPhase = data.currentPhase || "Requirement";
 
     const newProject = await this.prisma.project.create({
@@ -101,7 +145,7 @@ export class ProjectService {
           // Cari atau buat fase baru di cycle ini
           const targetPhase = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle } });
           const newPhaseData: any = { 
-              status: requestData.phaseStatus || 'in-progress', 
+              status: requestData.phaseStatus || requestData.status || 'on-track', 
               startDate: requestData.phaseStartDate ? new Date(requestData.phaseStartDate) : new Date(), 
               deadline: requestData.phaseDeadline ? new Date(requestData.phaseDeadline) : undefined 
           };
@@ -115,6 +159,9 @@ export class ProjectService {
           if (requestData.phaseDeadline) phaseUpdatePayload.deadline = new Date(requestData.phaseDeadline);
           if (requestData.phaseStartDate) phaseUpdatePayload.startDate = new Date(requestData.phaseStartDate);
           if (requestData.phaseStatus) phaseUpdatePayload.status = requestData.phaseStatus;
+          if (requestData.overallProgress !== undefined) {
+            phaseUpdatePayload.progress = typeof requestData.overallProgress === 'string' ? parseInt(requestData.overallProgress) : requestData.overallProgress;
+          }
 
           if (Object.keys(phaseUpdatePayload).length > 0) { 
             await tx.sDLCPhase.updateMany({ where: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle }, data: phaseUpdatePayload }); 
@@ -145,7 +192,7 @@ export class ProjectService {
         detail = `Ubah status project ${updatedProject.name} menjadi ${requestData.status}`;
     }
 
-    await this.auditService.log(userId, action, detail);
+    await this.auditService.log(userId, action, detail, id);
     return updatedProject;
   }
 
@@ -166,32 +213,35 @@ export class ProjectService {
   }
 
   async createIssue(data: any, userId: string) {
+    const issueId = (data.issueId && !data.issueId.startsWith('ISS-')) ? data.issueId : await this.nextId('ISS', 'issue');
     const issue = await this.prisma.issue.create({
       data: {
-        issueId: data.issueId, title: data.title, priority: data.priority, description: data.description,
+        issueId: issueId, title: data.title, priority: data.priority, description: data.description,
         impactArea: data.impactArea || "General", reportedBy: data.reportedBy || "System", status: "open", projectId: data.projectId
       }
     });
-    await this.auditService.log(userId, "CREATE_ISSUE", `Report Issue baru: ${data.title} (${data.issueId})`);
+    await this.auditService.log(userId, "CREATE_ISSUE", `Report Issue baru: ${data.title} (${issueId})`, data.projectId);
     return issue;
   }
 
   async updateIssue(id: number, data: any, userId: string) {
     const issue = await this.prisma.issue.update({ where: { id: Number(id) }, data: { status: data.status } });
-    await this.auditService.log(userId, "UPDATE_ISSUE", `Update status Issue ${issue.issueId} menjadi ${data.status}`);
+    await this.auditService.log(userId, "UPDATE_ISSUE", `Update status Issue ${issue.issueId} menjadi ${data.status}`, issue.projectId);
     return issue;
   }
 
   async removeIssue(id: number, userId: string) {
-    const issue = await this.prisma.issue.delete({ where: { id: Number(id) } });
-    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue.title}`);
+    const issue = await this.prisma.issue.findUnique({ where: { id: Number(id) } });
+    await this.prisma.issue.delete({ where: { id: Number(id) } });
+    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue?.title}`, issue?.projectId);
     return issue;
   }
 
   async createImprovement(data: any, userId: string) {
+    const noteId = (data.noteId && !data.noteId.startsWith('IMP-')) ? data.noteId : await this.nextId('IMP', 'improvement');
     const imp = await this.prisma.improvement.create({
       data: { 
-        noteId: data.noteId, 
+        noteId: noteId, 
         title: data.title || "Optimization Idea",
         reviewer: data.reviewer, 
         developer: data.developer, 
@@ -203,7 +253,7 @@ export class ProjectService {
         projectId: data.projectId 
       }
     });
-    await this.auditService.log(userId, "ADD_IMPROVEMENT", `Menambah catatan improvement untuk project`);
+    await this.auditService.log(userId, "ADD_IMPROVEMENT", `Menambah catatan improvement untuk project (${noteId})`, data.projectId);
     return imp;
   }
 
@@ -223,11 +273,11 @@ export class ProjectService {
     });
 
     // CATAT KE ACTIVITY LOG (AUDIT LOG)
-    // Mencatat siapa yang menghapus dan ID/Deskripsi idenya
     await this.auditService.log(
       userId, 
       "DELETE_IMPROVEMENT", 
-      `Menghapus Ide Optimalisasi: ${imp.title}`
+      `Menghapus Ide Optimalisasi: ${imp.title}`,
+      imp.projectId
     );
 
     return deletedImp;
@@ -236,10 +286,33 @@ export class ProjectService {
   // 6. WEEKLY PROGRESS (TIMELINE)
   async addLog(data: any, userId: string) {
     const taskList = Array.isArray(data.tasks) ? data.tasks : [data.tasks];
+    
+    // Hitung base max number untuk TSK
+    const taskRows = await this.prisma.task.findMany({ select: { taskId: true } });
+    const regex = /^TSK-(\d{1,6})$/;
+    let maxNum = 0;
+    for (const r of taskRows) {
+      const match = r.taskId?.match(regex);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+    const baseNum = maxNum;
+
     const log = await this.prisma.weeklyProgress.create({
       data: {
         projectId: data.projectId, weekRange: data.weekRange, progress: parseInt(data.progress) || 0, completed: 0, total: taskList.length,
-        tasks: { create: taskList.map((taskName: string, index: number) => ({ taskId: `TSK-${Date.now()}-${index}`, taskName: taskName, status: 'in-progress', completedDate: null })) }
+        tasks: { 
+          create: taskList.map((taskName: string, index: number) => ({ 
+            taskId: this.formatSeqId('TSK', baseNum + index + 1), 
+            taskName: taskName, 
+            status: 'in-progress', 
+            completedDate: null 
+          })) 
+        }
       }
     });
     await this.auditService.log(userId, "ADD_WEEKLY_LOG", `Menambah Weekly Progress ${data.weekRange}`);
@@ -271,11 +344,72 @@ export class ProjectService {
       return log;
   }
 
-  async toggleTask(taskId: number, userId: string) {
+  async addTask(weeklyProgressId: number, taskName: string, userId: string) {
+    if (!taskName || !taskName.trim()) {
+      throw new Error("Nama task tidak boleh kosong");
+    }
+
+    const parent = await this.prisma.weeklyProgress.findUnique({
+      where: { id: weeklyProgressId },
+      include: { tasks: true }
+    });
+
+    if (!parent) {
+      throw new NotFoundException("Weekly Progress not found");
+    }
+
+    // Auto-generate sequential TSK ID
+    const taskId = await this.nextId('TSK', 'task');
+
+    const newTask = await this.prisma.task.create({
+      data: {
+        taskId,
+        taskName: taskName.trim(),
+        status: 'in-progress',
+        completedDate: null,
+        completedBy: null,
+        weeklyProgressId: weeklyProgressId
+      }
+    });
+
+    // Recalculate parent progress & total
+    const updatedParent = await this.prisma.weeklyProgress.findUnique({
+      where: { id: weeklyProgressId },
+      include: { tasks: true }
+    });
+
+    if (updatedParent) {
+      const total = updatedParent.tasks.length;
+      const completed = updatedParent.tasks.filter(t => t.status === 'completed').length;
+      const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      await this.prisma.weeklyProgress.update({
+        where: { id: weeklyProgressId },
+        data: { total, completed, progress }
+      });
+    }
+
+    await this.auditService.log(
+      userId,
+      "ADD_TASK",
+      `Menambahkan tugas baru "${taskName.trim()}" (${taskId}) ke Weekly Log #${weeklyProgressId}`
+    );
+
+    return newTask;
+  }
+
+  async toggleTask(taskId: number, userId: string, completedBy?: string) {
     const task = await this.prisma.task.findUnique({ where: { id: taskId }, });
     if (!task) throw new Error("Task not found");
     const newStatus = task.status === 'completed' ? 'in-progress' : 'completed';
-    await this.prisma.task.update({ where: { id: taskId }, data: { status: newStatus, completedDate: newStatus === 'completed' ? new Date() : null } });
+    await this.prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: newStatus,
+        completedDate: newStatus === 'completed' ? new Date() : null,
+        completedBy: newStatus === 'completed' ? (completedBy || 'Officer') : null
+      }
+    });
     const parentWeek = await this.prisma.weeklyProgress.findUnique({ where: { id: task.weeklyProgressId }, include: { tasks: true } });
     if (parentWeek) {
       const total = parentWeek.tasks.length;
@@ -451,10 +585,34 @@ export class ProjectService {
     newPhaseDeadline.setDate(newPhaseDeadline.getDate() + 7);
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
-        // KUNCI DATA LAMA (Archive)
+        // 1. KUNCI & SIMPAN DATA FASE AKTIF DI CYCLE LAMA (termasuk UAT / fase lainnya)
+        const currentActivePhase = oldProject.currentPhase;
+        
+        // Simpan progress & status aktual dari fase aktif di cycle lama
+        await tx.sDLCPhase.updateMany({
+            where: { projectId: id, cycle: currentCycle, phaseName: currentActivePhase },
+            data: { 
+                progress: oldProject.overallProgress || 0,
+                status: oldProject.status || 'completed'
+            } 
+        });
+
+        // 2. Kunci semua fase yang dilewati sebelum fase aktif di cycle lama menjadi completed
+        const curPhaseIdx = this.MASTER_PHASES.indexOf(currentActivePhase);
+        if (curPhaseIdx !== -1) {
+            for (let i = 0; i < curPhaseIdx; i++) {
+                const passedPhase = this.MASTER_PHASES[i];
+                await tx.sDLCPhase.updateMany({
+                    where: { projectId: id, cycle: currentCycle, phaseName: passedPhase },
+                    data: { status: 'completed', progress: 100 }
+                });
+            }
+        }
+
+        // Kunci semua fase yang masih in-progress di cycle lama menjadi completed
         await tx.sDLCPhase.updateMany({
             where: { projectId: id, cycle: currentCycle, status: 'in-progress' },
-            data: { status: 'completed' } 
+            data: { status: 'completed', progress: 100 } 
         });
 
         // UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
@@ -464,7 +622,7 @@ export class ProjectService {
                 cycle: nextCycle, 
                 overallProgress: 0, 
                 currentPhase: initialPhaseForNewCycle, 
-                status: 'in-progress',
+                status: 'on-track',
                 projectStartDate: today,
                 projectDeadline: newGlobalDeadline
             } 
@@ -478,7 +636,7 @@ export class ProjectService {
                     projectId: id, 
                     phaseName, 
                     cycle: nextCycle, 
-                    status: isInitial ? 'in-progress' : 'pending',
+                    status: isInitial ? 'on-track' : 'pending',
                     progress: 0, // Reset progress per fase
                     startDate: isInitial ? today : null, 
                     deadline: isInitial ? newPhaseDeadline : null 
@@ -494,7 +652,49 @@ export class ProjectService {
 
     if (!updatedProject) throw new Error("Gagal memuat data project setelah cycle baru.");
 
-    await this.auditService.log(userId, "NEXT_CYCLE", `Project ${updatedProject.name} dinaikkan ke Cycle ${nextCycle} mulai di fase ${initialPhaseForNewCycle}`);
+    await this.auditService.log(userId, "NEXT_CYCLE", `Project ${updatedProject.name} dinaikkan ke Cycle ${nextCycle} mulai di fase ${initialPhaseForNewCycle}`, updatedProject.id);
     return updatedProject;
+  }
+
+  // 7. PHASE NOTES (Catatan Progres per Fase SDLC)
+  async addPhaseNote(phaseId: number, content: string, userId: string) {
+    // Cari nama user
+    let createdBy = "Unknown User";
+    if (userId) {
+      const user = await this.prisma.user.findFirst({ where: { OR: [{ id: userId }, { email: userId }] } });
+      if (user) createdBy = user.name;
+    }
+
+    const note = await this.prisma.phaseNote.create({
+      data: { phaseId, content, createdBy }
+    });
+
+    // Cari info fase untuk audit log
+    const phase = await this.prisma.sDLCPhase.findUnique({ where: { id: phaseId }, include: { project: true } });
+    if (phase) {
+      await this.auditService.log(userId, "ADD_PHASE_NOTE", `Menambahkan catatan ke fase ${phase.phaseName} (Cycle ${phase.cycle}) pada project ${phase.project.name}`, phase.projectId);
+    }
+
+    return note;
+  }
+
+  async getPhaseNotes(phaseId: number) {
+    return this.prisma.phaseNote.findMany({
+      where: { phaseId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async deletePhaseNote(noteId: number, userId: string) {
+    const note = await this.prisma.phaseNote.findUnique({ where: { id: noteId }, include: { phase: { include: { project: true } } } });
+    if (!note) throw new Error("Catatan tidak ditemukan");
+
+    await this.prisma.phaseNote.delete({ where: { id: noteId } });
+
+    if (note.phase) {
+      await this.auditService.log(userId, "DELETE_PHASE_NOTE", `Menghapus catatan dari fase ${note.phase.phaseName} pada project ${note.phase.project.name}`, note.phase.projectId);
+    }
+
+    return { success: true };
   }
 }

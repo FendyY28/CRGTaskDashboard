@@ -38,10 +38,12 @@ model AuditLog {
   details   String
   userName  String  
   userId    String
+  projectId String?
   createdAt DateTime @default(now())
 
-  // Relasi ke User
+  // Relasi ke User & Project
   user      User     @relation(fields: [userId], references: [id])
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 }
 
 // PROJECT CORE
@@ -72,6 +74,7 @@ model Project {
   testCases        TestCase[]
   issues           Issue[]
   improvements     Improvement[]
+  auditLogs        AuditLog[]
 }
 
 // TIMELINE & PROGRESS (GANTT CHART DATA)
@@ -92,6 +95,20 @@ model SDLCPhase {
 
   projectId String
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Catatan / Progress Notes per Fase
+  notes     PhaseNote[]
+}
+
+// CATATAN PROGRES PER FASE SDLC
+model PhaseNote {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  createdBy String    // Nama user yang menulis
+  createdAt DateTime  @default(now())
+
+  phaseId   Int
+  phase     SDLCPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
 }
 
 // WEEKLY LOGS
@@ -113,6 +130,7 @@ model Task {
   taskName         String
   status           String         // completed, in-progress
   completedDate    DateTime?
+  completedBy      String?
   
   weeklyProgressId Int
   weeklyProgress   WeeklyProgress @relation(fields: [weeklyProgressId], references: [id], onDelete: Cascade)

@@ -1,4 +1,17 @@
 {
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "loading": "Loading...",
+    "all": "All",
+    "status": "Status",
+    "action": "Action"
+  },
   "header": {
     "profileSettings": "Profile Settings",
     "menu": {
@@ -6,9 +19,38 @@
       "analytics": "Analytics",
       "timeline": "Timeline",
       "testing": "Testing",
-      "pir": "PIR"
+      "pir": "PIR",
+      "users": "Users"
     },
     "logout": "Logout from System"
+  },
+  "gantt": {
+    "title": "Gantt Timeline",
+    "cycleLabel": "Cycle",
+    "activeCycle": "Active",
+    "archiveCycle": "History Archive",
+    "cycleRange": "Cycle Range: {{start}} - {{end}}",
+    "viewMode": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "tooltip": {
+      "status": "Status",
+      "progress": "Progress",
+      "timeline": "Timeline",
+      "onTrack": "ON TRACK",
+      "atRisk": "AT RISK",
+      "overdue": "OVERDUE",
+      "completed": "COMPLETED",
+      "notStarted": "NOT STARTED"
+    },
+    "noData": "No timeline data for Cycle {{cycle}}",
+    "checkCycle1": "Check Cycle 1",
+    "legend": {
+      "phasesTitle": "SDLC Phases:",
+      "statusTitle": "Phase Condition:"
+    }
   },
   "timeline": {
     "loading": "Loading Timelines...",
@@ -26,6 +68,63 @@
     "noProjectsFound": "No projects found for the selected filter.",
     "quickNavigation": "Quick Navigation",
     "logTeamActivity": "Log Team Activity",
+    "projectCard": {
+      "viewGantt": "View Gantt",
+      "overallProgress": "Overall Progress",
+      "phasesDone": "{{completed}} of 6 phases done",
+      "sdlcRoadmap": "SDLC Roadmap",
+      "weeklyLogs": "Weekly Logs",
+      "activityLog": "Activity Log",
+      "completedCount": "{{count}} completed",
+      "seeAll": "See All ({{count}})",
+      "noWeeklyLogs": "No weekly updates yet.",
+      "unassigned": "Unassigned",
+      "addTask": "Add New Task",
+      "taskPlaceholder": "Type new task name...",
+      "tableHeaders": {
+        "phaseStep": "Phase Step",
+        "timeline": "Timeline",
+        "status": "Status",
+        "period": "Period",
+        "tasks": "Tasks",
+        "progress": "Progress",
+        "percent": "%"
+      },
+      "modal": {
+        "title": "Activity Log: {{name}}",
+        "description": "Total {{count}} completed tasks",
+        "searchPlaceholder": "Search task, ID, period, or PIC name...",
+        "noSearchResults": "No activities matching \"{{query}}\""
+      }
+    },
+    "gantt": {
+      "title": "Gantt Timeline",
+      "cycleLabel": "Cycle",
+      "activeCycle": "Active",
+      "archiveCycle": "History Archive",
+      "cycleRange": "Cycle Range: {{start}} - {{end}}",
+      "viewMode": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      },
+      "tooltip": {
+        "status": "Status",
+        "progress": "Progress",
+        "timeline": "Timeline",
+        "onTrack": "ON TRACK",
+        "atRisk": "AT RISK",
+        "overdue": "OVERDUE",
+        "completed": "COMPLETED",
+        "notStarted": "NOT STARTED"
+      },
+      "noData": "No timeline data for Cycle {{cycle}}",
+      "checkCycle1": "Check Cycle 1",
+      "legend": {
+        "phasesTitle": "SDLC Phases:",
+        "statusTitle": "Status:"
+      }
+    },
     "deleteModal": {
       "titleLog": "Delete Weekly Log?",
       "titleTask": "Delete Task?",
@@ -97,14 +196,22 @@
         "saveIssue": "Save Report",
         "saveIdea": "Submit Idea"
       }
+    },
+    "search": {
+      "placeholder": "Search by title, ID, or reporter in this tab...",
+      "noResults": "No results for \"{{query}}\""
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "data": "items",
+      "rows": "Rows:",
+      "perPage": "/ page",
+      "first": "First",
+      "previous": "Previous",
+      "next": "Next",
+      "last": "Last"
     }
-  },
-  "common": {
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "delete": "Delete",
-    "status": "Status",
-    "action": "Action"
   },
   "dashboard": {
     "initializing": "Initializing Dashboard...",
@@ -138,6 +245,7 @@
     "title": "UAT Execution Console",
     "description": "Manage and execute User Acceptance Testing for active projects.",
     "sidebarTitle": "Active UAT Projects",
+    "noUatProjects": "No active UAT projects available at the moment.",
     "stats": {
       "pass": "Pass",
       "fail": "Fail",
@@ -322,7 +430,8 @@
       "cancel": "Cancel",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
-      "yesStart": "Yes, Start!"
+      "yesStart": "Yes, Start!",
+      "yesRollback": "Yes, Rework"
     },
     "nextCycleModal": {
       "title": "Next Cycle?",
@@ -330,6 +439,19 @@
       "desc2": "and start",
       "desc3": "from the Requirement phase.",
       "cycleText": "Cycle {{cycle}}"
+    },
+    "rollbackModal": {
+      "title": "Rework Phase",
+      "desc": "You will rework the project phase from",
+      "descSuffix": "This action will archive the current status (Cycle {{cycle}}) and start Cycle {{nextCycle}} for that phase.",
+      "historyNote": "When you click this confirmation button, it will be saved in History."
+    },
+    "phaseNotes": {
+      "title": "Phase Notes",
+      "addNote": "Add",
+      "placeholder": "What are you working on in this phase? E.g.: Finalizing SRS document, testing negative scenarios...",
+      "noNotes": "No notes yet for this phase.",
+      "confirmDelete": "Are you sure you want to delete this note?"
     }
   },
   "pirComponents": {
@@ -463,7 +585,8 @@
       "success": {
         "add": "User added! Credentials sent to email.",
         "reset": "Password reset! New credentials sent to email.",
-        "update": "Access rights updated successfully!"
+        "update": "Access rights updated successfully!",
+        "delete": "User deleted permanently!"
       }
     }
   },

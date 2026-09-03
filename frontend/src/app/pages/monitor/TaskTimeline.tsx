@@ -100,16 +100,16 @@ export function TaskTimeline() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: THEME.BSI_DARK_GRAY }}>
+          <h2 className="text-2xl font-black tracking-tight text-white drop-shadow-xs">
             {view === 'list' ? t('timeline.title') : t('timeline.ganttView', { name: selProject?.name })}
           </h2>
           {view === 'detail' && (
-            <Button variant="outline" onClick={() => { setView('list'); setSelProject(null); }} className="gap-2 h-9 rounded-xl border-gray-200 hover:bg-gray-50" style={{ color: THEME.BSI_GREY }}>
+            <Button variant="outline" onClick={() => { setView('list'); setSelProject(null); }} className="gap-2 h-9 rounded-xl border-white/30 bg-white/20 text-white hover:bg-white/30 shadow-sm backdrop-blur-xs">
               <ArrowLeft className="h-4 w-4"/> {t('timeline.backToTimeline')}
             </Button>
           )}
         </div>
-        <p className="text-sm font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('timeline.description')}</p>
+        <p className="text-sm font-medium text-white/90 drop-shadow-xs">{t('timeline.description')}</p>
       </div>
 
       {view === 'list' ? (

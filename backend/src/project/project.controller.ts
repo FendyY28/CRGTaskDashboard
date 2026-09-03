@@ -145,12 +145,19 @@ export class ProjectController {
     return this.projectService.updateLog(+id, updateData, userId);
   }
 
+  @Post('log/:id/task')
+  @UseGuards(JwtAuthGuard)
+  async addTask(@Param('id') id: string, @Body('taskName') taskName: string, @Request() req) {
+    const userId = this.getUserId(req, req.body);
+    return this.projectService.addTask(+id, taskName, userId);
+  }
+
   @Patch('task/:id/toggle')
   @UseGuards(JwtAuthGuard) 
-  async toggleTask(@Param('id') id: string, @Request() req) {
+  async toggleTask(@Param('id') id: string, @Body('completedBy') completedBy: string, @Request() req) {
     // Toggle task biasanya pakai logic khusus, kita ambil dari req.body jika frontend kirim
     const userId = this.getUserId(req, req.body);
-    return this.projectService.toggleTask(+id, userId);
+    return this.projectService.toggleTask(+id, userId, completedBy);
   }
 
   @Delete('task/:id')
@@ -232,9 +239,34 @@ export class ProjectController {
     async nextCycle(
       @Param('id') id: string, 
       @Request() req,
-      @Body() body?: { targetPhase?: string } // 🔥 TAMBAHKAN @Body() DI SINI
+      @Body() body?: { targetPhase?: string }
     ) {
-      const userId = this.getUserId(req, body); // body dikirim ke helper juga untuk jaga-jaga
-      return this.projectService.nextCycle(id, userId, body); // 🔥 LEMPAR body KE SERVICE
+      const userId = this.getUserId(req, body);
+      return this.projectService.nextCycle(id, userId, body);
     }
+
+  // 7. PHASE NOTES ENDPOINTS
+  @Post('phase/:phaseId/note')
+  @UseGuards(JwtAuthGuard)
+  async addPhaseNote(
+    @Param('phaseId') phaseId: string,
+    @Body() body: { content: string },
+    @Request() req,
+  ) {
+    const userId = this.getUserId(req, body);
+    return this.projectService.addPhaseNote(parseInt(phaseId), body.content, userId);
+  }
+
+  @Get('phase/:phaseId/notes')
+  @UseGuards(JwtAuthGuard)
+  async getPhaseNotes(@Param('phaseId') phaseId: string) {
+    return this.projectService.getPhaseNotes(parseInt(phaseId));
+  }
+
+  @Delete('phase/note/:noteId')
+  @UseGuards(JwtAuthGuard)
+  async deletePhaseNote(@Param('noteId') noteId: string, @Request() req) {
+    const userId = this.getUserId(req);
+    return this.projectService.deletePhaseNote(parseInt(noteId), userId);
+  }
 }

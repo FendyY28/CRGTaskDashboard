@@ -40,3 +40,12 @@ export const THEME = {
   BSI_LIGHT_GRAY: "#76777A",
   BSI_LIGHT_GOLD: "#B0851E",
 } as const;
+
+export const PHASE_COLORS: Record<string, { solid: string; bg: string; border: string; text: string; light: string }> = {
+  Requirement: { solid: "#6366F1", bg: "#EEF2FF", border: "#C7D2FE", text: "#4338CA", light: "#E0E7FF" }, // Indigo
+  "TF Meeting": { solid: "#0EA5E9", bg: "#F0F9FF", border: "#BAE6FD", text: "#0369A1", light: "#E0F2FE" }, // Sky Blue
+  Development: { solid: "#00A39D", bg: "#F0FDFA", border: "#99F6E4", text: "#0F766E", light: "#CCFBF1" }, // BSI Tosca
+  SIT: { solid: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", text: "#B45309", light: "#FEF3C7" },         // Amber
+  UAT: { solid: "#8B5CF6", bg: "#F5F3FF", border: "#DDD6FE", text: "#6D28D9", light: "#EDE9FE" },         // Purple
+  Live: { solid: "#10B981", bg: "#ECFDF5", border: "#A7F3D0", text: "#047857", light: "#D1FAE5" }         // Emerald
+};

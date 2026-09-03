@@ -92,10 +92,10 @@ export function TestingStatus() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-left relative">
       <div className="flex flex-col gap-1 mb-8 pb-2">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6" style={{ color: THEME.TOSCA }} /> {t('testing.title')}
+        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+          <ShieldCheck className="h-6 w-6 text-white" /> {t('testing.title')}
         </h2>
-        <p className="text-sm text-gray-500">{t('testing.description')}</p>
+        <p className="text-sm text-white/90 font-medium drop-shadow-xs">{t('testing.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -109,14 +109,14 @@ export function TestingStatus() {
             setSelectedProject(project);
             fetchTestCases(project.id);
           }}
-          emptyStateText={t('pir.noLiveProjects') /* atau text empty state lain jika ada */}
+          emptyStateText={t('testing.noUatProjects')}
         />
 
         {/* Main Content */}
         <main className="lg:col-span-3 space-y-6">
           {selectedProject ? (
             <>
-              <Card className="border-none shadow-sm ring-1 ring-gray-200 bg-white rounded-2xl overflow-hidden">
+              <Card className="border border-white/60 shadow-xl shadow-teal-950/5 ring-1 ring-black/5 bg-white/95 backdrop-blur-md rounded-2xl overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                     <div className="text-left">
@@ -130,13 +130,13 @@ export function TestingStatus() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" onClick={() => setIsShowingDeleted(!isShowingDeleted)} className={`h-10 gap-2 border-dashed transition-all ${isShowingDeleted ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'text-gray-500 border-gray-300 hover:text-gray-700'}`}>
+                        <Button variant="outline" onClick={() => setIsShowingDeleted(!isShowingDeleted)} className={`h-10 gap-2 border-dashed transition-all ${isShowingDeleted ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
                             {isShowingDeleted ? <LayoutList className="h-4 w-4"/> : <ArchiveX className="h-4 w-4"/>}
                             {isShowingDeleted ? t('testing.buttons.showActive') : t('testing.buttons.takeoutCases')}
                         </Button>
 
                         <ProtectAction>
-                          <Button onClick={() => setActiveModal({ type: 'add' })} className="text-white font-bold gap-2 shadow-md rounded-xl h-10 px-6 hover:opacity-90 transition-opacity" style={{ backgroundColor: THEME.TOSCA }}>
+                          <Button onClick={() => setActiveModal({ type: 'add' })} className="bg-gradient-to-r from-[#F8AD3C] to-[#F59E0B] text-white font-extrabold gap-2 shadow-lg shadow-amber-950/20 rounded-xl h-10 px-6 hover:scale-[1.02] transition-all border border-amber-300/30 cursor-pointer">
                               <Plus className="h-4 w-4" /> {t('testing.buttons.addTestCase')}
                           </Button>
                         </ProtectAction>
@@ -168,7 +168,7 @@ export function TestingStatus() {
                           <TestCaseRow key={testCase.id} item={testCase} onAction={handleTestCaseAction} />
                         ))}
                         {testCasesInSuite.length === 0 && (
-                            <div className="p-4 text-center text-xs text-gray-400 border border-dashed rounded-xl italic">
+                            <div className="p-5 text-center text-xs text-gray-700 bg-white/95 backdrop-blur-md border border-white/60 shadow-lg shadow-teal-950/5 rounded-2xl font-bold">
                                 {isShowingDeleted ? t('testing.suite.noTakenOut') : t('testing.suite.noActive')}
                             </div>
                         )}
@@ -179,9 +179,9 @@ export function TestingStatus() {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400 bg-white rounded-2xl border-2 border-dashed border-gray-100">
-              <ShieldCheck className="h-16 w-16 mb-4 text-gray-100" />
-              <p className="font-bold tracking-tight">{t('testing.emptyState')}</p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-700 bg-white/95 backdrop-blur-md rounded-2xl border border-white/60 shadow-xl shadow-teal-950/5 p-8">
+              <ShieldCheck className="h-16 w-16 mb-4 text-[#00A39D]/30" />
+              <p className="font-bold text-base text-gray-800 tracking-tight">{t('testing.emptyState')}</p>
             </div>
           )}
         </main>

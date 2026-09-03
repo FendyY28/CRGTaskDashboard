@@ -18,6 +18,7 @@ export interface Task {
   taskName: string;
   status: string;   // 'completed', 'in-progress', etc.
   completedDate?: string;
+  completedBy?: string;
 }
 
 export interface WeeklyProgress {
