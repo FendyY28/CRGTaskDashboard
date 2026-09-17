@@ -8,7 +8,8 @@ import {
   ClipboardCheck,
   BarChart3,
   Users,
-  User
+  User,
+  ShieldCheck
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,12 +21,12 @@ import {
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
-import BSILogo from "../../../assets/Logo BSI.png"; 
-import { LanguageSwitcher } from "./LanguageSwitcher"; 
+import BSILogo from "../../../assets/Logo BSI.png";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { getUserRoleFromToken } from "../../../lib/utils";
 
-import { THEME } from "../../constants/projectConstants"; 
+import { THEME } from "../../constants/projectConstants";
 
 export function Header() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export function Header() {
   const userData = {
     name: localStorage.getItem("user_name") || "Guest User",
     email: localStorage.getItem("user_email") || "guest@bsi.co.id",
-    role: getUserRoleFromToken() || "OFFICER", 
+    role: getUserRoleFromToken() || "OFFICER",
   };
 
   const getInitials = (name: string) => {
@@ -48,6 +49,7 @@ export function Header() {
     { id: "timeline", label: t('header.menu.timeline', 'Timeline'), icon: <ListChecks className="h-4 w-4" /> },
     { id: "testing", label: t('header.menu.testing', 'Testing'), icon: <TestTube2 className="h-4 w-4" /> },
     { id: "post-implementation", label: t('header.menu.pir', 'PIR'), icon: <ClipboardCheck className="h-4 w-4" /> },
+    { id: "audit-trail", label: t('header.menu.audit', 'Audit Trail'), icon: <ShieldCheck className="h-4 w-4" /> },
   ];
 
   const navItems = userData.role === 'ADMIN' 

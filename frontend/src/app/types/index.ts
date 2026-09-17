@@ -35,6 +35,7 @@ export interface SDLCPhase {
   phaseName: string;
   startDate: string;
   deadline: string;
+  cycle?: number;
   status: string;   // 'completed', 'in-progress', 'pending'
 }
 

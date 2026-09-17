@@ -5,13 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../com
 import { AddProjectSheet } from "../../components/project/add-project/AddProjectSheet";
 import { EditProjectSheet } from "../../components/project/edit-project/EditProjectSheet"; 
 import { useProjects } from "../../hooks/useProjects";
-import { PageHeader, DashboardKpiCard, DashboardCard } from "../../components/dashboard";
+import { PageHeader, DashboardKpiCard, DashboardCard, UpcomingDeadlinesCard } from "../../components/dashboard";
 import { PhaseBlock } from "../../components/features/monitor/PhaseBlock";
-import { ActivityLog } from "./ActivityLog"; 
 import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../constants/projectConstants";
 import { toast } from "sonner";
 import type { Project } from "../../types";
-import { ProtectAction } from "../../components/auth/ProtectAction"; 
+import { ProtectAction } from "../../components/auth/ProtectAction";
 import { useTranslation } from "react-i18next";
 
 const PHASES_LIST = Object.values(SDLC_PHASES);
@@ -35,9 +34,9 @@ export function OverviewDashboard() {
         setIsDeleting(false);
         return t('dashboard.toast.deleteSuccess');
       },
-      error: (err) => { 
-        setIsDeleting(false); 
-        return err.message || t('dashboard.toast.deleteFail'); 
+      error: (err) => {
+        setIsDeleting(false);
+        return err.message || t('dashboard.toast.deleteFail');
       }
     });
   };
@@ -46,17 +45,17 @@ export function OverviewDashboard() {
     const statsCounter = { totalCount: 0, activeCount: 0, completedCount: 0, newThisMonthCount: 0, deliveredThisMonthCount: 0 };
     const projectsGroupedByPhase: Record<string, Project[]> = {};
     const currentDate = new Date();
-    
+
     projects.forEach(project => {
-      statsCounter.totalCount++; 
+      statsCounter.totalCount++;
       const createdDate = new Date(project.createdAt);
-      
+
       if (createdDate.getMonth() === currentDate.getMonth() && createdDate.getFullYear() === currentDate.getFullYear()) {
         statsCounter.newThisMonthCount++;
       }
-      
+
       const isProjectCompleted = project.currentPhase === SDLC_PHASES.LIVE && Number(project.overallProgress) === 100;
-      
+
       if (isProjectCompleted) {
         statsCounter.completedCount++;
       } else {
@@ -66,7 +65,7 @@ export function OverviewDashboard() {
       if (isProjectCompleted && new Date(project.updatedAt).getMonth() === currentDate.getMonth()) {
         statsCounter.deliveredThisMonthCount++;
       }
-      
+
       if (!projectsGroupedByPhase[project.currentPhase]) {
         projectsGroupedByPhase[project.currentPhase] = [];
       }
@@ -76,13 +75,13 @@ export function OverviewDashboard() {
     const breakdownData = PHASES_LIST.map(phaseName => {
       const projectsInPhase = projectsGroupedByPhase[phaseName] || [];
       const phaseProgress = projectsInPhase.length ? Math.round(projectsInPhase.reduce((sum, proj) => sum + Number(proj.overallProgress), 0) / projectsInPhase.length) : 0;
-      
-      return { 
-        phase: phaseName, 
-        progress: phaseProgress, 
-        count: projectsInPhase.length, 
-        projects: projectsInPhase, 
-        status: projectsInPhase.length ? (phaseProgress === 100 ? PROJECT_STATUS.COMPLETED : PROJECT_STATUS.IN_PROGRESS) : PROJECT_STATUS.PENDING 
+
+      return {
+        phase: phaseName,
+        progress: phaseProgress,
+        count: projectsInPhase.length,
+        projects: projectsInPhase,
+        status: projectsInPhase.length ? (phaseProgress === 100 ? PROJECT_STATUS.COMPLETED : PROJECT_STATUS.IN_PROGRESS) : PROJECT_STATUS.PENDING
       };
     });
 
@@ -94,55 +93,55 @@ export function OverviewDashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-        <PageHeader 
-          title={t('dashboard.title')} 
-          description={t('dashboard.description')} 
+        <PageHeader
+          title={t('dashboard.title')}
+          description={t('dashboard.description')}
         />
-        
+
         <ProtectAction>
           <AddProjectSheet onProjectAdded={() => { refresh(); toast.success(t('dashboard.toast.createSuccess')); }} />
         </ProtectAction>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardKpiCard 
-          label={t('dashboard.totalProjects')} 
-          count={dashboardStats.totalCount} 
-          icon={FolderKanban} 
-          trend={dashboardStats.newThisMonthCount > 0 ? t('dashboard.newThisMonth', { count: dashboardStats.newThisMonthCount }) : ""} 
-          color={THEME.TOSCA} 
-          clickable={false} 
+        <DashboardKpiCard
+          label={t('dashboard.totalProjects')}
+          count={dashboardStats.totalCount}
+          icon={FolderKanban}
+          trend={dashboardStats.newThisMonthCount > 0 ? t('dashboard.newThisMonth', { count: dashboardStats.newThisMonthCount }) : ""}
+          color={THEME.TOSCA}
+          clickable={false}
         />
-        <DashboardKpiCard 
-          label={t('dashboard.activeProjects')} 
-          count={dashboardStats.activeCount} 
-          icon={Clock} 
-          description={t('dashboard.currentlyInProgress')} 
-          color={THEME.BSI_YELLOW} 
-          clickable={false} 
+        <DashboardKpiCard
+          label={t('dashboard.activeProjects')}
+          count={dashboardStats.activeCount}
+          icon={Clock}
+          description={t('dashboard.currentlyInProgress')}
+          color={THEME.BSI_YELLOW}
+          clickable={false}
         />
-        <DashboardKpiCard 
-          label={t('dashboard.freshlyLive')} 
-          count={dashboardStats.deliveredThisMonthCount} 
-          icon={Rocket} 
-          description={t('dashboard.launchedThisMonth')} 
-          color="#8B5CF6" 
-          clickable={false} 
+        <DashboardKpiCard
+          label={t('dashboard.freshlyLive')}
+          count={dashboardStats.deliveredThisMonthCount}
+          icon={Rocket}
+          description={t('dashboard.launchedThisMonth')}
+          color="#8B5CF6"
+          clickable={false}
         />
-        <DashboardKpiCard 
-          label={t('dashboard.completed')} 
-          count={dashboardStats.completedCount} 
-          icon={CheckCircle2} 
-          color="#059669" 
-          clickable={false} 
+        <DashboardKpiCard
+          label={t('dashboard.completed')}
+          count={dashboardStats.completedCount}
+          icon={CheckCircle2}
+          color="#059669"
+          clickable={false}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         <div className="lg:col-span-2">
-          <DashboardCard 
-            icon={LayoutDashboard} 
-            color={THEME.TOSCA} 
+          <DashboardCard
+            icon={LayoutDashboard}
+            color={THEME.TOSCA}
             title={t('dashboard.sdlcBreakdown')}
             className="h-full"
             contentClassName="pt-6 space-y-6"
@@ -152,11 +151,9 @@ export function OverviewDashboard() {
             ))}
           </DashboardCard>
         </div>
-        
+
         <div className="lg:col-span-1">
-          <div className="h-full">
-            <ActivityLog />
-          </div>
+          <UpcomingDeadlinesCard projects={projects} />
         </div>
       </div>
 

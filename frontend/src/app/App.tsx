@@ -22,6 +22,7 @@ const TaskTimeline = lazy(() => import("./pages/monitor/TaskTimeline").then(modu
 const TestingStatus = lazy(() => import("./pages/monitor/TestingStatus").then(module => ({ default: module.TestingStatus })));
 const PostImplementation = lazy(() => import("./pages/monitor/PostImplementation").then(module => ({ default: module.PostImplementation })));
 const Analytics = lazy(() => import("./pages/monitor/Analytics").then(module => ({ default: module.Analytics })));
+const AuditTrailPage = lazy(() => import("./pages/audit/AuditTrailPage").then(module => ({ default: module.AuditTrailPage })));
 
 const ProfileSettingsPage = lazy(() => import("./pages/profile/ProfileSettingsPage").then(module => ({ default: module.ProfileSettingsPage })));
 
@@ -64,7 +65,7 @@ export default function App() {
       <Router>
         <Suspense fallback={<PageFallback />}>
           <Routes>
-            
+
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/testing" element={<TestingStatus />} />
                 <Route path="/post-implementation" element={<PostImplementation />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/audit-trail" element={<AuditTrailPage />} />
                 
                 {/* 🔥 ROUTE UNTUK SEMUA USER */}
                 <Route path="/settings/profile" element={<ProfileSettingsPage />} />
