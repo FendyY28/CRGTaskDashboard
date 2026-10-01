@@ -1,7 +1,8 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { History, User, Clock, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "../../../services/api";
 import { THEME } from "../../../constants/projectConstants";
+import { useTranslation } from "react-i18next";
 
 interface LogEntry {
   id: string;
@@ -11,13 +12,6 @@ interface LogEntry {
   createdAt: string;
   user?: { name: string; email: string; role: string };
   project?: { id: string; name: string } | null;
-}
-
-function fmtDate(raw?: string) {
-  if (!raw) return "";
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -35,12 +29,14 @@ const ACTION_COLORS: Record<string, string> = {
   ADD_IMPROVEMENT: "#2563eb",
   DELETE_IMPROVEMENT: "#9f1239",
   ADD_WEEKLY_LOG: "#64748b",
+  UPDATE_WEEKLY_LOG: "#475569",
   DELETE_WEEKLY_LOG: "#475569",
   CREATE_TEST_CASE: "#16a34a",
   UPDATE_TEST_CASE: "#2563eb",
-  DELETE_TEST_CASE: "#dc2626",
+  TAKEOUT_TEST_CASE: "#dc2626",
   TOGGLE_TASK: "#0d9488",
   DELETE_TASK: "#dc2626",
+  ADD_TASK: "#0d9488",
 };
 
 const getActionColor = (action: string) => ACTION_COLORS[action] || THEME.BSI_GREY;
@@ -50,6 +46,7 @@ interface ProjectHistoryTimelineProps {
 }
 
 export function ProjectHistoryTimeline({ projectId }: ProjectHistoryTimelineProps) {
+  const { t, i18n } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -72,35 +69,66 @@ export function ProjectHistoryTimeline({ projectId }: ProjectHistoryTimelineProp
     fetchLogs();
   }, [fetchLogs]);
 
+  const formatDate = (raw?: string) => {
+    if (!raw) return "";
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return "";
+    const locale = i18n.language === "en" ? "en-US" : "id-ID";
+    return d.toLocaleString(locale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div className="mt-4 border-t border-gray-100 pt-4">
       <button
         type="button"
-        onClick={() => { setExpanded(v => !v); setDisplayCount(5); }}
+        onClick={() => {
+          setExpanded((v) => !v);
+          setDisplayCount(5);
+        }}
         className="flex items-center justify-between w-full text-left select-none group"
       >
         <div className="flex items-center gap-2">
           <History className="h-4 w-4" style={{ color: THEME.TOSCA }} />
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
-            Riwayat Perubahan Proyek
+          <span
+            className="text-[11px] font-bold uppercase tracking-widest"
+            style={{ color: THEME.BSI_GREY }}
+          >
+            {t("audit.history.title", "Riwayat Perubahan Proyek")}
           </span>
           {logs.length > 0 && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.TOSCA + "20", color: THEME.TOSCA }}>
+            <span
+              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ backgroundColor: THEME.TOSCA + "20", color: THEME.TOSCA }}
+            >
               {logs.length}
             </span>
           )}
         </div>
-        {expanded ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5 text-gray-400" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+        )}
       </button>
 
       {expanded && (
         <div className="mt-3 space-y-3">
           {loading ? (
-            <p className="text-[11px] text-center py-4 animate-pulse text-gray-400">Memuat riwayat...</p>
+            <p className="text-[11px] text-center py-4 animate-pulse text-gray-400">
+              {t("audit.history.loading", "Memuat riwayat...")}
+            </p>
           ) : logs.length === 0 ? (
             <div className="text-center py-6">
               <History className="h-7 w-7 text-gray-200 mx-auto mb-1" />
-              <p className="text-[11px] text-gray-400 italic">Belum ada riwayat untuk proyek ini.</p>
+              <p className="text-[11px] text-gray-400 italic">
+                {t("audit.history.empty", "Belum ada riwayat untuk proyek ini.")}
+              </p>
             </div>
           ) : (
             <div className="space-y-0 max-h-72 overflow-y-auto pr-1">
@@ -111,7 +139,10 @@ export function ProjectHistoryTimeline({ projectId }: ProjectHistoryTimelineProp
                   )}
                   <div
                     className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 z-10 mt-1 shadow-sm border-2 border-white"
-                    style={{ backgroundColor: getActionColor(log.action) + "20", color: getActionColor(log.action) }}
+                    style={{
+                      backgroundColor: getActionColor(log.action) + "20",
+                      color: getActionColor(log.action),
+                    }}
                   >
                     <Filter className="h-2.5 w-2.5" />
                   </div>
@@ -119,12 +150,16 @@ export function ProjectHistoryTimeline({ projectId }: ProjectHistoryTimelineProp
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span
                         className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide border"
-                        style={{ color: getActionColor(log.action), borderColor: getActionColor(log.action) + "40", backgroundColor: getActionColor(log.action) + "10" }}
+                        style={{
+                          color: getActionColor(log.action),
+                          borderColor: getActionColor(log.action) + "40",
+                          backgroundColor: getActionColor(log.action) + "10",
+                        }}
                       >
-                        {log.action.replace(/_/g, " ")}
+                        {t(`audit.actions.${log.action}`, log.action.replace(/_/g, " "))}
                       </span>
                       <span className="flex items-center gap-1 text-[9px] text-gray-400 shrink-0">
-                        <Clock className="h-2 w-2" /> {fmtDate(log.createdAt)}
+                        <Clock className="h-2 w-2" /> {formatDate(log.createdAt)}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-700 mt-1 leading-relaxed">{log.details}</p>
@@ -138,10 +173,14 @@ export function ProjectHistoryTimeline({ projectId }: ProjectHistoryTimelineProp
               {logs.length > displayCount && (
                 <button
                   type="button"
-                  onClick={() => setDisplayCount(c => c + 10)}
+                  onClick={() => setDisplayCount((c) => c + 10)}
                   className="w-full text-center text-[10px] font-semibold py-2 text-gray-400 hover:text-[#38A79C] transition-colors border-t border-gray-100 mt-1"
                 >
-                  Tampilkan {Math.min(10, logs.length - displayCount)} log lagi ({logs.length - displayCount} tersisa)
+                  {t("audit.history.showMore", {
+                    count: Math.min(10, logs.length - displayCount),
+                    remaining: logs.length - displayCount,
+                    defaultValue: `Tampilkan ${Math.min(10, logs.length - displayCount)} log lagi (${logs.length - displayCount} tersisa)`,
+                  })}
                 </button>
               )}
             </div>

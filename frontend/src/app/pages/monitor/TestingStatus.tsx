@@ -92,7 +92,7 @@ export function TestingStatus() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10 text-left relative">
       <div className="flex flex-col gap-1 mb-8 pb-2">
-        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+        <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
           <ShieldCheck className="h-6 w-6 text-white" /> {t('testing.title')}
         </h2>
         <p className="text-sm text-white/90 font-medium drop-shadow-xs">{t('testing.description')}</p>

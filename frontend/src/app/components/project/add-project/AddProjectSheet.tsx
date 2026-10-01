@@ -27,25 +27,31 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
     setFormData({ ...INITIAL_FORM, startDate: getToday(), deadline: calcDate(getToday(), 2, 'M'), phaseStartDate: getToday(), phaseDeadline: calcDate(getToday(), 7, 'D') });
     
     const url = API_URL ? `${API_URL}/project` : 'http://localhost:3000/project';
-    fetch(url, { headers: { 'Content-Type': 'application/json' } })
+    const token = localStorage.getItem("auth_token");
+    fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    })
       .then(res => res.json())
       .then((data: any[]) => Array.isArray(data) && setExistingData({
         names: data.map(p => p.name.toLowerCase()),
         codes: data.map(p => p.id.toLowerCase())
       }))
-      .catch(() => setStatusMsg({ error: "loadValidationFailed" })); 
+      .catch(() => setStatusMsg({ error: "loadValidationFailed" }));
   }, [open]);
 
   useEffect(() => {
     const errs: Record<string, string> = {};
     const { name, code, startDate: s, deadline: d, phaseStartDate: ps, phaseDeadline: pd } = formData;
-    
+
     if (name && existingData.names.includes(name.trim().toLowerCase())) errs.name = "nameExists";
     if (code && existingData.codes.includes(code.trim().toLowerCase())) errs.code = "codeExists";
     if (s && d && new Date(s) > new Date(d)) errs.dates = "deadlineBeforeStart";
     if (ps && pd && new Date(ps) > new Date(pd)) errs.phaseDates = "phaseDeadlineBeforeStart";
     else if (s && ps && new Date(ps) < new Date(s)) errs.phaseDates = "phaseBeforeProject";
-    
+
     setErrors(errs);
     setStatusMsg({});
   }, [formData, existingData]);
@@ -59,7 +65,7 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
         next.phaseStartDate = value;
         next.phaseDeadline = calcDate(value, 7, 'D');
       }
-      if (key === "phaseStartDate") next.phaseDeadline = calcDate(value, 7, 'D'); 
+      if (key === "phaseStartDate") next.phaseDeadline = calcDate(value, 7, 'D');
       return next;
     });
   };
@@ -75,22 +81,30 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
 
       const payload = {
         ...formData,
-        overallProgress: Number(formData.overallProgress), 
+        overallProgress: Number(formData.overallProgress),
         startDate: new Date(formData.startDate),
         deadline: new Date(formData.deadline),
         phaseStartDate: new Date(formData.phaseStartDate),
         phaseDeadline: new Date(formData.phaseDeadline),
         code: formData.code.trim() === "" ? undefined : formData.code,
-        performedBy: realUserId 
+        performedBy: realUserId
       };
 
+      const token = localStorage.getItem("auth_token");
       const res = await fetch(url, {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify(payload)
       });
-      
-      if (!res.ok) throw new Error("saveFailed"); 
+
+      if (!res.ok) {
+        let message = "saveFailed";
+        try { message = (await res.json())?.message || message; } catch {}
+        throw new Error(message);
+      }
 
       setStatusMsg({ success: "created" }); 
       onProjectAdded?.();

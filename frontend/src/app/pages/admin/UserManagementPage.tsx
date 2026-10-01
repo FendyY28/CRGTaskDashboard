@@ -86,7 +86,7 @@ export function UserManagementPage() {
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
-          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+          <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
             <Users className="h-6 w-6 text-white" /> 
             {t('admin.userManagement.title', 'Manajemen Pengguna')}
           </h2>

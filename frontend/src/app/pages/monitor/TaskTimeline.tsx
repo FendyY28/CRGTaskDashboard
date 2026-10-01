@@ -100,7 +100,8 @@ export function TaskTimeline() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black tracking-tight text-white drop-shadow-xs">
+          <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white drop-shadow-xs">
+            <LayoutDashboard className="h-6 w-6 text-white" />
             {view === 'list' ? t('timeline.title') : t('timeline.ganttView', { name: selProject?.name })}
           </h2>
           {view === 'detail' && (

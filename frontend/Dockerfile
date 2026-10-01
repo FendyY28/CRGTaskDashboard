@@ -1,9 +1,13 @@
 # Stage 1: Build the React application
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# VITE_API_URL di-bake saat build. Nilai ini dibaca browser, jadi harus
+# alamat publik backend, bukan nama service Docker.
+ARG VITE_API_URL=http://localhost:3000
+ENV VITE_API_URL=$VITE_API_URL
 # Note: If you are using Create React App instead of Vite, change 'dist' below to 'build'
 RUN npm run build
 

@@ -5,12 +5,12 @@ import {
 } from "recharts";
 import { 
   Activity, PieChart as PieIcon, BarChart3, AlertTriangle, 
-  TrendingUp, CheckCircle2, Filter, CheckSquare, Square, X, Search 
+  TrendingUp, CheckCircle2, Filter, CheckSquare, Square, X, Search
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { THEME } from "../../constants/projectConstants"; 
-import { DashboardCard } from "../../components/dashboard/index"; 
+import { THEME } from "../../constants/projectConstants";
+import { DashboardCard } from "../../components/dashboard/index";
 import { useAnalyticsData } from "../../hooks/useAnalyticsData";
 
 // --- TOOLTIPS ---
@@ -29,7 +29,7 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 
 const CustomAvgProgressTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload; 
+    const data = payload[0].payload;
     return (
       <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 text-xs animate-in zoom-in-95 duration-200">
         <p className="font-bold text-gray-800 mb-3 border-b border-gray-50 pb-2 text-sm">Phase: {label}</p>
@@ -103,7 +103,7 @@ export function Analytics() {
       {/* HEADER & FILTER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+          <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
             <BarChart3 className="h-6 w-6 text-white" /> {t('analytics.title')}
           </h2>
           <p className="text-sm font-medium text-white/90 drop-shadow-xs">{t('analytics.description')}</p>

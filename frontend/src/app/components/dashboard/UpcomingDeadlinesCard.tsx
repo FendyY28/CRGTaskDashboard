@@ -21,7 +21,9 @@ interface DeadlineItem {
   daysLeft: number;
 }
 
-export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) {
+export function UpcomingDeadlinesCard({
+  projects,
+}: UpcomingDeadlinesCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const now = new Date();
@@ -38,14 +40,21 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
       if (!deadline || Number.isNaN(deadline.getTime())) return [];
       const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / dayMs);
       return daysLeft <= 14 && project.status !== "completed"
-        ? [{ project, phaseName: phase?.phaseName || project.currentPhase, deadline, daysLeft }]
+        ? [
+            {
+              project,
+              phaseName: phase?.phaseName || project.currentPhase,
+              deadline,
+              daysLeft,
+            },
+          ]
         : [];
     })
     .sort((a, b) => a.deadline.getTime() - b.deadline.getTime())
     .slice(0, 6);
 
   const urgentProjects = projects.filter(
-    (project) => project.status === "at-risk" || project.status === "overdue",
+    (p) => p.status === "at-risk" || p.status === "overdue",
   );
 
   return (
@@ -64,7 +73,8 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
               {t("upcoming.urgent", "Urgent project alerts")}
             </p>
             <p className="text-[11px] text-red-600">
-              {urgentProjects.length} {t("upcoming.urgentDescription", "project(s) require attention")}
+              {urgentProjects.length}{" "}
+              {t("upcoming.urgentDescription", "project(s) require attention")}
             </p>
           </div>
         </div>
@@ -81,20 +91,30 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
             return (
               <button
                 key={`${item.project.id}-${item.phaseName}`}
-                onClick={() => navigate(`/audit-trail?projectId=${encodeURIComponent(item.project.id)}`)}
+                onClick={() =>
+                  navigate(
+                    `/audit-trail?projectId=${encodeURIComponent(item.project.id)}`,
+                  )
+                }
                 className="flex w-full items-center gap-3 rounded-lg border-gray-100 bg-gray-50/70 p-3 text-left transition hover:border-teal-200 hover:bg-teal-50/40"
               >
                 <CalendarClock
                   className={`h-4 w-4 shrink-0 ${overdue ? "text-red-500" : item.daysLeft <= 7 ? "text-amber-500" : "text-gray-400"}`}
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-bold text-gray-800">{item.project.name}</span>
+                  <span className="block truncate text-xs font-bold text-gray-800">
+                    {item.project.name}
+                  </span>
                   <span className="block truncate text-[10px] text-gray-500">
                     {item.phaseName} · {item.deadline.toLocaleDateString()}
                   </span>
                 </span>
-                <span className={`shrink-0 text-[10px] font-bold ${overdue ? "text-red-600" : item.daysLeft <= 7 ? "text-amber-600" : "text-gray-500"}`}>
-                  {overdue ? t("upcoming.overdue", "Overdue") : `${item.daysLeft} ${t("upcoming.days", "days")}`}
+                <span
+                  className={`shrink-0 text-[10px] font-bold ${overdue ? "text-red-600" : item.daysLeft <= 7 ? "text-amber-600" : "text-gray-500"}`}
+                >
+                  {overdue
+                    ? t("upcoming.overdue", "Overdue")
+                    : `${item.daysLeft} ${t("upcoming.days", "days")}`}
                 </span>
               </button>
             );
@@ -106,7 +126,9 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
         onClick={() => navigate("/audit-trail")}
         className="flex w-full items-center justify-center gap-2 border-t border-gray-100 pt-3 text-xs font-bold text-[#38A79C] hover:text-[#267d76]"
       >
-        {t("upcoming.auditTrail", "Open System Audit Trail")} <ArrowRight className="h-3.5 w-3.5" /> <ExternalLink className="h-3 w-3" />
+        {t("upcoming.auditTrail", "Open System Audit Trail")}{" "}
+        <ArrowRight className="h-3.5 w-3.5" />{" "}
+        <ExternalLink className="h-3 w-3" />
       </button>
     </DashboardCard>
   );

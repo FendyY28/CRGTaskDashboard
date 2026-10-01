@@ -7,10 +7,13 @@ import { PROJECT_STATUS, THEME } from "../../../constants/projectConstants";
 import { api } from "../../../services/api"; 
 import type { WeeklyProgress } from "../../../types";
 import { useTranslation } from "react-i18next";
+import { fmtDate } from "../../../../lib/utils";
 
-import { ProtectAction } from "../../auth/ProtectAction"; 
+import { ProtectAction } from "../../auth/ProtectAction";
 
-const PROGRESS_COLORS = { track: THEME.TOSCA, risk: THEME.BSI_YELLOW, overdue: "#E11D48" }; 
+const PROGRESS_COLORS = { track: THEME.TOSCA, risk: THEME.BSI_YELLOW, overdue: "#E11D48" };
+
+const formatCompletedDate = (d?: string | null) => fmtDate(d);
 
 interface WeeklyRowProps {
   week: WeeklyProgress;
@@ -31,16 +34,16 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
   const color = projectStatus.includes('track') || projectStatus === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
   const handleCheck = async (tid: number, e: React.MouseEvent) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     setLoadingId(tid);
-    try { 
+    try {
       const completedBy = localStorage.getItem('user_name') || undefined;
-      await api.patch(`/project/task/${tid}/toggle`, { completedBy }); 
-      onTaskToggle(); 
-    } catch (err: any) { 
-      alert(err.message || "Update failed"); 
-    } finally { 
-      setLoadingId(null); 
+      await api.patch(`/project/task/${tid}/toggle`, { completedBy });
+      onTaskToggle();
+    } catch (err: any) {
+      alert(err.message || "Update failed");
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -79,12 +82,12 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
         <TableCell className="text-center font-bold relative" style={{ color: THEME.TOSCA }}>
             <div className="flex items-center justify-center gap-3">
                 <span>{week.progress}%</span>
-                
+
                 {/* Sembunyikan icon hapus Weekly Log */}
                 <ProtectAction>
-                  <Button 
-                      variant="ghost" size="icon" 
-                      onClick={(e) => { e.stopPropagation(); onRequestDeleteLog(week.id); }} 
+                  <Button
+                      variant="ghost" size="icon"
+                      onClick={(e) => { e.stopPropagation(); onRequestDeleteLog(week.id); }}
                       className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all absolute right-2 hover:bg-red-50 text-red-500"
                   >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -93,23 +96,23 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
             </div>
         </TableCell>
       </TableRow>
-      
+
       {expanded && (
         <TableRow className="bg-gray-50/30 animate-in slide-in-from-top-1">
           <TableCell colSpan={4} className="p-4">
             <div className="grid gap-2">
-              {week.tasks?.length > 0 ? week.tasks?.map((t: any) => {
-                const isDone = t.status === PROJECT_STATUS.COMPLETED;
+              {week.tasks?.length > 0 ? week.tasks?.map((task: any) => {
+                const isDone = task.status === PROJECT_STATUS.COMPLETED;
                 return (
-                  <div key={t.id} className="flex items-center justify-center sm:justify-between p-3 rounded-xl border shadow-sm transition-all bg-white group/task" style={{ borderColor: isDone ? THEME.TOSCA + '50' : THEME.BSI_LIGHT_GRAY + '30' }}>
+                  <div key={task.id} className="flex items-center justify-center sm:justify-between p-3 rounded-xl border shadow-sm transition-all bg-white group/task" style={{ borderColor: isDone ? THEME.TOSCA + '50' : THEME.BSI_LIGHT_GRAY + '30' }}>
                     <div className="flex items-center gap-3">
-                      
+
                       {/* Fallback Checkbox: HEAD melihat versi statis, OFFICER melihat versi klik */}
-                      <ProtectAction 
+                      <ProtectAction
                         fallback={
-                          <div 
+                          <div
                             className="h-5 w-5 rounded border flex items-center justify-center transition-colors"
-                            style={{ 
+                            style={{
                               backgroundColor: isDone ? THEME.TOSCA : THEME.BSI_WHITE,
                               borderColor: isDone ? THEME.TOSCA : THEME.BSI_LIGHT_GRAY
                             }}
@@ -118,37 +121,52 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                           </div>
                         }
                       >
-                        <div 
-                          onClick={(e) => handleCheck(t.id, e)} 
+                        <div
+                          onClick={(e) => handleCheck(task.id, e)}
                           className="h-5 w-5 rounded border flex items-center justify-center cursor-pointer transition-colors hover:ring-2 ring-[#38A79C]/30"
-                          style={{ 
+                          style={{
                             backgroundColor: isDone ? THEME.TOSCA : THEME.BSI_WHITE,
                             borderColor: isDone ? THEME.TOSCA : THEME.BSI_LIGHT_GRAY
                           }}
                         >
-                          {loadingId === t.id ? <Loader2 className="h-3 w-3 animate-spin text-white"/> : isDone && <CheckCircle2 className="h-3.5 w-3.5 text-white"/>}
+                          {loadingId === task.id ? <Loader2 className="h-3 w-3 animate-spin text-white"/> : isDone && <CheckCircle2 className="h-3.5 w-3.5 text-white"/>}
                         </div>
                       </ProtectAction>
 
                       <div>
-                        <p className={`text-sm font-semibold ${isDone ? 'line-through opacity-60' : ''}`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_DARK_GRAY }}>{t.taskName}</p>
-                        <p className="text-[10px] font-mono" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t.taskId}</p>
+                        <p className={`text-sm font-semibold ${isDone ? 'line-through opacity-60' : ''}`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_DARK_GRAY }}>{task.taskName}</p>
+                        <p className="text-[10px] font-mono" style={{ color: THEME.BSI_LIGHT_GRAY }}>{task.taskId}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={`text-[10px] font-bold`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_GREY, borderColor: isDone ? THEME.TOSCA + '40' : THEME.BSI_LIGHT_GRAY + '50' }}>{isDone ? 'DONE' : 'WIP'}</Badge>
-                        
-                        {/* Sembunyikan icon hapus Task (X) */}
-                        <ProtectAction>
-                          <Button
-                              variant="ghost" size="icon"
-                              onClick={(e) => { e.stopPropagation(); onRequestDeleteTask(t.id); }}
-                              className="h-6 w-6 opacity-0 group-hover/task:opacity-100 transition-all hover:bg-red-50 text-red-500"
-                          >
-                              <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </ProtectAction>
+                    <div className="flex flex-col items-end gap-0.5">
+                        {isDone ? (
+                          <>
+                            <Badge variant="outline" className="text-[10px] font-bold" style={{ color: THEME.TOSCA, borderColor: THEME.TOSCA + '40' }}>
+                              {t('timeline.projectCard.completedOn', { date: formatCompletedDate(task.completedDate), defaultValue: `Selesai ${formatCompletedDate(task.completedDate)}` })}
+                            </Badge>
+                            {task.completedBy && (
+                              <span className="text-[10px] italic" style={{ color: THEME.BSI_GREY }}>
+                                {t('timeline.projectCard.by', { name: task.completedBy, defaultValue: `oleh ${task.completedBy}` })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <Badge variant="outline" className={`text-[10px] font-bold`} style={{ color: THEME.BSI_GREY, borderColor: THEME.BSI_LIGHT_GRAY + '50' }}>WIP</Badge>
+                        )}
+                      </div>
+
+                      {/* Sembunyikan icon hapus Task (X) */}
+                      <ProtectAction>
+                        <Button
+                            variant="ghost" size="icon"
+                            onClick={(e) => { e.stopPropagation(); onRequestDeleteTask(task.id); }}
+                            className="h-6 w-6 opacity-0 group-hover/task:opacity-100 transition-all hover:bg-red-50 text-red-500"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </ProtectAction>
                     </div>
                   </div>
                 );

@@ -167,11 +167,11 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
     return sortedFails;
   }, [testCases, allProjects]);
 
-  return { 
+  return {
     availableProjects: allProjects.map(p => ({ id: p.id, name: p.name })),
-    
-    statusData, averageProgressData, phaseData, 
-    uatData, issueData, issueResolutionData, 
+
+    statusData, averageProgressData, phaseData,
+    uatData, issueData, issueResolutionData,
     openLbl, inProgressLbl, topDefectsData
   };
 }

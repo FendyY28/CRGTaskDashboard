@@ -96,6 +96,7 @@ export function OverviewDashboard() {
         <PageHeader
           title={t('dashboard.title')}
           description={t('dashboard.description')}
+          icon={LayoutDashboard}
         />
 
         <ProtectAction>

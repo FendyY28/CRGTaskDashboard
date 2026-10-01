@@ -151,7 +151,7 @@ export function PostImplementation() {
       
       {/* HEADER PAGE (Hanya Text Judul, Tanpa Tombol) */}
       <div className="flex flex-col gap-1 mb-8 pb-2">
-        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+        <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
           <ShieldCheck className="h-6 w-6 text-white" /> 
           {t('pir.title')}
         </h2>

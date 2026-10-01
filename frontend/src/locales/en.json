@@ -20,7 +20,8 @@
       "timeline": "Timeline",
       "testing": "Testing",
       "pir": "PIR",
-      "users": "Users"
+      "users": "Users",
+      "audit": "Audit Trail"
     },
     "logout": "Logout from System"
   },
@@ -81,6 +82,8 @@
       "unassigned": "Unassigned",
       "addTask": "Add New Task",
       "taskPlaceholder": "Type new task name...",
+      "completedOn": "Completed {{date}}",
+      "by": "by {{name}}",
       "tableHeaders": {
         "phaseStep": "Phase Step",
         "timeline": "Timeline",
@@ -496,6 +499,80 @@
       "submit": "Submit"
     }
   },
+  "audit": {
+    "title": "System Audit Trail",
+    "description": "Comprehensive activity history and accountability records.",
+    "search": "Search activity...",
+    "filters": {
+      "searchLabel": "Search activity",
+      "searchPlaceholder": "Search by user, action, project, or details...",
+      "projectLabel": "Project",
+      "allProjects": "All projects",
+      "actionLabel": "Activity type",
+      "allActions": "All activity types",
+      "userLabel": "Performed by",
+      "allUsers": "All users",
+      "dateLabel": "Date range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "reset": "Reset All Filters"
+    },
+    "exportCsv": "Export CSV",
+    "table": {
+      "timestamp": "Timestamp",
+      "actor": "Actor",
+      "project": "Project",
+      "action": "Action",
+      "details": "Details",
+      "systemGlobal": "System / Global"
+    },
+    "pagination": {
+      "rows": "Rows per page:",
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {{start}}–{{end}} of {{total}} logs",
+      "page": "Page {{current}} of {{total}}"
+    },
+    "empty": "No audit records found.",
+    "actions": {
+      "CREATE_PROJECT": "Create Project",
+      "UPDATE_PROJECT": "Update Project",
+      "DELETE_PROJECT": "Delete Project",
+      "CHANGE_PHASE": "Change Phase",
+      "UPDATE_STATUS": "Update Status",
+      "NEXT_CYCLE": "Next Cycle",
+      "ADD_PHASE_NOTE": "Add Phase Note",
+      "DELETE_PHASE_NOTE": "Delete Phase Note",
+      "CREATE_ISSUE": "Report Issue",
+      "UPDATE_ISSUE": "Update Issue",
+      "DELETE_ISSUE": "Delete Issue",
+      "ADD_IMPROVEMENT": "Add Improvement",
+      "DELETE_IMPROVEMENT": "Delete Improvement",
+      "ADD_WEEKLY_LOG": "Add Weekly Log",
+      "UPDATE_WEEKLY_LOG": "Update Weekly Log",
+      "DELETE_WEEKLY_LOG": "Delete Weekly Log",
+      "ADD_TASK": "Add Task",
+      "TOGGLE_TASK": "Toggle Task",
+      "DELETE_TASK": "Delete Task",
+      "CREATE_TEST_CASE": "Create Test Case",
+      "UPDATE_TEST_CASE": "Update Test Case",
+      "TAKEOUT_TEST_CASE": "Takeout Test Case"
+    },
+    "activityLog": {
+      "title": "Activity Log",
+      "subtitle": "Real-time system updates",
+      "loading": "Loading updates...",
+      "error": "Failed to load activity.",
+      "empty": "No recent activity recorded.",
+      "noDetails": "No details provided."
+    },
+    "history": {
+      "title": "Project Change History",
+      "loading": "Loading history...",
+      "empty": "No history records for this project yet.",
+      "showMore": "Show {{count}} more logs ({{remaining}} remaining)"
+    }
+  },
   "analytics": {
     "title": "Analytics & Reports",
     "description": "Executive overview of project health, SDLC phases, and issue tracking.",
@@ -523,6 +600,13 @@
       "count": "Count",
       "projects": "Projects",
       "issues": "Issues"
+    },
+    "completedWork": {
+      "title": "Completed Work",
+      "description": "Tasks that have already been finished, with the date they were completed. Read-only.",
+      "untitled": "Untitled Task",
+      "empty": "No completed tasks yet",
+      "showingLatest": "Showing 20 most recent of {{total}} completed tasks"
     }
   },
   "admin": {
@@ -637,5 +721,14 @@
     "snooze": "Remind Me Later",
     "dismiss": "Close",
     "changeNow": "Change Password Now"
+  },
+  "upcoming": {
+    "title": "Upcoming Deadlines & Alerts",
+    "urgent": "Urgent project alerts",
+    "urgentDescription": "project(s) require attention",
+    "empty": "No upcoming deadlines or urgent alerts.",
+    "overdue": "Overdue",
+    "days": "days",
+    "auditTrail": "Open System Audit Trail"
   }
 }

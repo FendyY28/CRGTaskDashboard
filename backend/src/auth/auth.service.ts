@@ -105,13 +105,11 @@ export class AuthService {
     if (!user) throw new NotFoundException('User tidak ditemukan.');
     return user;
   }
-  async forgotPassword(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new NotFoundException('Email tidak terdaftar.');
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  /** Generate a 6-digit OTP and store it with an expiry on the user. */
+  private async issueOtp(user: { id: string; email: string; name: string }, expiryMinutes: number, subject: string, bodyHtml: string, footerNote: string) {
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const otpExpires = new Date();
-    otpExpires.setMinutes(otpExpires.getMinutes() + 10); 
+    otpExpires.setMinutes(otpExpires.getMinutes() + expiryMinutes);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -119,18 +117,32 @@ export class AuthService {
     });
 
     await this.mailerService.sendMail({
-      to: email,
-      subject: '🔐 Kode OTP Reset Password - BSI CRG',
+      to: user.email,
+      subject,
       html: this.getPremiumTemplate(
-        user.name, 
-        `Anda meminta untuk mereset password Anda. Berikut adalah kode OTP Anda: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`, 
-        "#", 
+        user.name,
+        bodyHtml.replace('{{OTP}}', `<span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`),
+        "#",
         "Gunakan Kode di Aplikasi",
-        "⚠️ Abaikan email ini jika Anda tidak merasa meminta reset password. Kode berlaku 10 menit."
+        footerNote
       ),
     });
 
     return { message: 'Kode OTP telah dikirim ke email Anda.' };
+  }
+
+  // 3. FORGOT PASSWORD (KIRIM OTP)
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('Email tidak terdaftar.');
+
+    return this.issueOtp(
+      user,
+      10,
+      '🔐 Kode OTP Reset Password - BSI CRG',
+      'Anda meminta untuk mereset password Anda. Berikut adalah kode OTP Anda: <br><br> {{OTP}}',
+      '⚠️ Abaikan email ini jika Anda tidak merasa meminta reset password. Kode berlaku 10 menit.'
+    );
   }
 
   // 4. RESET PASSWORD (VERIFIKASI OTP & SAVE NEW PASSWORD)
@@ -140,9 +152,9 @@ export class AuthService {
 
     const now = new Date();
     if (
-      !user.verificationToken || 
-      user.verificationToken !== data.otp || 
-      !user.verificationTokenExpiresAt || 
+      !user.verificationToken ||
+      user.verificationToken !== data.otp ||
+      !user.verificationTokenExpiresAt ||
       now > user.verificationTokenExpiresAt
     ) {
       throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
@@ -152,12 +164,12 @@ export class AuthService {
 
     const updatedUser = await this.prisma.user.update({
       where: { email: data.email },
-      data: { 
+      data: {
         password: hashedPassword,
         passwordChangedAt: new Date(),
-        verificationToken: null, 
+        verificationToken: null,
         verificationTokenExpiresAt: null
-      }, 
+      },
     });
 
     await this.sendPasswordChangedNotification(updatedUser.email, updatedUser.name);
@@ -170,31 +182,13 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date();
-    otpExpires.setMinutes(otpExpires.getMinutes() + 5); 
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { 
-        verificationToken: otp, 
-        verificationTokenExpiresAt: otpExpires 
-      },
-    });
-
-    await this.mailerService.sendMail({
-      to: user.email,
-      subject: '🔐 Kode Verifikasi Ganti Password - BSI CRG',
-      html: this.getPremiumTemplate(
-        user.name,
-        `Kode verifikasi Anda untuk mengganti password adalah: <br><br> <span style="font-size: 32px; font-weight: bold; color: #36A39D; letter-spacing: 5px;">${otp}</span>`,
-        "#", 
-        "Gunakan Kode di Aplikasi",
-        "⚠️ Rahasiakan kode ini."
-      ),
-    });
-
-    return { message: 'Kode OTP telah dikirim ke email Anda.' };
+    return this.issueOtp(
+      user,
+      5,
+      '🔐 Kode Verifikasi Ganti Password - BSI CRG',
+      'Kode verifikasi Anda untuk mengganti password adalah: <br><br> {{OTP}}',
+      '⚠️ Rahasiakan kode ini.'
+    );
   }
 
   // 6. CHANGE PASSWORD STEP 2: VERIFY OTP & UPDATE

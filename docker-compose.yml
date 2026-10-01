@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bsi_crg_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: superuser
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bsi_crg_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
   backend:
     build:
       context: ./backend
@@ -9,15 +23,24 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:superuser@postgres:5432/bsi_crg_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
+      args:
+        # URL publik backend, dibaca oleh browser di sisi klien.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
     ports:
       - "80:80"
       - "3001:3001" # Exposing alternate port just in case
     depends_on:
       - backend
     restart: unless-stopped
+volumes:
+  postgres_data:

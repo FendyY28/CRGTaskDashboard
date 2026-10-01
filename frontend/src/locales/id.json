@@ -20,7 +20,8 @@
       "timeline": "Linimasa",
       "testing": "Pengujian",
       "pir": "PIR",
-      "users": "Pengguna"
+      "users": "Pengguna",
+      "audit": "Jejak Audit"
     },
     "logout": "Keluar dari Sistem"
   },
@@ -81,6 +82,8 @@
       "unassigned": "Belum Ditugaskan",
       "addTask": "Tambah Tugas Baru",
       "taskPlaceholder": "Ketik nama tugas baru...",
+      "completedOn": "Selesai {{date}}",
+      "by": "oleh {{name}}",
       "tableHeaders": {
         "phaseStep": "Langkah Fase",
         "timeline": "Linimasa",
@@ -496,6 +499,80 @@
       "submit": "Kirim"
     }
   },
+  "audit": {
+    "title": "Jejak Audit Sistem",
+    "description": "Riwayat aktivitas dan catatan akuntabilitas sistem secara lengkap.",
+    "search": "Cari aktivitas...",
+    "filters": {
+      "searchLabel": "Cari aktivitas",
+      "searchPlaceholder": "Cari berdasarkan pengguna, aksi, proyek, atau detail...",
+      "projectLabel": "Proyek",
+      "allProjects": "Semua proyek",
+      "actionLabel": "Jenis aktivitas",
+      "allActions": "Semua jenis aktivitas",
+      "userLabel": "Dilakukan oleh",
+      "allUsers": "Semua pengguna",
+      "dateLabel": "Rentang tanggal",
+      "startDate": "Tanggal mulai",
+      "endDate": "Tanggal akhir",
+      "reset": "Reset Semua Filter"
+    },
+    "exportCsv": "Ekspor CSV",
+    "table": {
+      "timestamp": "Waktu",
+      "actor": "Pelaku",
+      "project": "Proyek",
+      "action": "Aksi",
+      "details": "Detail",
+      "systemGlobal": "Sistem / Global"
+    },
+    "pagination": {
+      "rows": "Baris per halaman:",
+      "previous": "Sebelumnya",
+      "next": "Selanjutnya",
+      "showing": "Menampilkan {{start}}–{{end}} dari {{total}} log",
+      "page": "Halaman {{current}} dari {{total}}"
+    },
+    "empty": "Tidak ada catatan audit yang ditemukan.",
+    "actions": {
+      "CREATE_PROJECT": "Buat Proyek",
+      "UPDATE_PROJECT": "Perbarui Proyek",
+      "DELETE_PROJECT": "Hapus Proyek",
+      "CHANGE_PHASE": "Ganti Fase",
+      "UPDATE_STATUS": "Ubah Status",
+      "NEXT_CYCLE": "Siklus Berikutnya",
+      "ADD_PHASE_NOTE": "Tambah Catatan Fase",
+      "DELETE_PHASE_NOTE": "Hapus Catatan Fase",
+      "CREATE_ISSUE": "Lapor Isu",
+      "UPDATE_ISSUE": "Perbarui Isu",
+      "DELETE_ISSUE": "Hapus Isu",
+      "ADD_IMPROVEMENT": "Tambah Ide Optimasi",
+      "DELETE_IMPROVEMENT": "Hapus Ide Optimasi",
+      "ADD_WEEKLY_LOG": "Tambah Log Mingguan",
+      "UPDATE_WEEKLY_LOG": "Perbarui Log Mingguan",
+      "DELETE_WEEKLY_LOG": "Hapus Log Mingguan",
+      "ADD_TASK": "Tambah Tugas",
+      "TOGGLE_TASK": "Ubah Status Tugas",
+      "DELETE_TASK": "Hapus Tugas",
+      "CREATE_TEST_CASE": "Buat Kasus Uji",
+      "UPDATE_TEST_CASE": "Perbarui Kasus Uji",
+      "TAKEOUT_TEST_CASE": "Keluarkan Kasus Uji"
+    },
+    "activityLog": {
+      "title": "Log Aktivitas",
+      "subtitle": "Pembaruan sistem waktu nyata",
+      "loading": "Memuat pembaruan...",
+      "error": "Gagal memuat aktivitas.",
+      "empty": "Tidak ada aktivitas terbaru yang tercatat.",
+      "noDetails": "Tidak ada detail yang diberikan."
+    },
+    "history": {
+      "title": "Riwayat Perubahan Proyek",
+      "loading": "Memuat riwayat...",
+      "empty": "Belum ada riwayat untuk proyek ini.",
+      "showMore": "Tampilkan {{count}} log lagi ({{remaining}} tersisa)"
+    }
+  },
   "analytics": {
     "title": "Analitik & Laporan",
     "description": "Ringkasan eksekutif tentang kesehatan proyek, fase SDLC, dan pelacakan masalah.",
@@ -523,6 +600,13 @@
       "count": "Jumlah",
       "projects": "Proyek",
       "issues": "Isu"
+    },
+    "completedWork": {
+      "title": "Pekerjaan Selesai",
+      "description": "Tugas yang sudah diselesaikan, beserta tanggal penyelesaiannya. Hanya untuk dilihat.",
+      "untitled": "Tugas Tanpa Nama",
+      "empty": "Belum ada tugas yang selesai",
+      "showingLatest": "Menampilkan 20 tugas terbaru dari {{total}} tugas selesai"
     }
   },
   "admin": {
@@ -637,5 +721,14 @@
     "snooze": "Nanti Saja",
     "dismiss": "Tutup",
     "changeNow": "Ganti Password Sekarang"
+  },
+  "upcoming": {
+    "title": "Tenggat Waktu & Peringatan Mendatang",
+    "urgent": "Peringatan proyek mendesak",
+    "urgentDescription": "proyek membutuhkan perhatian",
+    "empty": "Tidak ada tenggat waktu mendatang atau peringatan mendesak.",
+    "overdue": "Terlambat",
+    "days": "hari",
+    "auditTrail": "Buka Jejak Audit Sistem"
   }
 }

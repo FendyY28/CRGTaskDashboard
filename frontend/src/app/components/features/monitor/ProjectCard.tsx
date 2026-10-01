@@ -4,9 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../ui/dialog";
-import { User, Clock, LayoutDashboard, Map, CheckCircle2, ArrowRight, Search, X } from "lucide-react";
+import { User, LayoutDashboard, Map, CheckCircle2, ArrowRight, Search, X } from "lucide-react";
 import { StatusBadge } from "../../dashboard/index";
-import { WeeklyRow } from "./WeeklyRow";
+import { DoneTasksTable } from "./DoneTasksTable";
 import { fmtDate } from "../../../../lib/utils";
 import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../../constants/projectConstants"; 
 import { useTranslation } from "react-i18next";
@@ -109,19 +109,8 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}><Clock className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.weeklyLogs')}</h4>
-          <div className="rounded-xl border overflow-hidden shadow-sm bg-white" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '40' }}>
-            <Table>
-              <TableHeader style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + '15' }}>
-                <TableRow>{[t('timeline.projectCard.tableHeaders.period'), t('timeline.projectCard.tableHeaders.tasks'), t('timeline.projectCard.tableHeaders.progress'), t('timeline.projectCard.tableHeaders.percent')].map((h, i) => <TableHead key={i} className={`text-[10px] font-bold uppercase h-10 ${i!==1?'text-center':''}`} style={{ color: THEME.BSI_GREY }}>{h}</TableHead>)}</TableRow>
-              </TableHeader>
-              <TableBody>
-                {project.weeklyProgress?.length ? project.weeklyProgress.map((w: any, idx: number) => 
-                    <WeeklyRow key={idx} week={w} projectStatus={project.status} onTaskToggle={onRefresh} onRequestDeleteLog={onDeleteLog} onRequestDeleteTask={onDeleteTask} />
-                ) : <TableRow><TableCell colSpan={4} className="text-center text-xs py-8 italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('timeline.projectCard.noWeeklyLogs')}</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </div>
+          <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}><CheckCircle2 className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.tasksDone', 'Tasks Done')}</h4>
+          <DoneTasksTable project={project} />
         </div>
 
         {/* ACTIVITY LOG — Rekam jejak task yang telah selesai */}

@@ -138,7 +138,7 @@ export function ProfileSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10 text-left">
       <div>
-        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+        <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
           <User className="h-6 w-6 text-white" /> 
           {t('settings.profile.title')}
         </h2>
