@@ -728,7 +728,12 @@
     "urgentDescription": "project(s) require attention",
     "empty": "No upcoming deadlines or urgent alerts.",
     "overdue": "Overdue",
+    "overdueBy": "{{count}} days overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
     "days": "days",
+    "daysRemaining": "{{count}} days left",
+    "pic": "PIC",
     "auditTrail": "Open System Audit Trail"
   }
 }

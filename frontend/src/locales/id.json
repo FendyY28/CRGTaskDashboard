@@ -728,7 +728,12 @@
     "urgentDescription": "proyek membutuhkan perhatian",
     "empty": "Tidak ada tenggat waktu mendatang atau peringatan mendesak.",
     "overdue": "Terlambat",
+    "overdueBy": "Terlambat {{count}} hari",
+    "today": "Hari ini",
+    "tomorrow": "Besok",
     "days": "hari",
+    "daysRemaining": "{{count}} hari lagi",
+    "pic": "PIC",
     "auditTrail": "Buka Jejak Audit Sistem"
   }
 }
