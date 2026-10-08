@@ -9,6 +9,30 @@ export const SDLC_PHASES = {
   LIVE: "Live",
 } as const;
 
+/** Urutan fase SDLC dalam siklus project. */
+export const SDLC_PHASE_ORDER = [
+  SDLC_PHASES.REQUIREMENT,
+  SDLC_PHASES.TF_MEETING,
+  SDLC_PHASES.DEVELOPMENT,
+  SDLC_PHASES.SIT,
+  SDLC_PHASES.UAT,
+  SDLC_PHASES.LIVE,
+] as const;
+
+/**
+ * Pasangan label pendek <-> nama fase lengkap.
+ * Satu-satunya sumber kebenaran untuk pemetaan "Req" -> "Requirement"
+ * yang dipakai di chart analytics dan komponen timeline.
+ */
+export const PHASE_LABELS: ReadonlyArray<{ short: string; full: string }> = [
+  { short: "Req", full: SDLC_PHASES.REQUIREMENT },
+  { short: "TF", full: SDLC_PHASES.TF_MEETING },
+  { short: "Dev", full: SDLC_PHASES.DEVELOPMENT },
+  { short: "SIT", full: SDLC_PHASES.SIT },
+  { short: "UAT", full: SDLC_PHASES.UAT },
+  { short: "Live", full: SDLC_PHASES.LIVE },
+];
+
 export const PROJECT_STATUS = {
   ON_TRACK: "on-track",
   IN_PROGRESS: "in-progress",

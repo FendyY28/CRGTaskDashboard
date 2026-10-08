@@ -1,15 +1,65 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { WeeklyProgress } from "../app/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export interface WeeklyTotals {
+  taskCount: number;
+  doneCount: number;
+  overall: number;
+}
+
+/**
+ * Hitung total task & persentase selesai dari daftar weekly progress.
+ * Null-guard array tasks dan clamp hasil ke 0-100 supaya data backend yang
+ * tidak konsisten tidak pernah menampilkan angka aneh di UI.
+ */
+export const computeWeeklyTotals = (weeks: WeeklyProgress[]): WeeklyTotals => {
+  let taskCount = 0;
+  let doneCount = 0;
+  for (const w of weeks) {
+    const tasks = w.tasks ?? [];
+    taskCount += tasks.length;
+    doneCount += tasks.filter((task) => task.status === "completed").length;
+  }
+  const raw = taskCount ? (doneCount / taskCount) * 100 : 0;
+  return { taskCount, doneCount, overall: Math.min(100, Math.max(0, Math.round(raw))) };
+};
 
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Format Tanggal (DD MMM YYYY)
 export const fmtDate = (d?: string | null) => 
   d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : "-";
+
+/** Ubah "YYYY-MM-DD" -> "DD/MM/YYYY". */
+export const toSlashDate = (d: string) => {
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+};
+
+/** Format objek Date menjadi "DD/MM/YYYY" tanpa pergeseran zona waktu. */
+const toLocalSlashDate = (d: Date) =>
+  `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+
+/**
+ * Rentang minggu (Senin-Minggu) dari tanggal acuan, diformat "DD/MM/YYYY".
+ * Anchor = hari dalam minggu tersebut (bukan hari Senin), jadi label selalu
+ * dimulai dari tanggal yang sama dengan yang dipilih user.
+ */
+export const weekRangeFrom = (anchor: string): string => {
+  const d = new Date(`${anchor}T00:00:00`);
+  if (isNaN(d.getTime())) return "";
+  // getDay(): 0=Minggu ... 6=Sabtu. Mundur ke Senin minggu yang sama.
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const monday = new Date(d);
+  const sunday = new Date(d);
+  sunday.setDate(sunday.getDate() + 6);
+  return `${toLocalSlashDate(monday)} - ${toLocalSlashDate(sunday)}`;
+};
 
 // Kapitalisasi (misal: "on-track" -> "On Track")
 export const capitalize = (s: string) => 

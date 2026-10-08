@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { Prisma } from '@prisma/client';
@@ -14,6 +14,25 @@ export class ProjectService {
 
   /** Max retries when a generated sequential id collides under concurrency. */
   private static readonly ID_COLLISION_RETRIES = 3;
+
+  /**
+   * Bentuk relasi project yang dipakai findAll(), findOne(), dan update().
+   * Ditaruh di satu tempat supaya penambahan/penghapusan relasi cukup diubah
+   * sekali dan response ketiga endpoint tidak pernah berbeda bentuk.
+   */
+  private static readonly PROJECT_INCLUDE = {
+    sdlcPhases: {
+      include: { notes: { orderBy: { createdAt: 'desc' } } },
+      orderBy: [{ cycle: 'asc' }, { id: 'asc' }]
+    },
+    weeklyProgress: {
+      include: { tasks: { orderBy: { id: 'asc' } } },
+      orderBy: { id: 'desc' }
+    },
+    testCases: { include: { defect: true } },
+    issues: { orderBy: { reportedDate: 'desc' } },
+    improvements: { orderBy: { createdDate: 'desc' } }
+  } satisfies Prisma.ProjectInclude;
 
   // Helper Auto Sequential Code: 001 -> 002 -> 003 ... 999 -> 1000, 1001
   private formatSeqId(prefix: string, num: number): string {
@@ -74,19 +93,23 @@ export class ProjectService {
     );
   }
 
-  private async nextId(prefix: string, model: 'project' | 'task' | 'issue' | 'improvement'): Promise<string> {
+  private async nextId(
+    prefix: string,
+    model: 'project' | 'task' | 'issue' | 'improvement',
+    db: Prisma.TransactionClient | PrismaService = this.prisma
+  ): Promise<string> {
     let idList: (string | null | undefined)[] = [];
     if (model === 'project') {
-      const rows = await this.prisma.project.findMany({ select: { id: true } });
+      const rows = await db.project.findMany({ select: { id: true } });
       idList = rows.map(r => r.id);
     } else if (model === 'task') {
-      const rows = await this.prisma.task.findMany({ select: { taskId: true } });
+      const rows = await db.task.findMany({ select: { taskId: true } });
       idList = rows.map(r => r.taskId);
     } else if (model === 'issue') {
-      const rows = await this.prisma.issue.findMany({ select: { issueId: true } });
+      const rows = await db.issue.findMany({ select: { issueId: true } });
       idList = rows.map(r => r.issueId);
     } else if (model === 'improvement') {
-      const rows = await this.prisma.improvement.findMany({ select: { noteId: true } });
+      const rows = await db.improvement.findMany({ select: { noteId: true } });
       idList = rows.map(r => r.noteId);
     }
 
@@ -107,18 +130,7 @@ export class ProjectService {
   // 1. BASIC CRUD (FIND)
   async findAll() {
     return this.prisma.project.findMany({
-      include: {
-        sdlcPhases: {
-          include: { notes: { orderBy: { createdAt: 'desc' } } },
-          orderBy: [{ cycle: 'asc' }, { id: 'asc' }]
-        },
-        issues: true,
-        improvements: true,
-        weeklyProgress: {
-          include: { tasks: { orderBy: { id: 'asc' } } },
-          orderBy: { id: 'desc' }
-        },
-      },
+      include: ProjectService.PROJECT_INCLUDE,
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -126,19 +138,7 @@ export class ProjectService {
   async findOne(id: string) {
     return this.prisma.project.findUnique({
       where: { id },
-      include: {
-        sdlcPhases: {
-          include: { notes: { orderBy: { createdAt: 'desc' } } },
-          orderBy: [{ cycle: 'asc' }, { id: 'asc' }]
-        },
-        weeklyProgress: {
-          include: { tasks: { orderBy: { id: 'asc' } } },
-          orderBy: { id: 'desc' }
-        },
-        testCases: { include: { defect: true } },
-        issues: { orderBy: { reportedDate: 'desc' } },
-        improvements: { orderBy: { createdDate: 'desc' } }
-      }
+      include: ProjectService.PROJECT_INCLUDE
     });
   }
 
@@ -186,6 +186,13 @@ export class ProjectService {
     const oldProject = await this.prisma.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
     if (!oldProject) throw new NotFoundException("Project not found");
 
+    // Fall back to the project's current phase when the caller omits it, and
+    // reject the request outright if it cannot be resolved to a known phase.
+    const targetPhase: string = requestData.currentPhase ?? oldProject.currentPhase;
+    if (!targetPhase || !this.MASTER_PHASES.includes(targetPhase)) {
+      throw new BadRequestException(`Fase project tidak valid: ${targetPhase ?? '(kosong)'}`);
+    }
+
     const isPhaseChanged = requestData.currentPhase && (requestData.currentPhase !== oldProject.currentPhase);
     const currentCycle = oldProject.cycle || 1; // PENTING: Hanya modifikasi cycle aktif
 
@@ -201,15 +208,15 @@ export class ProjectService {
           });
 
           // Cari atau buat fase baru di cycle ini
-          const targetPhase = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle } });
+          const targetPhaseRow = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle } });
           const newPhaseData: any = {
               status: requestData.phaseStatus || requestData.status || 'on-track',
               startDate: requestData.phaseStartDate ? new Date(requestData.phaseStartDate) : new Date(),
               deadline: requestData.phaseDeadline ? new Date(requestData.phaseDeadline) : undefined
           };
 
-          if (targetPhase) { await tx.sDLCPhase.update({ where: { id: targetPhase.id }, data: newPhaseData }); }
-          else { await tx.sDLCPhase.create({ data: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle, ...newPhaseData } as any }); }
+          if (targetPhaseRow) { await tx.sDLCPhase.update({ where: { id: targetPhaseRow.id }, data: newPhaseData }); }
+          else { await tx.sDLCPhase.create({ data: { projectId: id, phaseName: targetPhase, cycle: currentCycle, ...newPhaseData } as any }); }
       }
       else {
           // Fase tidak berubah, hanya update detail fase (seperti progress/deadline)
@@ -222,19 +229,32 @@ export class ProjectService {
           }
 
           if (Object.keys(phaseUpdatePayload).length > 0) {
-            await tx.sDLCPhase.updateMany({ where: { projectId: id, phaseName: requestData.currentPhase, cycle: currentCycle }, data: phaseUpdatePayload });
+            await tx.sDLCPhase.updateMany({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle }, data: phaseUpdatePayload });
           }
       }
 
-      // Update detail global project
-      const projectUpdateData: Prisma.ProjectUpdateInput = {
-        name: requestData.name, pic: requestData.pic, currentPhase: requestData.currentPhase, status: requestData.status,
-        overallProgress: typeof requestData.overallProgress === 'string' ? parseInt(requestData.overallProgress) : requestData.overallProgress,
-      };
+      // Update detail global project.
+      // Hanya field yang benar-benar dikirim yang di-assign, supaya request
+      // parsial tidak menulis undefined/NaN ke kolom lain.
+      const projectUpdateData: Prisma.ProjectUpdateInput = { currentPhase: targetPhase };
+      if (requestData.name !== undefined) projectUpdateData.name = requestData.name;
+      if (requestData.pic !== undefined) projectUpdateData.pic = requestData.pic;
+      if (requestData.status !== undefined) projectUpdateData.status = requestData.status;
+      if (requestData.overallProgress !== undefined) {
+        projectUpdateData.overallProgress = typeof requestData.overallProgress === 'string'
+          ? parseInt(requestData.overallProgress)
+          : requestData.overallProgress;
+      }
       if (requestData.projectStartDate) projectUpdateData.projectStartDate = new Date(requestData.projectStartDate);
       if (requestData.projectDeadline) projectUpdateData.projectDeadline = new Date(requestData.projectDeadline);
 
-      return tx.project.update({ where: { id }, data: projectUpdateData, include: { sdlcPhases: true, weeklyProgress: true } });
+      // Bentuk response disamakan dengan findOne() supaya konsumen tidak
+      // kehilangan field (tasks, testCases, issues, improvements) setelah update.
+      return tx.project.update({
+        where: { id },
+        data: projectUpdateData,
+        include: ProjectService.PROJECT_INCLUDE
+      });
     });
 
     if (!updatedProject) throw new Error("Gagal mengupdate project.");
@@ -257,8 +277,10 @@ export class ProjectService {
   // 4. DELETE PROJECT
   async remove(id: string, userId: string) {
     const project = await this.prisma.project.findUnique({ where: { id }});
+    if (!project) throw new NotFoundException("Project not found");
+
     const deleted = await this.prisma.project.delete({ where: { id } });
-    await this.auditService.log(userId, "DELETE_PROJECT", `Menghapus project: ${project ? project.name : id}`, id);
+    await this.auditService.log(userId, "DELETE_PROJECT", `Menghapus project: ${project.name}`, id);
     return deleted;
   }
 
@@ -306,8 +328,10 @@ export class ProjectService {
 
   async createImprovement(data: any, userId: string) {
     const imp = await this.insertWithGeneratedId(
-      () => (data.noteId && !data.noteId.startsWith('IMP-'))
-        ? Promise.resolve(data.noteId)
+      // ID kustom hanya dipakai kalau sudah memakai prefix yang benar;
+      // selain itu selalu generate agar format noteId konsisten (IMP-xxx).
+      () => (data.noteId && String(data.noteId).startsWith('IMP-'))
+        ? Promise.resolve(String(data.noteId))
         : this.nextId('IMP', 'improvement'),
       (noteId) =>
         this.prisma.improvement.create({
@@ -358,38 +382,95 @@ export class ProjectService {
 
   // 6. WEEKLY PROGRESS (TIMELINE)
   async addLog(data: any, userId: string) {
-    const taskList = Array.isArray(data.tasks) ? data.tasks : [data.tasks];
+    const projectId: string = data.projectId;
+    if (!projectId) throw new BadRequestException("Project tidak boleh kosong.");
 
-    // Hitung base max number untuk TSK
-    const taskRows = await this.prisma.task.findMany({ select: { taskId: true } });
-    const regex = /^TSK-(\d{1,6})$/;
-    let maxNum = 0;
-    for (const r of taskRows) {
-      const match = r.taskId?.match(regex);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (!isNaN(num) && num > maxNum) {
-          maxNum = num;
-        }
-      }
+    const project = await this.prisma.project.findUnique({ where: { id: projectId }, select: { id: true } });
+    if (!project) throw new NotFoundException("Project not found");
+
+    const weekRange: string = (data.weekRange || "").trim();
+    if (!weekRange) throw new BadRequestException("Periode (week) tidak boleh kosong.");
+
+    // Judul log mingguan wajib. Deskripsi tidak lagi di level log — deskripsi
+    // melekat pada masing-masing task (lihat addTask).
+    const title: string = String(data.title ?? "").replace(/\s+/g, " ").trim();
+    if (!title) throw new BadRequestException("Judul log tidak boleh kosong.");
+
+    // Normalisasi input: potong spasi excess, buang baris kosong, dan dedup
+    // (case-insensitive) supaya task kembar tidak masuk sebagai dua baris terpisah.
+    // Task boleh dikirim sebagai string ("nama task") atau objek
+    // { taskName, description } supaya deskripsi per task ikut tersimpan.
+    const rawTasks: any[] = Array.isArray(data.tasks) ? data.tasks : [data.tasks];
+    const seen = new Set<string>();
+    const taskList: { taskName: string; description: string }[] = [];
+    for (const raw of rawTasks) {
+      const rawName = typeof raw === 'object' && raw !== null ? raw.taskName : raw;
+      const rawDesc = typeof raw === 'object' && raw !== null ? raw.description : "";
+      const name = String(rawName ?? "").replace(/\s+/g, " ").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      taskList.push({ taskName: name, description: String(rawDesc ?? "").trim() });
     }
-    const baseNum = maxNum;
 
-    const log = await this.prisma.weeklyProgress.create({
-      data: {
-        projectId: data.projectId, weekRange: data.weekRange, progress: parseInt(data.progress) || 0, completed: 0, total: taskList.length,
-        tasks: {
-          create: taskList.map((taskName: string, index: number) => ({
-            taskId: this.formatSeqId('TSK', baseNum + index + 1),
-            taskName: taskName,
+    if (taskList.length === 0) throw new BadRequestException("Tidak ada task yang valid untuk disimpan.");
+
+    // Deskripsi wajib diisi untuk setiap task — divalidasi di sini supaya tidak
+    // ada task tersimpan dengan deskripsi kosong.
+    const missingDescription = taskList.filter(t => !t.description);
+    if (missingDescription.length > 0) {
+      throw new BadRequestException(
+        `Deskripsi wajib diisi untuk setiap task. Belum diisi: ${missingDescription.map(t => `"${t.taskName}"`).join(', ')}`
+      );
+    }
+
+    // Task ID digenerate satu per satu lewat nextId(..., tx) di dalam transaksi
+    // yang sama, supaya task ke-2 dan seterusnya melihat nomor task ke-1 yang
+    // baru dibuat dan tidak memakai ulang nomor yang sama.
+    // Parent log + seluruh task dibuat dalam satu transaksi supaya kalau salah
+    // satu task gagal, log setengah jadi tidak ikut tersimpan.
+    return this.prisma.$transaction(async (tx) => {
+      const log = await tx.weeklyProgress.create({
+        data: {
+          projectId,
+          weekRange,
+          title,
+          progress: 0,
+          completed: 0,
+          total: taskList.length,
+        },
+      });
+
+      for (const task of taskList) {
+        // nextId() HARUS baca lewat `tx` — kalau baca lewat this.prisma, task yang
+        // baru dibuat di transaksi ini belum terlihat, jadi semua task dalam satu
+        // batch dapat nomor yang sama (ini penyebab checklist "doubling").
+        const taskId = await this.nextId('TSK', 'task', tx);
+        await tx.task.create({
+          data: {
+            taskId,
+            taskName: task.taskName,
+            description: task.description,
             status: 'in-progress',
-            completedDate: null
-          }))
-        }
+            completedDate: null,
+            completedBy: null,
+            weeklyProgressId: log.id,
+          },
+        });
       }
+
+      const tasks = await tx.task.findMany({ where: { weeklyProgressId: log.id }, orderBy: { id: 'asc' } });
+      return { ...log, tasks };
+    }).then(async (result) => {
+      await this.auditService.log(
+        userId,
+        "ADD_WEEKLY_LOG",
+        `Menambah Weekly Log "${title}" (${weekRange}, ${taskList.length} task)`,
+        projectId
+      );
+      return result;
     });
-    await this.auditService.log(userId, "ADD_WEEKLY_LOG", `Menambah Weekly Progress ${data.weekRange}`, data.projectId);
-    return log;
   }
 
   async removeLog(id: number, userId: string) {
@@ -412,15 +493,49 @@ export class ProjectService {
   }
 
   async updateLog(weeklyId: number, data: any, userId: string) {
-      const log = await this.prisma.weeklyProgress.update({ where: { id: Number(weeklyId) }, data: { progress: parseInt(data.progress), ...(data.weekRange && { weekRange: data.weekRange }) } });
-      await this.auditService.log(userId, "UPDATE_WEEKLY_LOG", `Update Weekly Progress ID ${weeklyId}`, log.projectId);
+      // Hanya field yang benar-benar dikirim yang di-assign, supaya request
+      // parsial tidak menulis undefined/NaN ke kolom lain (mis. `progress`
+      // yang tidak ikut terkirim menghasilkan NaN kalau langsung di-parseInt).
+      const payload: Prisma.WeeklyProgressUpdateInput = {};
+
+      if (data.progress !== undefined && data.progress !== null && data.progress !== '') {
+        const parsedProgress = typeof data.progress === 'number' ? data.progress : parseInt(String(data.progress), 10);
+        if (isNaN(parsedProgress)) throw new BadRequestException("Progress harus berupa angka.");
+        payload.progress = Math.min(100, Math.max(0, parsedProgress));
+      }
+
+      if (data.weekRange !== undefined) {
+        const weekRange = String(data.weekRange).trim();
+        if (!weekRange) throw new BadRequestException("Periode (week) tidak boleh kosong.");
+        payload.weekRange = weekRange;
+      }
+
+      if (data.title !== undefined) {
+        const title = String(data.title).replace(/\s+/g, ' ').trim();
+        if (!title) throw new BadRequestException("Judul log tidak boleh kosong.");
+        payload.title = title;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        throw new BadRequestException("Tidak ada perubahan yang dikirim.");
+      }
+
+      const log = await this.prisma.weeklyProgress.update({ where: { id: Number(weeklyId) }, data: payload });
+      await this.auditService.log(userId, "UPDATE_WEEKLY_LOG", `Update Weekly Log "${log.title}" (ID ${weeklyId})`, log.projectId);
       return log;
   }
 
 
-  async addTask(weeklyProgressId: number, taskName: string, userId: string) {
-    if (!taskName || !taskName.trim()) {
-      throw new Error("Nama task tidak boleh kosong");
+  async addTask(weeklyProgressId: number, taskName: string, userId: string, description?: string) {
+    const normalizedName = (taskName ?? "").replace(/\s+/g, " ").trim();
+    if (!normalizedName) {
+      throw new BadRequestException("Nama task tidak boleh kosong");
+    }
+
+    // Deskripsi wajib diisi: menjelaskan pekerjaan dari task ini.
+    const normalizedDescription = (description ?? "").trim();
+    if (!normalizedDescription) {
+      throw new BadRequestException("Deskripsi task tidak boleh kosong");
     }
 
     const parent = await this.prisma.weeklyProgress.findUnique({
@@ -432,6 +547,18 @@ export class ProjectService {
       throw new NotFoundException("Weekly Progress not found");
     }
 
+    // Idempotency guard: kalau task dengan nama sama (case-insensitive) sudah ada
+    // di weekly log ini, kembalikan yang lama alih-alih menambah baris kedua.
+    // Ini yang bikin checklist "doubling" saat user double-click atau request retry
+    // (kombinasi taskId @unique + insertWithGeneratedId hanya menangkap tabrakan ID,
+    // bukan insert kedua dari user yang sama).
+    const duplicate = parent.tasks.find(
+      (t) => t.taskName.toLowerCase() === normalizedName.toLowerCase()
+    );
+    if (duplicate) {
+      return duplicate;
+    }
+
     // Auto-generate sequential TSK ID
     const newTask = await this.insertWithGeneratedId(
       () => this.nextId('TSK', 'task'),
@@ -439,7 +566,8 @@ export class ProjectService {
         this.prisma.task.create({
           data: {
             taskId,
-            taskName: taskName.trim(),
+            taskName: normalizedName,
+            description: normalizedDescription,
             status: 'in-progress',
             completedDate: null,
             completedBy: null,
@@ -455,7 +583,7 @@ export class ProjectService {
     await this.auditService.log(
       userId,
       "ADD_TASK",
-      `Menambahkan tugas baru "${taskName.trim()}" (${newTask.taskId}) ke Weekly Log #${weeklyProgressId}`,
+      `Menambahkan tugas baru "${normalizedName}" (${newTask.taskId}) ke Weekly Log #${weeklyProgressId}`,
       parent.projectId
     );
 
@@ -464,14 +592,17 @@ export class ProjectService {
 
   async toggleTask(taskId: number, userId: string, completedBy?: string) {
     const task = await this.prisma.task.findUnique({ where: { id: taskId }, include: { weeklyProgress: true } });
-    if (!task) throw new Error("Task not found");
+    if (!task) throw new NotFoundException("Task not found");
     const newStatus = task.status === 'completed' ? 'in-progress' : 'completed';
+    // Kalau frontend tidak mengirim nama, ambil dari user yang sedang login
+    // supaya "Dikerjakan Oleh" tidak selalu tertulis "Officer".
+    const actorName = completedBy?.trim() || (await this.resolveUserName(userId));
     await this.prisma.task.update({
       where: { id: taskId },
       data: {
         status: newStatus,
         completedDate: newStatus === 'completed' ? new Date() : null,
-        completedBy: newStatus === 'completed' ? (completedBy || 'Officer') : null
+        completedBy: newStatus === 'completed' ? actorName : null
       }
     });
     await this.recalcWeeklyProgress(task.weeklyProgressId);
@@ -679,17 +810,23 @@ export class ProjectService {
 
   // 7. PHASE NOTES (Catatan Progres per Fase SDLC)
   async addPhaseNote(phaseId: number, content: string, userId: string) {
+    const trimmedContent = (content ?? '').trim();
+    if (!trimmedContent) {
+      throw new BadRequestException("Isi catatan tidak boleh kosong.");
+    }
+
+    // Validasi fase dulu supaya tidak ada catatan orphan untuk phaseId palsu.
+    const phase = await this.prisma.sDLCPhase.findUnique({ where: { id: phaseId }, include: { project: true } });
+    if (!phase) throw new NotFoundException("Fase tidak ditemukan");
+
     const createdBy = await this.resolveUserName(userId);
 
     const note = await this.prisma.phaseNote.create({
-      data: { phaseId, content, createdBy }
+      data: { phaseId, content: trimmedContent, createdBy }
     });
 
-    // Cari info fase untuk audit log
-    const phase = await this.prisma.sDLCPhase.findUnique({ where: { id: phaseId }, include: { project: true } });
-    if (phase) {
-      await this.auditService.log(userId, "ADD_PHASE_NOTE", `Menambahkan catatan ke fase ${phase.phaseName} (Cycle ${phase.cycle}) pada project ${phase.project.name}`, phase.projectId);
-    }
+    // Catat ke activity log
+    await this.auditService.log(userId, "ADD_PHASE_NOTE", `Menambahkan catatan ke fase ${phase.phaseName} (Cycle ${phase.cycle}) pada project ${phase.project.name}`, phase.projectId);
 
     return note;
   }

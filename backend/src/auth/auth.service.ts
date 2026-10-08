@@ -19,6 +19,11 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
+  /** Base URL frontend untuk link di email (fallback ke localhost untuk dev). */
+  private getFrontendUrl(): string {
+    return (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
+  }
+
   // 1. VERIFY EMAIL (Aktivasi Akun Baru)
   async verifyEmail(token: string) {
     const user = await this.prisma.user.findFirst({
@@ -58,7 +63,7 @@ export class AuthService {
         data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
       });
 
-      const verificationLink = `http://localhost:5173/verify-email?token=${token}`;
+      const verificationLink = `${this.getFrontendUrl()}/verify-email?token=${token}`;
       await this.sendVerificationEmail(user.email, user.name, verificationLink, "Action Required: Activate Your Account");
 
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
@@ -70,7 +75,7 @@ export class AuthService {
 
     // Jika passwordChangedAt lebih lama dari 6 bulan lalu, lempar error
     if (user.passwordChangedAt && user.passwordChangedAt < sixMonthsAgo) {
-      throw new ForbiddenException('PASSWORD_EXPIRED'); 
+      throw new ForbiddenException('PASSWORD_EXPIRED');
     }
 
     const payload = { sub: user.id, email: user.email, name: user.name, role: user.role };
@@ -78,11 +83,11 @@ export class AuthService {
 
     return {
       message: 'Login berhasil',
-      access_token: realToken, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role, 
+      access_token: realToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
         name: user.name,
         passwordChangedAt: user.passwordChangedAt
       }
@@ -200,9 +205,9 @@ export class AuthService {
 
     const now = new Date();
     if (
-      !user.verificationToken || 
-      user.verificationToken !== otp || 
-      !user.verificationTokenExpiresAt || 
+      !user.verificationToken ||
+      user.verificationToken !== otp ||
+      !user.verificationTokenExpiresAt ||
       now > user.verificationTokenExpiresAt
     ) {
       throw new BadRequestException('Kode OTP salah atau sudah kedaluwarsa.');
@@ -218,10 +223,10 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         password: hashedPassword,
         passwordChangedAt: new Date(),
-        verificationToken: null, 
+        verificationToken: null,
         verificationTokenExpiresAt: null
       },
     });
@@ -240,9 +245,9 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         password: hashedPassword,
-        passwordChangedAt: new Date(), 
+        passwordChangedAt: new Date(),
         verificationToken: null,
         verificationTokenExpiresAt: null
       },
@@ -257,7 +262,7 @@ export class AuthService {
          <div style="background: #f0fdfa; border: 1px dashed #36A39D; padding: 15px; font-size: 24px; font-family: monospace; font-weight: bold; color: #36A39D; letter-spacing: 2px; text-align: center;">
            ${newRawPassword}
          </div>`,
-        "http://localhost:5173/login", 
+        `${this.getFrontendUrl()}/login`,
         "Masuk Sekarang",
         "🛡️ Demi keamanan, Anda dapat mengganti password ini kapan saja melalui menu Pengaturan Profil."
       ),
@@ -299,7 +304,7 @@ export class AuthService {
       html: this.getPremiumTemplate(
         name,
         `Kami ingin menginformasikan bahwa password akun BSI CRG Anda baru saja diubah pada <b>${dateStr} WIB</b>.<br><br>Jika ini adalah Anda, tidak ada tindakan lebih lanjut yang diperlukan.`,
-        "http://localhost:5173/login", 
+        `${this.getFrontendUrl()}/login`, 
         "Masuk ke Akun Anda",
         "🚨 PENTING: Jika Anda tidak merasa mengubah password, segera hubungi Administrator IT."
       ),

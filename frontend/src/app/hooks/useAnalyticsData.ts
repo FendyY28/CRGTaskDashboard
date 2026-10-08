@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
-import { THEME } from "../constants/projectConstants";
+import { THEME, PHASE_LABELS } from "../constants/projectConstants";
 
 export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
@@ -48,7 +48,7 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
     return {
       projects: allProjects.filter(p => selectedProjectIds.includes(p.id)),
       issues: allIssues.filter(i => selectedProjectIds.includes(i.projectId)),
-      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)), 
+      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)),
     };
   }, [allProjects, allIssues, allTestCases, selectedProjectIds]);
 
@@ -56,9 +56,9 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   // 3. KALKULASI CHART (Memakai data yang sudah difilter di atas)
   const statusData = useMemo(() => {
     const counts = { 'on-track': 0, 'at-risk': 0, 'overdue': 0, 'completed': 0 };
-    projects.forEach(p => { 
+    projects.forEach(p => {
       if (counts[p.status as keyof typeof counts] !== undefined) {
-        counts[p.status as keyof typeof counts]++; 
+        counts[p.status as keyof typeof counts]++;
       }
     });
     return [
@@ -70,23 +70,19 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   }, [projects]);
 
   const averageProgressData = useMemo(() => {
-    const phases = ["Req", "TF", "Dev", "SIT", "UAT", "Live"];
-    const fullPhases = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
-    return phases.map((phase, index) => {
-      const projsInPhase = projects.filter(p => p.currentPhase === fullPhases[index]);
-      const avg = projsInPhase.length > 0 
+    return PHASE_LABELS.map(({ short, full }) => {
+      const projsInPhase = projects.filter(p => p.currentPhase === full);
+      const avg = projsInPhase.length > 0
         ? Math.round(projsInPhase.reduce((sum, p) => sum + (p.overallProgress || 0), 0) / projsInPhase.length)
         : 0;
-      return { name: phase, Average: avg, projectCount: projsInPhase.length };
+      return { name: short, Average: avg, projectCount: projsInPhase.length };
     });
   }, [projects]);
 
   const phaseData = useMemo(() => {
-    const phases = ["Req", "TF", "Dev", "SIT", "UAT", "Live"];
-    const fullPhases = ["Requirement", "TF Meeting", "Development", "SIT", "UAT", "Live"];
-    return phases.map((phase, index) => ({
-      name: phase,
-      [t('analytics.labels.projects')]: projects.filter(p => p.currentPhase === fullPhases[index]).length
+    return PHASE_LABELS.map(({ short, full }) => ({
+      name: short,
+      [t('analytics.labels.projects')]: projects.filter(p => p.currentPhase === full).length
     }));
   }, [projects, t]);
 

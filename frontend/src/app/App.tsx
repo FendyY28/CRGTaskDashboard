@@ -38,11 +38,13 @@ const PageFallback = () => (
 const DashboardLayout = () => {
   return (
     <div className="min-h-screen relative flex flex-col font-sans text-gray-900 bg-gradient-to-br from-[#00827D] via-[#009B95] to-[#E68A15] overflow-x-hidden">
-      {/* Dynamic BSI Ambient Glow Layers for depth */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[35rem] h-[35rem] bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 -right-32 w-[35rem] h-[35rem] bg-[#F8AD3C]/25 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 left-1/4 w-[40rem] h-[40rem] bg-[#005D59]/30 rounded-full blur-3xl" />
+      {/* Ambient glow. Sengaja TIDAK pakai blur-3xl: filter blur pada
+          elemen full-screen diprose ulang tiap frame scroll (mahal di GPU).
+          Gradien radial memberi efek yang sama dengan biaya jauh lebih murah. */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-32 -left-32 w-[35rem] h-[35rem] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.10),transparent_70%)]" />
+        <div className="absolute top-1/2 -right-32 w-[35rem] h-[35rem] rounded-full bg-[radial-gradient(circle,rgba(248,173,60,0.25),transparent_70%)]" />
+        <div className="absolute -bottom-32 left-1/4 w-[40rem] h-[40rem] rounded-full bg-[radial-gradient(circle,rgba(0,93,89,0.30),transparent_70%)]" />
       </div>
 
       <Header />

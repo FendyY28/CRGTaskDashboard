@@ -1,14 +1,14 @@
-import { useState, useMemo, memo } from "react";
+﻿import { useState, useMemo, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../ui/dialog";
-import { User, LayoutDashboard, Map, CheckCircle2, ArrowRight, Search, X } from "lucide-react";
+import { User, LayoutDashboard, Map, CheckCircle2, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { StatusBadge } from "../../dashboard/index";
 import { DoneTasksTable } from "./DoneTasksTable";
+import { WeeklyLogsSection } from "./WeeklyLogsSection";
 import { fmtDate } from "../../../../lib/utils";
-import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../../constants/projectConstants"; 
+import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../../constants/projectConstants";
 import { useTranslation } from "react-i18next";
 
 const PHASES_ARRAY = Object.values(SDLC_PHASES);
@@ -25,8 +25,8 @@ interface ProjectCardProps {
 
 export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, onDeleteLog, onDeleteTask }: ProjectCardProps) => {
   const { t } = useTranslation();
-  const [showAllModal, setShowAllModal] = useState(false);
-  const [activitySearch, setActivitySearch] = useState("");
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logSearch, setLogSearch] = useState("");
 
   const { globalPct, completedPhases } = useMemo(() => {
     if (project.status === PROJECT_STATUS.COMPLETED) return { globalPct: 100, completedPhases: 6 };
@@ -48,9 +48,17 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
 
   const accentColor = project.status.includes('track') || project.status === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
 
+  const weeklyLogs = useMemo(() => project.weeklyProgress ?? [], [project.weeklyProgress]);
+
+  const filteredWeeks = useMemo(() => {
+    const q = logSearch.trim().toLowerCase();
+    if (!q) return weeklyLogs;
+    return weeklyLogs.filter((w) => w.weekRange?.toLowerCase().includes(q));
+  }, [weeklyLogs, logSearch]);
+
   return (
-    <Card 
-      className={`border border-white/60 shadow-xl shadow-teal-950/5 bg-white/95 backdrop-blur-md overflow-hidden scroll-mt-24 rounded-2xl group transition-all duration-300 ring-1 ring-black/5 ${highlight ? 'ring-2 shadow-2xl scale-[1.01]' : ''}`} 
+    <Card
+      className={`border border-white/60 shadow-xl shadow-teal-950/5 bg-white/95 overflow-hidden scroll-mt-24 rounded-2xl group transition-all duration-300 ring-1 ring-black/5 ${highlight ? 'ring-2 shadow-2xl' : ''}`}
       style={{ '--tw-ring-color': highlight ? THEME.TOSCA : undefined } as React.CSSProperties}
     >
       <div className="h-1.5 w-full" style={{ backgroundColor: accentColor }} />
@@ -92,7 +100,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
               </TableHeader>
               <TableBody>
                 {PHASES_ARRAY.map((ph, idx) => {
-                  const pData = phaseDict[ph]; 
+                  const pData = phaseDict[ph];
                   const curIdx = PHASES_ARRAY.indexOf(project.currentPhase);
                   const stat = idx < curIdx ? PROJECT_STATUS.COMPLETED : (idx === curIdx ? (Number(project.overallProgress) === 100 ? PROJECT_STATUS.COMPLETED : project.status) : PROJECT_STATUS.PENDING);
                   return (
@@ -112,187 +120,51 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
           <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}><CheckCircle2 className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.tasksDone', 'Tasks Done')}</h4>
           <DoneTasksTable project={project} />
         </div>
+{/* WEEKLY LOGS â€” catatan mingguan + task (toggle / tambah / hapus) */}
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setLogsOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-3 text-left"
+            aria-expanded={logsOpen}
+          >
+            <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
+              <ClipboardList className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.weeklyLogs')}
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: THEME.TOSCA + '15', color: THEME.TOSCA }}
+              >
+                {weeklyLogs.length}
+              </span>
+            </h4>
+            {logsOpen ? <ChevronUp className="h-4 w-4" style={{ color: THEME.BSI_LIGHT_GRAY }} /> : <ChevronDown className="h-4 w-4" style={{ color: THEME.BSI_LIGHT_GRAY }} />}
+          </button>
 
-        {/* ACTIVITY LOG — Rekam jejak task yang telah selesai */}
-        {(() => {
-          const allDoneTasks = (project.weeklyProgress ?? [])
-            .flatMap((w: any) => (w.tasks ?? []).map((t: any) => ({ ...t, weekRange: w.weekRange })))
-            .filter((t: any) => t && (t.status === 'completed' || t.status === PROJECT_STATUS.COMPLETED))
-            .sort((a: any, b: any) => {
-              const timeA = a.completedDate ? new Date(a.completedDate).getTime() : 0;
-              const timeB = b.completedDate ? new Date(b.completedDate).getTime() : 0;
-              return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
-            });
+          {logSearch.trim() && (
+            <input
+              type="text"
+              value={logSearch}
+              onChange={(e) => setLogSearch(e.target.value)}
+              placeholder={t('timeline.projectCard.searchLogs', 'Cari periode...')}
+              className="w-full h-9 px-3 text-xs rounded-xl border bg-white outline-none focus:ring-2 focus:ring-[#38A79C]/30"
+              style={{ borderColor: THEME.BSI_LIGHT_GRAY + '60', color: THEME.BSI_DARK_GRAY }}
+            />
+          )}
 
-          if (allDoneTasks.length === 0) return null;
-
-          const formatDateSafe = (dateVal?: string | null) => {
-            if (!dateVal) return null;
-            try {
-              const d = new Date(dateVal);
-              if (isNaN(d.getTime())) return null;
-              return new Intl.DateTimeFormat('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit'
-              }).format(d);
-            } catch {
-              return null;
-            }
-          };
-
-          const previewTasks = allDoneTasks.slice(0, 5);
-
-          const filteredModalTasks = allDoneTasks.filter((t: any) => {
-            if (!activitySearch.trim()) return true;
-            const q = activitySearch.toLowerCase();
-            return (
-              t.taskName?.toLowerCase().includes(q) ||
-              t.taskId?.toLowerCase().includes(q) ||
-              t.weekRange?.toLowerCase().includes(q) ||
-              t.completedBy?.toLowerCase().includes(q)
-            );
-          });
-
-          return (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
-                  <CheckCircle2 className="h-4 w-4" style={{ color: THEME.BSI_GREEN }} /> {t('timeline.projectCard.activityLog')}
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: THEME.BSI_GREEN + '15', color: THEME.BSI_GREEN }}>
-                    {t('timeline.projectCard.completedCount', { count: allDoneTasks.length })}
-                  </span>
-                </h4>
-
-                {allDoneTasks.length > 5 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setActivitySearch(""); setShowAllModal(true); }}
-                    className="h-7 text-xs font-bold gap-1 rounded-lg hover:bg-teal-50"
-                    style={{ color: THEME.TOSCA }}
-                  >
-                    {t('timeline.projectCard.seeAll', { count: allDoneTasks.length })} <ArrowRight className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-
-              <div className="rounded-xl border overflow-hidden shadow-sm bg-white" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '40' }}>
-                <div className="divide-y" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>
-                  {previewTasks.map((t: any, idx: number) => {
-                    const formattedDate = formatDateSafe(t.completedDate);
-                    return (
-                      <div key={t.id ?? idx} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                        {/* Icon done */}
-                        <div className="h-7 w-7 min-w-[28px] rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.BSI_GREEN + '15' }}>
-                          <CheckCircle2 className="h-4 w-4" style={{ color: THEME.BSI_GREEN }} />
-                        </div>
-
-                        {/* Task name + period */}
-                        <div className="flex-1 overflow-hidden">
-                          <p className="text-sm font-semibold truncate" style={{ color: THEME.BSI_DARK_GRAY }}>{t.taskName || "Untitled Task"}</p>
-                          <p className="text-[10px] font-mono" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t.taskId} · {t.weekRange}</p>
-                        </div>
-
-                        {/* Completed by & date */}
-                        <div className="text-right shrink-0 space-y-0.5">
-                          {t.completedBy ? (
-                            <p className="text-xs font-semibold flex items-center justify-end gap-1" style={{ color: THEME.BSI_DARK_GRAY }}>
-                              <User className="h-3 w-3" style={{ color: THEME.BSI_LIGHT_GRAY }} />
-                              {t.completedBy}
-                            </p>
-                          ) : (
-                            <p className="text-xs italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>—</p>
-                          )}
-                          {formattedDate && (
-                            <p className="text-[10px]" style={{ color: THEME.BSI_LIGHT_GRAY }}>
-                              {formattedDate}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* DIALOG MODAL: LIHAT SEMUA ACTIVITY LOG */}
-              <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
-                <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[620px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
-                  <DialogHeader className="p-6 border-b border-gray-100 bg-gray-50/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                          <CheckCircle2 className="h-5 w-5" style={{ color: THEME.BSI_GREEN }} />
-                          {t('timeline.projectCard.modal.title', { name: project.name })}
-                        </DialogTitle>
-                        <DialogDescription className="text-xs text-gray-500 mt-0.5">
-                          {t('timeline.projectCard.modal.description', { count: allDoneTasks.length })}
-                        </DialogDescription>
-                      </div>
-                    </div>
-
-                    {/* Search inside modal */}
-                    <div className="relative mt-4">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={activitySearch}
-                        onChange={(e) => setActivitySearch(e.target.value)}
-                        placeholder={t('timeline.projectCard.modal.searchPlaceholder')}
-                        className="w-full h-9 pl-9 pr-9 text-xs border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#36A39D]/30 focus:border-[#36A39D] text-gray-800 placeholder-gray-400"
-                      />
-                      {activitySearch && (
-                        <button onClick={() => setActivitySearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </DialogHeader>
-
-                  <div className="flex-1 overflow-y-auto p-4 divide-y divide-gray-100 max-h-[450px]">
-                    {filteredModalTasks.length > 0 ? (
-                      filteredModalTasks.map((t: any, idx: number) => {
-                        const formattedDate = formatDateSafe(t.completedDate);
-                        return (
-                          <div key={t.id ?? idx} className="flex items-center gap-4 px-3 py-3 hover:bg-gray-50 rounded-xl transition-colors">
-                            <div className="h-7 w-7 min-w-[28px] rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.BSI_GREEN + '15' }}>
-                              <CheckCircle2 className="h-4 w-4" style={{ color: THEME.BSI_GREEN }} />
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                              <p className="text-sm font-semibold truncate text-gray-900">{t.taskName || "Untitled Task"}</p>
-                              <p className="text-[11px] font-mono text-gray-400">{t.taskId} · {t.weekRange}</p>
-                            </div>
-                            <div className="text-right shrink-0 space-y-0.5">
-                              {t.completedBy ? (
-                                <p className="text-xs font-semibold flex items-center justify-end gap-1 text-gray-800">
-                                  <User className="h-3 w-3 text-gray-400" />
-                                  {t.completedBy}
-                                </p>
-                              ) : (
-                                <p className="text-xs italic text-gray-400">—</p>
-                              )}
-                              {formattedDate && (
-                                <p className="text-[10px] text-gray-400">
-                                  {formattedDate}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-12 text-gray-400 text-xs italic">
-                        {t('timeline.projectCard.modal.noSearchResults', { query: activitySearch })}
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          );
-        })()}
+          {logsOpen ? (
+            <WeeklyLogsSection
+              weeks={filteredWeeks}
+              projectStatus={project.status}
+              onRefresh={onRefresh}
+              onRequestDeleteLog={onDeleteLog}
+              onRequestDeleteTask={onDeleteTask}
+            />
+          ) : (
+            <p className="text-[11px] italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+              {t('timeline.projectCard.expandLogsHint', 'Klik untuk melihat dan mengelola catatan mingguan.')}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

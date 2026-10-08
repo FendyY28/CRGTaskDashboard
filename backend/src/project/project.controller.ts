@@ -147,9 +147,14 @@ export class ProjectController {
 
   @Post('log/:id/task')
   @UseGuards(JwtAuthGuard)
-  async addTask(@Param('id') id: string, @Body('taskName') taskName: string, @Request() req) {
+  async addTask(
+    @Param('id') id: string,
+    @Body('taskName') taskName: string,
+    @Body('description') description: string,
+    @Request() req
+  ) {
     const userId = this.getUserId(req, req.body);
-    return this.projectService.addTask(+id, taskName, userId);
+    return this.projectService.addTask(+id, taskName, userId, description);
   }
 
   @Patch('task/:id/toggle')

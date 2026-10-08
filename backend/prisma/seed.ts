@@ -73,8 +73,8 @@ async function main() {
             weekRange: 'Week 1 (Oct 1-7)', progress: 100, completed: 5, total: 5,
             tasks: {
               create: [
-                { taskId: 'REQ-01', taskName: 'Gather user stories', status: 'completed', completedDate: new Date('2025-10-03') },
-                { taskId: 'REQ-02', taskName: 'Define technical specs', status: 'completed', completedDate: new Date('2025-10-05') }
+                { taskId: 'REQ-01', taskName: 'Gather user stories', description: 'Mengumpulkan user story dari stakeholder untuk kebutuhan awal.', status: 'completed', completedDate: new Date('2025-10-03') },
+                { taskId: 'REQ-02', taskName: 'Define technical specs', description: 'Menyusun spesifikasi teknis berdasarkan user story yang sudah dikumpulkan.', status: 'completed', completedDate: new Date('2025-10-05') }
               ]
             }
           },
@@ -82,9 +82,9 @@ async function main() {
             weekRange: 'Week 12 (Jan 1-7)', progress: 60, completed: 3, total: 5,
             tasks: {
               create: [
-                { taskId: 'DEV-55', taskName: 'API Integration for QRIS', status: 'completed', completedDate: new Date('2026-01-02') },
-                { taskId: 'DEV-56', taskName: 'Frontend Login Screen', status: 'in-progress' },
-                { taskId: 'DEV-57', taskName: 'Database Migration', status: 'pending' }
+                { taskId: 'DEV-55', taskName: 'API Integration for QRIS', description: 'Integrasi API pembayaran QRIS dengan modul transaksi.', status: 'completed', completedDate: new Date('2026-01-02') },
+                { taskId: 'DEV-56', taskName: 'Frontend Login Screen', description: 'Membuat halaman login beserta validasi input di frontend.', status: 'in-progress' },
+                { taskId: 'DEV-57', taskName: 'Database Migration', description: 'Migrasi skema database ke versi terbaru.', status: 'pending' }
               ]
             }
           }

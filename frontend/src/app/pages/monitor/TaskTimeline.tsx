@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { CheckCircle2, LayoutDashboard, AlertCircle, Timer, Filter, PlusCircle, ArrowRight, Loader2, ArrowLeft, FolderKanban, X, AlertTriangle } from "lucide-react";
+import { CheckCircle2, LayoutDashboard, AlertCircle, Timer, Filter, PlusCircle, ArrowRight, Loader2, ArrowLeft, FolderKanban, X, AlertTriangle, ChevronDown } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { ProjectGantt } from "../../components/features/monitor/ProjectGantt";
 import { DashboardKpiCard, DashboardCard } from "../../components/dashboard/index";
-import { PROJECT_STATUS, THEME } from "../../constants/projectConstants"; 
-import { api } from "../../services/api"; 
+import { PROJECT_STATUS, THEME } from "../../constants/projectConstants";
+import { api } from "../../services/api";
 import type { Project } from "../../types";
 
 import { ProjectCard } from "../../components/features/monitor/ProjectCard";
@@ -14,7 +14,10 @@ import { ProtectAction } from "../../components/auth/ProtectAction";
 
 import { useTranslation } from "react-i18next";
 
-const PROGRESS_COLORS = { track: THEME.TOSCA, risk: THEME.BSI_YELLOW, overdue: "#E11D48" }; 
+const PROGRESS_COLORS = { track: THEME.TOSCA, risk: THEME.BSI_YELLOW, overdue: "#E11D48" };
+
+/** Berapa banyak kartu project yang di-render sekaligus. */
+const PAGE_SIZE = 6;
 
 export function TaskTimeline() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -23,7 +26,8 @@ export function TaskTimeline() {
   const [selProject, setSelProject] = useState<Project | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
-  
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const [deleteConf, setDeleteConf] = useState<{ type: 'log' | 'task', id: number } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -69,14 +73,14 @@ export function TaskTimeline() {
     if (!deleteConf) return;
     setIsDeleting(true);
     try {
-        const endpoint = deleteConf.type === 'log' 
+        const endpoint = deleteConf.type === 'log'
             ? `/project/log/${deleteConf.id}`
             : `/project/task/${deleteConf.id}`;
-        
+
         await api.delete(endpoint);
 
-        setDeleteConf(null); 
-        await fetchData();   
+        setDeleteConf(null);
+        await fetchData();
     } catch (e: any) {
         alert(e.message || t('timeline.toast.systemError'));
     } finally {
@@ -85,6 +89,26 @@ export function TaskTimeline() {
   };
 
   const filtered = useMemo(() => (!filter || filter === 'all') ? projects : projects.filter(p => p.status === filter), [projects, filter]);
+
+  // Hanya render PAGE_SIZE kartu pertama agar halaman tetap ringan saat project banyak.
+  const visibleProjects = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const remainingCount = filtered.length - visibleProjects.length;
+
+  // Navigasi cepat bisa menunjuk project yang belum di-render (di luar paginasi),
+  // jadi tampilkan cukup banyak kartu dulu, baru scroll ke target.
+  const navigateToProject = useCallback((id: string) => {
+    const idx = filtered.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    if (idx >= visibleCount) {
+      setVisibleCount(Math.ceil((idx + 1) / PAGE_SIZE) * PAGE_SIZE);
+      requestAnimationFrame(() => scrollTo(id));
+      return;
+    }
+    scrollTo(id);
+  }, [filtered, visibleCount, scrollTo]);
+
+  // Kembali ke halaman pertama tiap filter berubah.
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [filter]);
 
   const filterStyle = useMemo(() => {
     if (!filter || filter === 'all') return { bg: THEME.TOSCA + '15', text: THEME.TOSCA, border: THEME.TOSCA + '30' };
@@ -136,14 +160,14 @@ export function TaskTimeline() {
               )}
               
               <div className="space-y-8">
-                {filtered.length > 0 ? filtered.map(p => (
+                {filtered.length > 0 ? visibleProjects.map(p => (
                   <div key={p.id} ref={el => refs.current[p.id] = el} className="scroll-mt-24 transition-all duration-500">
-                    <ProjectCard 
-                      project={p} 
-                      onRefresh={fetchData} 
-                      onViewGantt={handleViewGantt} 
-                      highlight={highlightId === p.id} 
-                      onDeleteLog={handleDeleteLog} 
+                    <ProjectCard
+                      project={p}
+                      onRefresh={fetchData}
+                      onViewGantt={handleViewGantt}
+                      highlight={highlightId === p.id}
+                      onDeleteLog={handleDeleteLog}
                       onDeleteTask={handleDeleteTask}
                     />
                   </div>
@@ -153,6 +177,21 @@ export function TaskTimeline() {
                     <p className="font-medium text-gray-500">{t('timeline.noProjectsFound')}</p>
                   </div>
                 )}
+
+                {remainingCount > 0 && (
+                  <div className="flex flex-col items-center gap-2 pt-2">
+                    <button
+                      onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                      className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-xs transition hover:bg-white/30"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      {t('timeline.showMore', { count: Math.min(PAGE_SIZE, remainingCount) })}
+                    </button>
+                    <span className="text-xs text-white/80">
+                      {t('timeline.showingOf', { shown: visibleProjects.length, total: filtered.length })}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -160,7 +199,7 @@ export function TaskTimeline() {
               <div className="sticky top-6 space-y-6">
                 <DashboardCard color={THEME.TOSCA} title={t('timeline.quickNavigation')} icon={Filter} className="max-h-[350px] overflow-hidden" contentClassName="space-y-2 overflow-y-auto pr-2 px-3 pb-5 h-[250px] custom-scrollbar">
                   {filtered.map(p => (
-                    <button key={p.id} onClick={() => scrollTo(p.id)} className="w-full text-left p-2.5 rounded-lg flex items-center justify-between group cursor-pointer border border-transparent transition-all hover:bg-gray-50">
+                    <button key={p.id} onClick={() => navigateToProject(p.id)} className="w-full text-left p-2.5 rounded-lg flex items-center justify-between group cursor-pointer border border-transparent transition-all hover:bg-gray-50">
                       <div className="truncate pr-2"><span className="text-xs font-bold block truncate transition-colors" style={{ color: THEME.BSI_DARK_GRAY }}>{p.name}</span><span className="text-[10px]" style={{ color: THEME.BSI_LIGHT_GRAY }}>{p.id}</span></div>
                       <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" style={{ color: THEME.BSI_LIGHT_GRAY }} />
                     </button>

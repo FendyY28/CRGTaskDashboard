@@ -5,7 +5,7 @@ import { Button } from "../../ui/button";
 import { ChevronDown, ChevronUp, CheckCircle2, Loader2, X, Trash2, Plus } from "lucide-react";
 import { PROJECT_STATUS, THEME } from "../../../constants/projectConstants"; 
 import { api } from "../../../services/api"; 
-import type { WeeklyProgress } from "../../../types";
+import type { ProjectStatus, WeeklyProgress } from "../../../types";
 import { useTranslation } from "react-i18next";
 import { fmtDate } from "../../../../lib/utils";
 
@@ -17,7 +17,7 @@ const formatCompletedDate = (d?: string | null) => fmtDate(d);
 
 interface WeeklyRowProps {
   week: WeeklyProgress;
-  projectStatus: string;
+  projectStatus: ProjectStatus;
   onTaskToggle: () => void;
   onRequestDeleteLog: (id: number) => void;
   onRequestDeleteTask: (id: number) => void;
@@ -29,6 +29,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
   const [isSavingTask, setIsSavingTask] = useState(false);
 
   const color = projectStatus.includes('track') || projectStatus === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
@@ -49,11 +50,15 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskName.trim() || isSavingTask) return;
+    if (!newTaskName.trim() || !newTaskDescription.trim() || isSavingTask) return;
     setIsSavingTask(true);
     try {
-      await api.post(`/project/log/${week.id}/task`, { taskName: newTaskName.trim() });
+      await api.post(`/project/log/${week.id}/task`, {
+        taskName: newTaskName.trim(),
+        description: newTaskDescription.trim()
+      });
       setNewTaskName("");
+      setNewTaskDescription("");
       setIsAddingTask(false);
       onTaskToggle();
     } catch (err: any) {
@@ -68,8 +73,11 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
       <TableRow className="hover:bg-gray-50/50 cursor-pointer group transition-colors relative" onClick={() => setExpanded(!expanded)}>
         <TableCell>
           <div className="flex items-center gap-3 font-semibold group-hover:opacity-80 transition-opacity" style={{ color: THEME.BSI_DARK_GRAY }}>
-            {expanded ? <ChevronUp className="h-4 w-4"/> : <ChevronDown className="h-4 w-4"/>} {week.weekRange}
+            {expanded ? <ChevronUp className="h-4 w-4"/> : <ChevronDown className="h-4 w-4"/>} {week.title?.trim() || week.weekRange}
           </div>
+        </TableCell>
+        <TableCell>
+          <span className="text-xs font-medium" style={{ color: THEME.BSI_GREY }}>{week.weekRange}</span>
         </TableCell>
         <TableCell className="text-center font-medium" style={{ color: THEME.BSI_GREY }}>
           {week.tasks?.filter((t: any) => t.status === PROJECT_STATUS.COMPLETED).length} / {week.tasks?.length || 0}
@@ -99,7 +107,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
 
       {expanded && (
         <TableRow className="bg-gray-50/30 animate-in slide-in-from-top-1">
-          <TableCell colSpan={4} className="p-4">
+          <TableCell colSpan={5} className="p-4">
             <div className="grid gap-2">
               {week.tasks?.length > 0 ? week.tasks?.map((task: any) => {
                 const isDone = task.status === PROJECT_STATUS.COMPLETED;
@@ -135,7 +143,10 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
 
                       <div>
                         <p className={`text-sm font-semibold ${isDone ? 'line-through opacity-60' : ''}`} style={{ color: isDone ? THEME.TOSCA : THEME.BSI_DARK_GRAY }}>{task.taskName}</p>
-                        <p className="text-[10px] font-mono" style={{ color: THEME.BSI_LIGHT_GRAY }}>{task.taskId}</p>
+                        {task.description?.trim() && (
+                          <p className="text-xs leading-relaxed mt-0.5 max-w-[520px]" style={{ color: THEME.BSI_GREY }}>{task.description}</p>
+                        )}
+                        <p className="text-[10px] font-mono mt-0.5" style={{ color: THEME.BSI_LIGHT_GRAY }}>{task.taskId}</p>
                       </div>
                     </div>
 
@@ -187,7 +198,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                   <form
                     onSubmit={handleAddTask}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 p-2 bg-white border border-[#38A79C]/50 rounded-xl shadow-xs animate-in fade-in duration-200 mt-1"
+                    className="flex flex-col gap-2 p-2 bg-white border border-[#38A79C]/50 rounded-xl shadow-xs animate-in fade-in duration-200 mt-1"
                   >
                     <input
                       type="text"
@@ -195,14 +206,22 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                       value={newTaskName}
                       onChange={(e) => setNewTaskName(e.target.value)}
                       placeholder={t('timeline.projectCard.taskPlaceholder', 'Ketik nama tugas baru...')}
-                      className="flex-1 text-xs border-none bg-transparent focus:outline-none text-gray-800 placeholder-gray-400 px-2"
+                      className="w-full text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-[#38A79C]/50 text-gray-800 placeholder-gray-400 px-2.5 py-1.5"
                       disabled={isSavingTask}
                     />
-                    <div className="flex items-center gap-1 shrink-0">
+                    <textarea
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      placeholder={t('timeline.projectCard.taskDescriptionPlaceholder', 'Deskripsi pekerjaan (wajib)...')}
+                      rows={2}
+                      className="w-full text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-[#38A79C]/50 text-gray-800 placeholder-gray-400 px-2.5 py-1.5 resize-y"
+                      disabled={isSavingTask}
+                    />
+                    <div className="flex items-center justify-end gap-1 shrink-0">
                       <Button
                         type="submit"
                         size="sm"
-                        disabled={!newTaskName.trim() || isSavingTask}
+                        disabled={!newTaskName.trim() || !newTaskDescription.trim() || isSavingTask}
                         className="h-7 text-xs px-3 bg-[#38A79C] hover:bg-[#38A79C]/90 text-white rounded-lg cursor-pointer"
                       >
                         {isSavingTask ? <Loader2 className="h-3 w-3 animate-spin" /> : t('common.save', 'Simpan')}
@@ -211,7 +230,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); setIsAddingTask(false); setNewTaskName(""); }}
+                        onClick={(e) => { e.stopPropagation(); setIsAddingTask(false); setNewTaskName(""); setNewTaskDescription(""); }}
                         className="h-7 text-xs px-2 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
                       >
                         <X className="h-3.5 w-3.5" />

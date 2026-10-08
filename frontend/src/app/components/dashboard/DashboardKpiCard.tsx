@@ -18,7 +18,7 @@ export const DashboardKpiCard = ({ label, count, icon: Icon, color, onClick, act
   <Card 
     onClick={clickable ? onClick : undefined} 
     className={cn(
-      "relative overflow-hidden border border-white/60 bg-white/95 backdrop-blur-md rounded-2xl transition-all duration-300 shadow-xl shadow-teal-950/5 group",
+      "relative overflow-hidden border border-white/60 bg-white/95 rounded-2xl transition-all duration-300 shadow-xl shadow-teal-950/5 group",
       clickable ? "cursor-pointer hover:shadow-2xl hover:-translate-y-1 hover:border-white ring-1 ring-black/5" : "shadow-lg ring-1 ring-black/5",
       active ? "ring-2 ring-white border-transparent scale-[1.02]" : ""
     )}

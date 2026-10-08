@@ -16,6 +16,7 @@ export interface Task {
   id: number;       // ID Database (untuk update status)
   taskId: string;   // ID String (misal: TSK-001)
   taskName: string;
+  description?: string; // Penjelasan pekerjaan task ini (wajib diisi saat input)
   status: string;   // 'completed', 'in-progress', etc.
   completedDate?: string;
   completedBy?: string;
@@ -24,6 +25,7 @@ export interface Task {
 export interface WeeklyProgress {
   id: number;       // Hapus tanda tanya (?) agar tidak error saat delete
   weekRange: string;
+  title: string;        // Judul log mingguan (diisi saat pembuatan)
   progress: number;
   completed: number;
   total: number;

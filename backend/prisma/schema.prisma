@@ -113,12 +113,13 @@ model PhaseNote {
 
 // WEEKLY LOGS
 model WeeklyProgress {
-  id        Int      @id @default(autoincrement())
-  weekRange String   // Contoh: "Week 1 (Jan 27)"
-  progress  Int      // Progress Mingguan (0-100)
-  completed Int      // Jumlah Task Selesai
-  total     Int      // Total Task
-  
+  id          Int      @id @default(autoincrement())
+  weekRange   String   // Contoh: "Week 1 (Jan 27)"
+  title       String   @default("") // Judul log mingguan, mis. "Sprint 3 - Payment"
+  progress    Int      // Progress Mingguan (0-100)
+  completed   Int      // Jumlah Task Selesai
+  total       Int      // Total Task
+
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks     Task[]
@@ -126,8 +127,9 @@ model WeeklyProgress {
 
 model Task {
   id               Int            @id @default(autoincrement())
-  taskId           String         // TSK-001
+  taskId           String         @unique // TSK-001 — unique agar ID tabrakan terdeteksi (P2002) dan di-retry
   taskName         String
+  description      String         @db.Text // Penjelasan pekerjaan task ini, wajib diisi
   status           String         // completed, in-progress
   completedDate    DateTime?
   completedBy      String?
