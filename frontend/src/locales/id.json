@@ -10,7 +10,9 @@
     "loading": "Memuat...",
     "all": "Semua",
     "status": "Status",
-    "action": "Aksi"
+    "action": "Aksi",
+    "actions": "Aksi",
+    "unassigned": "Belum Ditugaskan"
   },
   "header": {
     "profileSettings": "Pengaturan Profil",
@@ -104,7 +106,10 @@
         "description": "Total {{count}} tugas yang telah diselesaikan",
         "searchPlaceholder": "Cari tugas, ID, periode, atau nama PIC...",
         "noSearchResults": "Tidak ada aktivitas yang sesuai pencarian \"{{query}}\""
-      }
+      },
+      "searchTasks": "Cari tugas...",
+      "noTasksDone": "Belum ada tugas yang selesai.",
+      "untitledTask": "Tugas Tanpa Judul"
     },
     "logForm": {
       "project": "Proyek",
@@ -265,6 +270,10 @@
       "desc2": "? Tindakan ini tidak dapat dibatalkan.",
       "cancel": "Batal",
       "confirm": "Konfirmasi Hapus"
+    },
+    "phases": {
+      "projectCount": "{{count}} proyek",
+      "empty": "Tidak ada proyek dalam fase ini."
     }
   },
   "testing": {
@@ -517,7 +526,8 @@
         "deleteLoading": "Menghapus isu...",
         "deleteSuccess": "Isu berhasil dihapus.",
         "deleteError": "Gagal menghapus isu."
-      }
+      },
+      "unknownIssue": "Isu Tidak Diketahui"
     },
     "common": {
       "submit": "Kirim"
@@ -542,6 +552,8 @@
       "reset": "Reset Semua Filter"
     },
     "exportCsv": "Ekspor CSV",
+    "exportEmpty": "Tidak ada data untuk diekspor dengan filter ini.",
+    "exportFailed": "Gagal mengekspor data.",
     "table": {
       "timestamp": "Waktu",
       "actor": "Pelaku",
@@ -618,7 +630,10 @@
       "testingQuality": "Kualitas UAT (Lulus vs Gagal)",
       "topDefects": "Proyek Paling Gagal (UAT)",
       "issuePriority": "Isu Live Berdasarkan Prioritas",
-      "issueResolution": "Status Penyelesaian Isu"
+      "issueResolution": "Status Penyelesaian Isu",
+      "phaseLabel": "Fase",
+      "avgProgressLabel": "Rata-rata Kemajuan",
+      "activeProjectsLabel": "Proyek Aktif"
     },
     "labels": {
       "count": "Jumlah",
@@ -759,5 +774,100 @@
     "daysRemaining": "{{count}} hari lagi",
     "pic": "PIC",
     "auditTrail": "Buka Jejak Audit Sistem"
+  },
+  "auth": {
+    "login": {
+      "title": "Selamat Datang Kembali",
+      "subtitle": "Masuk untuk mengakses Sistem Pemantauan CRG",
+      "emailLabel": "Alamat Email",
+      "emailPlaceholder": "nama@bankbsi.id",
+      "passwordLabel": "Kata Sandi",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Ingat saya",
+      "forgotPassword": "Lupa Kata Sandi?",
+      "verifying": "Memverifikasi...",
+      "secureLogin": "Masuk Aman",
+      "serverError": "Gagal terhubung ke server."
+    },
+    "register": {
+      "title": "Buat Akun",
+      "subtitle": "Bergabung ke Portal Akses Pemantauan CRG",
+      "nameLabel": "Nama Lengkap",
+      "namePlaceholder": "Masukkan nama lengkap Anda",
+      "emailLabel": "Email Kerja",
+      "emailPlaceholder": "nama@bankbsi.id",
+      "passwordLabel": "Kata Sandi",
+      "passwordPlaceholder": "••••••••",
+      "confirmLabel": "Konfirmasi Kata Sandi",
+      "confirmPlaceholder": "••••••••",
+      "processing": "Memproses...",
+      "registerBtn": "Daftar Akun",
+      "alreadyHaveAccount": "Sudah punya akun?",
+      "loginHere": "Masuk di sini",
+      "passwordMismatch": "Konfirmasi kata sandi tidak cocok!",
+      "failed": "Registrasi gagal",
+      "resendFailed": "Gagal mengirim ulang email",
+      "successTitle": "Periksa Kotak Masuk Anda!",
+      "successSubtitle": "Verifikasi diperlukan untuk melanjutkan.",
+      "successDesc": "Kami telah mengirim tautan verifikasi ke",
+      "successDesc2": "Harap verifikasi akun Anda sebelum masuk.",
+      "backToRegister": "Kembali ke Registrasi",
+      "resending": "Mengirim...",
+      "resendIn": "Kirim Ulang Email dalam {{count}}d",
+      "resendBtn": "Kirim Ulang Email",
+      "spamNotice": "Tidak menerima email? Periksa spam atau klik Kirim Ulang."
+    },
+    "forgotPassword": {
+      "step1Title": "Atur Ulang Kata Sandi",
+      "step1Subtitle": "Masukkan email kerja Anda untuk menerima kode OTP.",
+      "step2Title": "Verifikasi & Buat Kata Sandi",
+      "step2Subtitle": "Kami telah mengirimkan 6 digit kode ke {{email}}",
+      "step3Title": "Kata Sandi Berhasil Diubah",
+      "step3Subtitle": "Kata sandi Anda telah berhasil diperbarui.",
+      "emailLabel": "Alamat Email Kerja",
+      "emailPlaceholder": "nama@bankbsi.id",
+      "sendOtp": "Kirim Kode OTP",
+      "processing": "Memproses...",
+      "backToLogin": "Kembali ke Masuk",
+      "otpLabel": "6-Digit Kode OTP",
+      "newPasswordLabel": "Kata Sandi Baru",
+      "confirmPasswordLabel": "Konfirmasi Kata Sandi",
+      "resetPasswordBtn": "Atur Ulang Kata Sandi",
+      "verifying": "Memverifikasi...",
+      "cancel": "Batal",
+      "successDesc": "Anda sekarang dapat menggunakan kata sandi baru untuk masuk ke Dasbor CRG.",
+      "proceedToLogin": "Lanjut ke Masuk",
+      "passwordMismatch": "Kata sandi baru dan konfirmasi tidak cocok!",
+      "passwordRequirements": "Kata sandi minimal 6 karakter, mengandung huruf besar dan simbol.",
+      "otpFailed": "Gagal mengirim OTP.",
+      "otpInvalid": "Kode OTP salah atau kedaluwarsa."
+    },
+    "resetPassword": {
+      "title": "Kata Sandi Baru",
+      "subtitle": "Mengatur ulang akun untuk: {{email}}",
+      "successTitle": "Kata Sandi Diperbarui!",
+      "successSubtitle": "Mengalihkan Anda ke halaman masuk...",
+      "newPasswordLabel": "Kata Sandi Baru",
+      "newPasswordPlaceholder": "Masukkan kata sandi baru",
+      "confirmPasswordLabel": "Konfirmasi Kata Sandi Baru",
+      "confirmPasswordPlaceholder": "Konfirmasi kata sandi baru",
+      "updating": "Memperbarui...",
+      "updateBtn": "Perbarui Kata Sandi",
+      "passwordMismatch": "Kata sandi konfirmasi tidak cocok!",
+      "updateFailed": "Gagal memperbarui kata sandi.",
+      "successMessage": "Kata sandi Anda telah berhasil diubah. <br />Mohon tunggu sementara kami mengalihkan Anda."
+    },
+    "verifyEmail": {
+      "verifyingTitle": "Memverifikasi...",
+      "verifyingSubtitle": "Mohon tunggu sementara kami memvalidasi token Anda.",
+      "successTitle": "Email Terverifikasi!",
+      "successSubtitle": "Akun Anda sekarang aktif. Selamat datang di BSI CRG.",
+      "failedTitle": "Verifikasi Gagal",
+      "failedSubtitle": "Token Anda tidak valid atau telah kedaluwarsa.",
+      "redirecting": "Mengalihkan ke Masuk...",
+      "errorNotice": "Akun mungkin sudah aktif jika Anda memuat ulang halaman. <br/>Silakan coba masuk untuk memastikannya.",
+      "goToLogin": "Ke Halaman Masuk",
+      "needToken": "Butuh token baru? Daftar"
+    }
   }
 }

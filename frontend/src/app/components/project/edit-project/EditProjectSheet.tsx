@@ -114,13 +114,14 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
     } else handleChange("currentPhase", v); 
   };
 
+  // Tanggal dikirim sebagai ISO string (bukan objek Date) agar lolos
+  // @IsISO8601() di backend. updatedAt diisi Prisma (@updatedAt), bukan client.
   const getPreparedPayload = () => ({
     ...form, overallProgress: Number(form.overallProgress),
-    projectStartDate: form.projectStartDate ? new Date(form.projectStartDate) : undefined,
-    projectDeadline: form.projectDeadline ? new Date(form.projectDeadline) : undefined,
-    phaseStartDate: form.phaseStartDate ? new Date(form.phaseStartDate) : undefined,
-    phaseDeadline: form.phaseDeadline ? new Date(form.phaseDeadline) : undefined,
-    updatedAt: new Date()
+    projectStartDate: form.projectStartDate ? new Date(form.projectStartDate).toISOString() : undefined,
+    projectDeadline: form.projectDeadline ? new Date(form.projectDeadline).toISOString() : undefined,
+    phaseStartDate: form.phaseStartDate ? new Date(form.phaseStartDate).toISOString() : undefined,
+    phaseDeadline: form.phaseDeadline ? new Date(form.phaseDeadline).toISOString() : undefined
   });
 
   const saveProjectChanges = async (e?: FormEvent) => {

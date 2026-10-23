@@ -1,17 +1,18 @@
 import { memo } from "react";
 import { AlertTriangle, Lightbulb, ChevronRight, User, Calendar } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { StatusBadge } from "../../dashboard/index";
 import { THEME } from "../../../constants/projectConstants";
 import type { ProjectIssue, ImprovementNote } from "../../../types";
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('id-ID', {
-  day: 'numeric', month: 'short', year: 'numeric',
-  hour: '2-digit', minute: '2-digit'
-});
-
-const formatDate = (dateString?: string) => {
-  if (!dateString) return "Unknown Date";
-  return DATE_FORMATTER.format(new Date(dateString));
+const formatDate = (dateString?: string, locale: string = 'id-ID', fallback: string = 'Unknown Date') => {
+  if (!dateString) return fallback;
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return fallback;
+  return new Intl.DateTimeFormat(locale.startsWith('en') ? 'en-US' : 'id-ID', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  }).format(d);
 };
 
 type LogItem = ProjectIssue | ImprovementNote;
@@ -22,12 +23,13 @@ interface LogRowProps {
 }
 
 export const LogRow = memo(({ item, onClick }: LogRowProps) => {
+  const { t, i18n } = useTranslation();
   const isImp = item.type === 'improvement';
   
   const reporterName = isImp ? (item as ImprovementNote).reviewer : (item as ProjectIssue).reportedBy;
   const dateReported = isImp ? (item as ImprovementNote).createdDate : (item as ProjectIssue).reportedDate;
   
-  const title = (item as any).title || (isImp ? "Improvement Plan" : "Unknown Issue");
+  const title = (item as any).title || (isImp ? t('pirComponents.modal.improvementPlan', 'Improvement Plan') : t('pirComponents.modal.unknownIssue', 'Unknown Issue'));
   
   const displayId = isImp ? (item as ImprovementNote).noteId : (item as ProjectIssue).issueId;
   const description = isImp ? (item as ImprovementNote).recommendations : (item as ProjectIssue).description;
@@ -72,7 +74,7 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
             <p className="text-xs line-clamp-1 mt-2 pr-8 italic" style={{ color: THEME.BSI_GREY }}>{description}</p>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>
               <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: THEME.BSI_GREY }}><User className="h-3 w-3" /> {reporterName}</span>
-              <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: THEME.BSI_GREY }}><Calendar className="h-3 w-3" /> {formatDate(dateReported)}</span>
+              <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: THEME.BSI_GREY }}><Calendar className="h-3 w-3" /> {formatDate(dateReported, i18n.language, t('pirComponents.modal.unknownDate', 'Unknown Date'))}</span>
             </div>
           </div>
         </div>

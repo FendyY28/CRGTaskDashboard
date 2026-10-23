@@ -283,23 +283,23 @@ export function ProjectGantt({
                   {project?.id}
                 </span>
                 {selectedCycle < maxCycle ? (
-                  <Badge className="bg-amber-50 text-amber-700 border-amber-200 shadow-none">
+                  <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200 shadow-none">
                     {t("gantt.archiveCycle")}
                   </Badge>
                 ) : (
-                  <Badge className="bg-teal-50 text-teal-700 border-teal-200 shadow-none">
+                  <Badge className="text-xs bg-teal-50 text-teal-700 border-teal-200 shadow-none">
                     {t("gantt.activeCycle")}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-500 font-medium ml-7 flex items-center gap-2 mt-0.5">
+              <p className="text-sm text-gray-500 font-medium ml-7 flex items-center gap-2 mt-0.5">
                 <span>{t("gantt.title")}</span>
                 <span className="text-gray-300">•</span>
                 <span className="font-semibold text-gray-700">
                   {t("gantt.cycleLabel")} {selectedCycle}
                 </span>
                 <span className="text-gray-300">•</span>
-                <span className="text-[11px] text-gray-400 font-mono">
+                <span className="text-xs text-gray-500 font-mono">
                   {t("gantt.cycleRange", {
                     start: cycleDateRange.start,
                     end: cycleDateRange.end,
@@ -312,8 +312,8 @@ export function ProjectGantt({
           <div className="flex items-center gap-3 flex-wrap">
             {/* Navigasi / Filter Cycle Tabs */}
             <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200/80 shadow-xs">
-              <span className="text-[10px] font-bold text-gray-500 uppercase px-2 mr-0.5 flex items-center gap-1">
-                <RefreshCw className="h-3 w-3 text-gray-400" />{" "}
+              <span className="text-xs font-bold text-gray-600 uppercase px-2 mr-0.5 flex items-center gap-1">
+                <RefreshCw className="h-3.5 w-3.5 text-gray-400" />{" "}
                 {t("gantt.cycleLabel")}
               </span>
               {Array.from({ length: maxCycle }, (_, i) => i + 1).map((c) => {
@@ -323,7 +323,7 @@ export function ProjectGantt({
                   <button
                     key={c}
                     onClick={() => setSelectedCycle(c)}
-                    className={`text-xs px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`text-sm px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       isActive
                         ? "bg-white text-[#36A39D] shadow-xs ring-1 ring-gray-200/60"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-200/60"
@@ -506,7 +506,7 @@ export function ProjectGantt({
             <Button
               variant="link"
               onClick={() => setSelectedCycle(1)}
-              className="text-[#36A39D] font-bold text-xs mt-1"
+              className="text-[#36A39D] font-bold text-sm mt-1"
             >
               {t("gantt.checkCycle1")}
             </Button>

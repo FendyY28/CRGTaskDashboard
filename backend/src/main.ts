@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -37,9 +38,16 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // --- CORS ---
-  // Daftar origin diizinkan diambil dari env CORS_ORIGINS (pisahkan dengan koma).
-  // Jika kosong, semua origin diizinkan (khusus pengembangan).
+  // Validate incoming DTO payloads globally.
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      skipUndefinedProperties: true,
+    }),
+  );
+
+  // Allow origins listed in CORS_ORIGINS; fall back to any origin when unset.
   const corsOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
     .map((o) => o.trim())
@@ -50,7 +58,6 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-  // ----------
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

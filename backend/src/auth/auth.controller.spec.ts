@@ -47,20 +47,20 @@ describe('AuthController', () => {
   describe('validateEmail', () => {
     it('returns success when the email is valid', async () => {
       emailServiceMock.verify.mockResolvedValue(true);
-      await expect(controller.validateEmail('user@example.com')).resolves.toEqual({ success: true });
+      await expect(controller.validateEmail({ email: 'user@example.com' })).resolves.toEqual({ success: true });
       expect(emailServiceMock.verify).toHaveBeenCalledWith('user@example.com');
     });
 
     it('throws BadRequestException when the email is invalid', async () => {
       emailServiceMock.verify.mockResolvedValue(false);
-      await expect(controller.validateEmail('bad@example.com')).rejects.toThrow(BadRequestException);
+      await expect(controller.validateEmail({ email: 'bad@example.com' })).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('delegation to AuthService', () => {
     it('verifyEmail delegates to AuthService.verifyEmail', async () => {
       authServiceMock.verifyEmail.mockResolvedValue({ success: true });
-      await expect(controller.verifyEmail('tok-123')).resolves.toEqual({ success: true });
+      await expect(controller.verifyEmail({ token: 'tok-123' })).resolves.toEqual({ success: true });
       expect(authServiceMock.verifyEmail).toHaveBeenCalledWith('tok-123');
     });
 

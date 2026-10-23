@@ -14,26 +14,25 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    // 1. Konfigurasi Global Environment Variables
+    // Global env vars.
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
-    // Rate limiting global (default 100 req / 60 detik per IP).
-    // Endpoint auth yang sensitif memakai limit yang lebih ketat lewat @Throttle.
+    // Global rate limit (100 req/min per IP); sensitive auth routes use stricter @Throttle.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
 
-    // 2. Konfigurasi Mailer
+    // SMTP transport for transactional email.
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: config.get('MAIL_HOST'), // smtp.gmail.com
+          host: config.get('MAIL_HOST'),
           port: 587,
-          secure: false, // true for 465, false for other ports
+          secure: false, // true only for port 465
           auth: {
             user: config.get('MAIL_USER'),
-            pass: config.get('MAIL_PASS'), // App Password (16 karakter, tanpa spasi)
+            pass: config.get('MAIL_PASS'),
           },
         },
         defaults: {
@@ -43,7 +42,7 @@ import { UserModule } from './user/user.module';
       inject: [ConfigService],
     }),
 
-    // 3. Module Internal Lainnya
+    // Feature modules.
     ProjectModule,
     PrismaModule,
     AuthModule,
@@ -54,7 +53,7 @@ import { UserModule } from './user/user.module';
   providers: [
     AppService,
     PrismaService,
-    // Guard ini otomatis aktif untuk semua route (kecuali yang di-skip)
+    // Rate limiting applies to every route unless explicitly skipped.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

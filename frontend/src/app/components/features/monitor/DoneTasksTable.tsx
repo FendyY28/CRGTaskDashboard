@@ -48,11 +48,11 @@ const toTimestamp = (value?: string | null): number => {
   return Number.isNaN(t) ? 0 : t;
 };
 
-const formatDateSafe = (value?: string | null) => {
+const formatDateSafe = (value?: string | null, locale = "id-ID") => {
   if (!value) return null;
   const d = new Date(value);
   if (isNaN(d.getTime())) return null;
-  return new Intl.DateTimeFormat("id-ID", {
+  return new Intl.DateTimeFormat(locale.startsWith("en") ? "en-US" : "id-ID", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -77,8 +77,8 @@ const TaskSearchBar = memo(({ query, onQueryChange }: TaskSearchBarProps) => {
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        placeholder={t("timeline.projectCard.searchTasks", "Cari task…")}
-        className="w-full rounded-lg border pl-8 pr-8 py-1.5 text-xs outline-none focus:ring-1"
+        placeholder={t("timeline.projectCard.searchTasks", "Cari tugas...")}
+        className="w-full rounded-lg border pl-8 pr-8 py-1.5 text-sm outline-none focus:ring-1"
         style={{
           borderColor: THEME.BSI_LIGHT_GRAY + "60",
           color: THEME.BSI_DARK_GRAY,
@@ -101,48 +101,51 @@ interface DoneTaskRowProps {
   task: DoneTask;
 }
 
-const DoneTaskRow = memo(({ task }: DoneTaskRowProps) => (
-  <TableRow className="hover:bg-gray-50/50 transition-colors">
-    <TableCell
-      className="py-3 font-semibold text-xs whitespace-nowrap"
-      style={{ color: THEME.BSI_DARK_GRAY }}
-    >
-      {task.weekRange}
-    </TableCell>
-    <TableCell className="py-3 text-xs">
-      <p className="font-medium flex items-center gap-1.5" style={{ color: THEME.BSI_DARK_GRAY }}>
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: THEME.BSI_GREEN }} />
-        {task.taskName || "Untitled Task"}
-      </p>
-      {task.taskId && (
-        <p className="text-[10px] font-mono ml-5" style={{ color: THEME.BSI_LIGHT_GRAY }}>
-          {task.taskId}
+const DoneTaskRow = memo(({ task }: DoneTaskRowProps) => {
+  const { t, i18n } = useTranslation();
+  return (
+    <TableRow className="hover:bg-gray-50/50 transition-colors">
+      <TableCell
+        className="py-3 font-semibold text-xs whitespace-nowrap"
+        style={{ color: THEME.BSI_DARK_GRAY }}
+      >
+        {task.weekRange}
+      </TableCell>
+      <TableCell className="py-3 text-sm whitespace-normal min-w-[220px]">
+        <p className="font-medium flex items-center gap-1.5" style={{ color: THEME.BSI_DARK_GRAY }}>
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: THEME.BSI_GREEN }} />
+          {task.taskName || t("timeline.projectCard.untitledTask", "Untitled Task")}
         </p>
-      )}
-    </TableCell>
-    <TableCell
-      className="py-3 text-center text-xs font-medium"
-      style={{ color: THEME.BSI_DARK_GRAY }}
-    >
-      {task.completedBy ? (
-        <span className="inline-flex items-center justify-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-full">
-          <User className="h-3 w-3" style={{ color: THEME.TOSCA }} />
-          {task.completedBy}
-        </span>
-      ) : (
-        <span className="italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>
-          —
-        </span>
-      )}
-    </TableCell>
-    <TableCell
-      className="py-3 text-center text-xs whitespace-nowrap"
-      style={{ color: THEME.BSI_GREY }}
-    >
-      {task.completedDate ? formatDateSafe(task.completedDate) : "-"}
-    </TableCell>
-  </TableRow>
-));
+        {task.taskId && (
+          <p className="text-[11px] font-mono ml-5" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+            {task.taskId}
+          </p>
+        )}
+      </TableCell>
+      <TableCell
+        className="py-3 text-center text-xs font-medium"
+        style={{ color: THEME.BSI_DARK_GRAY }}
+      >
+        {task.completedBy ? (
+          <span className="inline-flex items-center justify-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-full">
+            <User className="h-3 w-3" style={{ color: THEME.TOSCA }} />
+            {task.completedBy}
+          </span>
+        ) : (
+          <span className="italic" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+            —
+          </span>
+        )}
+      </TableCell>
+      <TableCell
+        className="py-3 text-center text-sm whitespace-nowrap"
+        style={{ color: THEME.BSI_GREY }}
+      >
+        {task.completedDate ? formatDateSafe(task.completedDate, i18n.language) : "-"}
+      </TableCell>
+    </TableRow>
+  );
+});
 DoneTaskRow.displayName = "DoneTaskRow";
 
 /**
@@ -178,7 +181,7 @@ export const DoneTasksTable = memo(({ project }: DoneTasksTableProps) => {
   if (doneTasks.length === 0) {
     return (
       <div
-        className="rounded-xl border border-dashed py-6 text-center text-xs italic"
+        className="rounded-xl border border-dashed py-6 text-center text-sm italic"
         style={{ borderColor: THEME.BSI_LIGHT_GRAY + "50", color: THEME.BSI_LIGHT_GRAY }}
       >
         {t("timeline.projectCard.noTasksDone", "Belum ada task yang selesai.")}
@@ -202,25 +205,25 @@ export const DoneTasksTable = memo(({ project }: DoneTasksTableProps) => {
           <TableHeader style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + "15" }}>
             <TableRow>
               <TableHead
-                className="text-[10px] font-bold uppercase h-10"
+                className="text-[11px] font-bold uppercase h-10"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.period")}
               </TableHead>
               <TableHead
-                className="text-[10px] font-bold uppercase h-10"
+                className="text-[11px] font-bold uppercase h-10"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.description", "Deskripsi")}
               </TableHead>
               <TableHead
-                className="text-[10px] font-bold uppercase h-10 text-center"
+                className="text-[11px] font-bold uppercase h-10 text-center"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.doneBy", "Dikerjakan Oleh")}
               </TableHead>
               <TableHead
-                className="text-[10px] font-bold uppercase h-10 text-center"
+                className="text-[11px] font-bold uppercase h-10 text-center"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.date", "Tanggal")}
@@ -232,7 +235,7 @@ export const DoneTasksTable = memo(({ project }: DoneTasksTableProps) => {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="text-center text-xs py-8 italic"
+                  className="text-center text-sm py-8 italic"
                   style={{ color: THEME.BSI_LIGHT_GRAY }}
                 >
                   {t("timeline.projectCard.noTasksDone", "Belum ada task yang sesuai.")}
@@ -254,7 +257,7 @@ export const DoneTasksTable = memo(({ project }: DoneTasksTableProps) => {
       {hasMore && (
         <button
           onClick={() => setExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-colors hover:bg-gray-50"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors hover:bg-gray-50"
           style={{ color: THEME.TOSCA }}
         >
           {expanded ? (

@@ -38,8 +38,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
     e.stopPropagation();
     setLoadingId(tid);
     try {
-      const completedBy = localStorage.getItem('user_name') || undefined;
-      await api.patch(`/project/task/${tid}/toggle`, { completedBy });
+      await api.patch(`/project/task/${tid}/toggle`, {});
       onTaskToggle();
     } catch (err: any) {
       alert(err.message || "Update failed");
@@ -77,37 +76,38 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
           </div>
         </TableCell>
         <TableCell>
-          <span className="text-xs font-medium" style={{ color: THEME.BSI_GREY }}>{week.weekRange}</span>
+          <span className="text-sm font-medium" style={{ color: THEME.BSI_GREY }}>{week.weekRange}</span>
         </TableCell>
-        <TableCell className="text-center font-medium" style={{ color: THEME.BSI_GREY }}>
+        <TableCell className="text-center w-[72px] tabular-nums" style={{ color: THEME.BSI_GREY }}>
           {week.tasks?.filter((t: any) => t.status === PROJECT_STATUS.COMPLETED).length} / {week.tasks?.length || 0}
         </TableCell>
-        <TableCell className="min-w-[120px]">
-          <div className="w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + '40' }}>
-            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${week.progress}%`, backgroundColor: color }} />
+        <TableCell className="w-[140px]">
+          <div className="flex items-center gap-2.5">
+            <div className="flex-1 rounded-full h-2 overflow-hidden" style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + '40' }}>
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${week.progress}%`, backgroundColor: color }} />
+            </div>
           </div>
         </TableCell>
-        <TableCell className="text-center font-bold relative" style={{ color: THEME.TOSCA }}>
-            <div className="flex items-center justify-center gap-3">
-                <span>{week.progress}%</span>
-
-                {/* Sembunyikan icon hapus Weekly Log */}
-                <ProtectAction>
-                  <Button
-                      variant="ghost" size="icon"
-                      onClick={(e) => { e.stopPropagation(); onRequestDeleteLog(week.id); }}
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all absolute right-2 hover:bg-red-50 text-red-500"
-                  >
-                      <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </ProtectAction>
-            </div>
+        <TableCell className="text-right font-bold tabular-nums whitespace-nowrap w-[64px]" style={{ color: THEME.TOSCA }}>
+          {week.progress}%
+        </TableCell>
+        <TableCell className="text-right w-[64px] whitespace-nowrap">
+          <ProtectAction>
+            <Button
+              variant="ghost" size="icon"
+              onClick={(e) => { e.stopPropagation(); onRequestDeleteLog(week.id); }}
+              title={t('common.delete', 'Hapus')}
+              className="h-7 w-7 text-red-500 hover:bg-red-50 hover:text-red-600"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </ProtectAction>
         </TableCell>
       </TableRow>
 
       {expanded && (
         <TableRow className="bg-gray-50/30 animate-in slide-in-from-top-1">
-          <TableCell colSpan={5} className="p-4">
+          <TableCell colSpan={6} className="p-4">
             <div className="grid gap-2">
               {week.tasks?.length > 0 ? week.tasks?.map((task: any) => {
                 const isDone = task.status === PROJECT_STATUS.COMPLETED;
@@ -168,12 +168,12 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                         )}
                       </div>
 
-                      {/* Sembunyikan icon hapus Task (X) */}
                       <ProtectAction>
                         <Button
                             variant="ghost" size="icon"
                             onClick={(e) => { e.stopPropagation(); onRequestDeleteTask(task.id); }}
-                            className="h-6 w-6 opacity-0 group-hover/task:opacity-100 transition-all hover:bg-red-50 text-red-500"
+                            title={t('common.delete', 'Hapus')}
+                            className="h-7 w-7 self-start text-red-500 hover:bg-red-50 hover:text-red-600"
                         >
                             <X className="h-3.5 w-3.5" />
                         </Button>

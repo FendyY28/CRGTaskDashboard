@@ -22,6 +22,19 @@ export class AuditController {
     return this.auditService.getLogs({ projectId, userId, action, search, startDate, endDate, page: page ? +page : undefined, limit: limit ? +limit : undefined });
   }
 
+  // GET /audit/export — every log matching the same filters, unpaginated (for CSV).
+  @Get('export')
+  async exportLogs(
+    @Query('projectId') projectId?: string,
+    @Query('userId') userId?: string,
+    @Query('action') action?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.auditService.getLogsForExport({ projectId, userId, action, search, startDate, endDate });
+  }
+
   // GET /audit/project/:projectId — Logs for specific project
   @Get('project/:projectId')
   async getProjectLogs(@Param('projectId') projectId: string, @Query('limit') limit?: string) {

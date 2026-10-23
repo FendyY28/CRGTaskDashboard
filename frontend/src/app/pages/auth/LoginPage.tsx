@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Lock, Mail, ChevronRight, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"; 
+import { useTranslation } from "react-i18next";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
@@ -18,6 +19,7 @@ const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
 const inputExtraCls = "pl-10"; 
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   
@@ -60,7 +62,6 @@ export function LoginPage() {
     setUi(prev => ({ ...prev, loading: true, error: "", isResend: false }));
     
     try {
-      // Menggunakan api.post yang sudah bersih
       const result = await api.post("/auth/login", { 
         email: form.email, 
         password: form.password 
@@ -87,7 +88,7 @@ export function LoginPage() {
       navigate("/dashboard");
 
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to connect to the server.";
+      const errorMessage = err.message || t("auth.login.serverError", "Failed to connect to the server.");
       const isResendEmail = errorMessage.toLowerCase().includes("email verifikasi") || errorMessage.toLowerCase().includes("akun belum aktif");
 
       setUi(prev => ({ 
@@ -101,22 +102,23 @@ export function LoginPage() {
   };
 
   return (
-    // Bungkus HANYA dengan AuthLayout (BSI Logo & Footer otomatis terpasang)
     <AuthLayout 
-      title="Welcome Back" 
-      subtitle="Sign in to access CRG Monitoring System"
+      title={t("auth.login.title", "Welcome Back")} 
+      subtitle={t("auth.login.subtitle", "Sign in to access CRG Monitoring System")}
     >
       <form onSubmit={handleLogin} className="space-y-5">
         
         {/* Input Email */}
         <div className="space-y-2 text-left relative">
-          <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Email Address</Label>
+          <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            {t("auth.login.emailLabel", "Email Address")}
+          </Label>
           <div className="relative">
             <Mail className={iconCls} />
             <DashboardInput 
               id="email" 
               type="email" 
-              placeholder="name@bankbsi.id" 
+              placeholder={t("auth.login.emailPlaceholder", "name@bankbsi.id")} 
               className={inputExtraCls} 
               value={form.email} 
               onChange={updateForm} 
@@ -128,20 +130,26 @@ export function LoginPage() {
 
         {/* Input Password */}
         <div className="space-y-2 text-left relative">
-          <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Password</Label>
+          <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            {t("auth.login.passwordLabel", "Password")}
+          </Label>
           <div className="relative">
             <Lock className={iconCls} />
             <DashboardInput 
               id="password" 
               type={ui.showPass ? "text" : "password"} 
-              placeholder="••••••••" 
+              placeholder={t("auth.login.passwordPlaceholder", "••••••••")} 
               className={inputExtraCls} 
               value={form.password} 
               onChange={updateForm} 
               disabled={ui.loading} 
               required 
             />
-            <button type="button" onClick={() => setUi(p => ({ ...p, showPass: !p.showPass }))} className="absolute right-3 top-3.5 text-gray-400 hover:text-[#36A39D] transition-colors">
+            <button 
+              type="button" 
+              onClick={() => setUi(p => ({ ...p, showPass: !p.showPass }))} 
+              className="absolute right-3 top-3.5 text-gray-400 hover:text-[#36A39D] transition-colors"
+            >
               {ui.showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
@@ -158,11 +166,11 @@ export function LoginPage() {
               className="h-4 w-4 rounded border-gray-300 text-[#36A39D] focus:ring-[#36A39D] cursor-pointer"
             />
             <label htmlFor="rememberMe" className="text-xs font-semibold text-gray-500 cursor-pointer select-none hover:text-gray-700">
-              Remember me
+              {t("auth.login.rememberMe", "Remember me")}
             </label>
           </div>
           <Link to="/forgot-password" className="text-xs text-[#36A39D] hover:underline font-bold transition-all">
-            Forgot Password?
+            {t("auth.login.forgotPassword", "Forgot Password?")}
           </Link>
         </div>
 
@@ -173,14 +181,26 @@ export function LoginPage() {
               ? "bg-amber-50 border-amber-200 text-amber-700" 
               : "bg-red-50 border-red-100 text-red-600"
             }`}>
-            {ui.isResend ? <AlertCircle className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span className="leading-tight">{ui.error}</span>
           </div>
         )}
 
         {/* Tombol Submit */}
-        <Button type="submit" className="w-full bg-[#36A39D] hover:bg-[#2b8580] text-white h-12 text-sm font-bold rounded-xl shadow-lg shadow-[#36A39D]/20 mt-4 transition-all active:scale-[0.98]" disabled={ui.loading}>
-          {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</> : <>Secure Login <ChevronRight className="ml-1 h-4 w-4" /></>}
+        <Button 
+          type="submit" 
+          className="w-full bg-[#36A39D] hover:bg-[#2b8580] text-white h-12 text-sm font-bold rounded-xl shadow-lg shadow-[#36A39D]/20 mt-4 transition-all active:scale-[0.98]" 
+          disabled={ui.loading}
+        >
+          {ui.loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.login.verifying", "Verifying...")}
+            </>
+          ) : (
+            <>
+              {t("auth.login.secureLogin", "Secure Login")} <ChevronRight className="ml-1 h-4 w-4" />
+            </>
+          )}
         </Button>
 
       </form>

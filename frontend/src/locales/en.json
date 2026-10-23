@@ -10,7 +10,9 @@
     "loading": "Loading...",
     "all": "All",
     "status": "Status",
-    "action": "Action"
+    "action": "Action",
+    "actions": "Actions",
+    "unassigned": "Unassigned"
   },
   "header": {
     "profileSettings": "Profile Settings",
@@ -104,7 +106,10 @@
         "description": "Total {{count}} completed tasks",
         "searchPlaceholder": "Search task, ID, period, or PIC name...",
         "noSearchResults": "No activities matching \"{{query}}\""
-      }
+      },
+      "searchTasks": "Search tasks...",
+      "noTasksDone": "No completed tasks yet.",
+      "untitledTask": "Untitled Task"
     },
     "logForm": {
       "project": "Project",
@@ -265,6 +270,11 @@
       "desc2": "? Action cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Confirm Delete"
+    },
+    "phases": {
+      "projectCount_one": "{{count}} project",
+      "projectCount_other": "{{count}} projects",
+      "empty": "No projects are currently in this phase."
     }
   },
   "testing": {
@@ -517,7 +527,8 @@
         "deleteLoading": "Removing issue...",
         "deleteSuccess": "Issue deleted successfully.",
         "deleteError": "Failed to delete issue."
-      }
+      },
+      "unknownIssue": "Unknown Issue"
     },
     "common": {
       "submit": "Submit"
@@ -542,6 +553,8 @@
       "reset": "Reset All Filters"
     },
     "exportCsv": "Export CSV",
+    "exportEmpty": "No data to export with these filters.",
+    "exportFailed": "Failed to export data.",
     "table": {
       "timestamp": "Timestamp",
       "actor": "Actor",
@@ -618,7 +631,10 @@
       "testingQuality": "UAT Quality (Pass vs Fail)",
       "topDefects": "Top Failed Projects (UAT)",
       "issuePriority": "Live Issues by Priority",
-      "issueResolution": "Issue Resolution Status"
+      "issueResolution": "Issue Resolution Status",
+      "phaseLabel": "Phase",
+      "avgProgressLabel": "Avg Progress",
+      "activeProjectsLabel": "Active Projects"
     },
     "labels": {
       "count": "Count",
@@ -759,5 +775,100 @@
     "daysRemaining": "{{count}} days left",
     "pic": "PIC",
     "auditTrail": "Open System Audit Trail"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to access CRG Monitoring System",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "name@bankbsi.id",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot Password?",
+      "verifying": "Verifying...",
+      "secureLogin": "Secure Login",
+      "serverError": "Failed to connect to the server."
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join CRG Monitoring Access Portal",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "emailLabel": "Work Email",
+      "emailPlaceholder": "name@bankbsi.id",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "confirmLabel": "Confirm Password",
+      "confirmPlaceholder": "••••••••",
+      "processing": "Processing...",
+      "registerBtn": "Register Account",
+      "alreadyHaveAccount": "Already have an account?",
+      "loginHere": "Login here",
+      "passwordMismatch": "Confirm password does not match!",
+      "failed": "Registration failed",
+      "resendFailed": "Failed to resend email",
+      "successTitle": "Check Your Inbox!",
+      "successSubtitle": "Verification required to continue.",
+      "successDesc": "We have sent a verification link to",
+      "successDesc2": "Please verify your account before logging in.",
+      "backToRegister": "Back to Register",
+      "resending": "Sending...",
+      "resendIn": "Resend Email in {{count}}s",
+      "resendBtn": "Resend Email",
+      "spamNotice": "Didn't receive email? Check spam or click Resend."
+    },
+    "forgotPassword": {
+      "step1Title": "Reset Password",
+      "step1Subtitle": "Enter your work email to receive an OTP code.",
+      "step2Title": "Verify & Create Password",
+      "step2Subtitle": "We sent a 6-digit code to {{email}}",
+      "step3Title": "Password Changed",
+      "step3Subtitle": "Your password has been successfully reset.",
+      "emailLabel": "Work Email Address",
+      "emailPlaceholder": "name@bankbsi.id",
+      "sendOtp": "Send OTP Code",
+      "processing": "Processing...",
+      "backToLogin": "Back to Login",
+      "otpLabel": "6-Digit OTP Code",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "resetPasswordBtn": "Reset Password",
+      "verifying": "Verifying...",
+      "cancel": "Cancel",
+      "successDesc": "You can now use your new password to log in to the CRG Dashboard.",
+      "proceedToLogin": "Proceed to Login",
+      "passwordMismatch": "New password and confirmation do not match!",
+      "passwordRequirements": "Password must be at least 6 characters, contain an uppercase letter, and a symbol.",
+      "otpFailed": "Failed to send OTP.",
+      "otpInvalid": "OTP code is invalid or has expired."
+    },
+    "resetPassword": {
+      "title": "New Password",
+      "subtitle": "Resetting account for: {{email}}",
+      "successTitle": "Password Updated!",
+      "successSubtitle": "Redirecting you to login page...",
+      "newPasswordLabel": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPasswordLabel": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "updating": "Updating...",
+      "updateBtn": "Update Password",
+      "passwordMismatch": "Confirm password does not match!",
+      "updateFailed": "Failed to update password.",
+      "successMessage": "Your password has been changed successfully. <br />Please wait while we redirect you."
+    },
+    "verifyEmail": {
+      "verifyingTitle": "Verifying...",
+      "verifyingSubtitle": "Please wait while we validate your token.",
+      "successTitle": "Email Verified!",
+      "successSubtitle": "Your account is now active. Welcome to BSI CRG.",
+      "failedTitle": "Verification Failed",
+      "failedSubtitle": "Your token is invalid or has expired.",
+      "redirecting": "Redirecting to Login...",
+      "errorNotice": "Account might be already active if you refreshed. <br/>Please try logging in to confirm.",
+      "goToLogin": "Go to Login",
+      "needToken": "Need a new token? Register"
+    }
   }
 }

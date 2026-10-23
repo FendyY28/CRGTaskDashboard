@@ -1,15 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { hasValidAuthToken } from "../../utils/auth";
 
 export const PublicRoute = () => {
-  // 1. Ambil token dari LocalStorage
-  const token = localStorage.getItem("auth_token");
-
-  // 2. Cek: Jika SUDAH ADA token (artinya sudah login)
-  if (token) {
-    // Jangan kasih masuk Login lagi, langsung lempar ke Dashboard
+  // Hanya jika token benar-benar valid, arahkan ke Dashboard.
+  // Jika tidak ada token atau token sudah kadaluarsa, izinkan akses ke halaman publik (Login, dsb).
+  if (hasValidAuthToken()) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // 3. Jika BELUM login, silakan akses halaman (Login/Register/Forgot Pass)
   return <Outlet />;
 };

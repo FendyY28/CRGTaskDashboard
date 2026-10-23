@@ -1,10 +1,10 @@
-import { API_URL, getUserIdFromToken } from "../../lib/utils"; 
+import { API_URL } from "../../lib/utils";
 
 const getToken = () => localStorage.getItem("auth_token");
 
 async function fetchWrapper(endpoint: string, options: RequestInit = {}) {
   const token = getToken();
-  
+
   const headers = {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -30,8 +30,8 @@ async function fetchWrapper(endpoint: string, options: RequestInit = {}) {
     throw new Error(errorMessage);
   }
 
-  if (response.status === 204) return {}; 
-  
+  if (response.status === 204) return {};
+
   try {
     return await response.json();
   } catch (e) {
@@ -39,26 +39,19 @@ async function fetchWrapper(endpoint: string, options: RequestInit = {}) {
   }
 }
 
-// 2. FUNGSI HELPER UNTUK INJEKSI USER ID OTOMATIS
-const injectUserId = (body: any = {}) => {
-  const userId = getUserIdFromToken();
-  // Gabungkan data body asli dengan userId
-  return { ...body, userId }; 
-};
+// Identitas pelaku TIDAK lagi dikirim dari client. Backend mengambilnya dari
+// JWT, sehingga audit trail tidak bisa dipalsukan lewat body request.
 
 export const api = {
-  get: (endpoint: string, options?: RequestInit) => 
+  get: (endpoint: string, options?: RequestInit) =>
     fetchWrapper(endpoint, { ...options, method: "GET" }),
-    
-  post: (endpoint: string, body: any = {}, options?: RequestInit) => 
-    // Injeksi userId sebelum dikirim
-    fetchWrapper(endpoint, { ...options, method: "POST", body: JSON.stringify(injectUserId(body)) }),
-    
-  patch: (endpoint: string, body: any = {}, options?: RequestInit) => 
-    // Injeksi userId sebelum dikirim
-    fetchWrapper(endpoint, { ...options, method: "PATCH", body: JSON.stringify(injectUserId(body)) }),
-    
-  delete: (endpoint: string, body: any = {}, options?: RequestInit) => 
-    // Injeksi userId sebelum dikirim
-    fetchWrapper(endpoint, { ...options, method: "DELETE", body: JSON.stringify(injectUserId(body)) }),
+
+  post: (endpoint: string, body: any = {}, options?: RequestInit) =>
+    fetchWrapper(endpoint, { ...options, method: "POST", body: JSON.stringify(body) }),
+
+  patch: (endpoint: string, body: any = {}, options?: RequestInit) =>
+    fetchWrapper(endpoint, { ...options, method: "PATCH", body: JSON.stringify(body) }),
+
+  delete: (endpoint: string, body: any = {}, options?: RequestInit) =>
+    fetchWrapper(endpoint, { ...options, method: "DELETE", body: JSON.stringify(body) }),
 };

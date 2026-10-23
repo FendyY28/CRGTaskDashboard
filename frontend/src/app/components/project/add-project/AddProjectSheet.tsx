@@ -9,7 +9,7 @@ import { API_URL } from "../../../../lib/utils";
 import { useTranslation } from "react-i18next";
 
 // Mengimpor utility functions dan constants
-import { getToday, calcDate, getUserIdFromToken, INITIAL_FORM, PHASES } from "./addProjectUtils";
+import { getToday, calcDate, INITIAL_FORM, PHASES } from "./addProjectUtils";
 
 export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -77,17 +77,17 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
 
     try {
       const url = API_URL ? `${API_URL}/project` : 'http://localhost:3000/project';
-      const realUserId = getUserIdFromToken();
 
+      // Pelaku dicatat backend dari JWT; client tidak mengirim identitas.
       const payload = {
         ...formData,
         overallProgress: Number(formData.overallProgress),
-        startDate: new Date(formData.startDate),
-        deadline: new Date(formData.deadline),
-        phaseStartDate: new Date(formData.phaseStartDate),
-        phaseDeadline: new Date(formData.phaseDeadline),
+        // Tanggal dikirim sebagai ISO string agar lolos @IsISO8601() di backend.
+        startDate: new Date(formData.startDate).toISOString(),
+        deadline: new Date(formData.deadline).toISOString(),
+        phaseStartDate: new Date(formData.phaseStartDate).toISOString(),
+        phaseDeadline: new Date(formData.phaseDeadline).toISOString(),
         code: formData.code.trim() === "" ? undefined : formData.code,
-        performedBy: realUserId
       };
 
       const token = localStorage.getItem("auth_token");

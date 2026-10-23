@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ChevronRight, Loader2, ArrowLeft, ShieldCheck, AlertCircle, KeyRound, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
@@ -10,6 +11,7 @@ import { api } from "../../services/api";
 import { THEME } from "../../constants/projectConstants"; 
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Email, 2: OTP & New Password, 3: Success
   const [formData, setFormData] = useState({
     email: "",
@@ -29,25 +31,31 @@ export function ForgotPasswordPage() {
       await api.post("/auth/forgot-password", { email: formData.email });
       setStep(2); 
     } catch (err: any) {
-      setUi({ loading: false, error: err.response?.data?.message || err.message || "Gagal mengirim OTP." });
+      setUi({ loading: false, error: err.response?.data?.message || err.message || t("auth.forgotPassword.otpFailed", "Gagal mengirim OTP.") });
     } finally {
       setUi(prev => ({ ...prev, loading: false }));
     }
   };
 
-  // STEP 2: VERIFY OTP & RESET PASSWORD
+  // Step 2: verify the OTP and set the new password.
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setUi({ loading: true, error: "" });
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setUi({ loading: false, error: "Password baru dan konfirmasi tidak cocok!" });
+      setUi({ 
+        loading: false, 
+        error: t("auth.forgotPassword.passwordMismatch", "Password baru dan konfirmasi tidak cocok!") 
+      });
       return;
     }
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$&*~^%()_+\-={}[\]|:;"'<>,.?/]).{6,}$/;
     if (!passwordRegex.test(formData.newPassword)) {
-      setUi({ loading: false, error: "Password minimal 6 karakter, ada huruf besar & simbol." });
+      setUi({ 
+        loading: false, 
+        error: t("auth.forgotPassword.passwordRequirements", "Password minimal 6 karakter, ada huruf besar & simbol.") 
+      });
       return;
     }
 
@@ -59,22 +67,25 @@ export function ForgotPasswordPage() {
       });
       setStep(3); 
     } catch (err: any) {
-      setUi({ loading: false, error: err.response?.data?.message || "Kode OTP salah atau kedaluwarsa." });
+      setUi({ 
+        loading: false, 
+        error: err.response?.data?.message || t("auth.forgotPassword.otpInvalid", "Kode OTP salah atau kedaluwarsa.") 
+      });
     } finally {
       setUi(prev => ({ ...prev, loading: false }));
     }
   };
 
   const layoutTitles = {
-    1: "Reset Password",
-    2: "Verify & Create Password",
-    3: "Password Changed"
+    1: t("auth.forgotPassword.step1Title", "Reset Password"),
+    2: t("auth.forgotPassword.step2Title", "Verify & Create Password"),
+    3: t("auth.forgotPassword.step3Title", "Password Changed")
   };
   
   const layoutSubtitles = {
-    1: "Enter your work email to receive an OTP code.",
-    2: `We sent a 6-digit code to ${formData.email}`,
-    3: "Your password has been successfully reset."
+    1: t("auth.forgotPassword.step1Subtitle", "Enter your work email to receive an OTP code."),
+    2: t("auth.forgotPassword.step2Subtitle", { email: formData.email, defaultValue: `We sent a 6-digit code to ${formData.email}` }),
+    3: t("auth.forgotPassword.step3Subtitle", "Your password has been successfully reset.")
   };
 
   return (
@@ -84,13 +95,20 @@ export function ForgotPasswordPage() {
       {step === 1 && (
         <form onSubmit={handleRequestOtp} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Work Email Address</Label>
+            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+              {t("auth.forgotPassword.emailLabel", "Work Email Address")}
+            </Label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
-                id="email" type="email" placeholder="name@bankbsi.id" 
-                className="pl-10" required disabled={ui.loading}
-                value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                id="email" 
+                type="email" 
+                placeholder={t("auth.forgotPassword.emailPlaceholder", "name@bankbsi.id")} 
+                className="pl-10" 
+                required 
+                disabled={ui.loading}
+                value={formData.email} 
+                onChange={(e) => setFormData({...formData, email: e.target.value})} 
               />
             </div>
           </div>
@@ -111,7 +129,11 @@ export function ForgotPasswordPage() {
                 boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
             }}
           >
-            {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <>Send OTP Code <ChevronRight className="ml-1 h-4 w-4" /></>}
+            {ui.loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.forgotPassword.processing", "Processing...")}</>
+            ) : (
+              <>{t("auth.forgotPassword.sendOtp", "Send OTP Code")} <ChevronRight className="ml-1 h-4 w-4" /></>
+            )}
           </Button>
 
           <div className="text-center pt-2">
@@ -122,7 +144,7 @@ export function ForgotPasswordPage() {
                 onMouseOut={(e) => (e.currentTarget.style.color = '')}
             >
               <ArrowLeft className="mr-2 h-3 w-3 transition-transform group-hover:-translate-x-1" />
-              Back to Login
+              {t("auth.forgotPassword.backToLogin", "Back to Login")}
             </Link>
           </div>
         </form>
@@ -133,38 +155,57 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleResetPassword} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
           
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1" style={{ color: THEME.TOSCA }}>6-Digit OTP Code</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1" style={{ color: THEME.TOSCA }}>
+              {t("auth.forgotPassword.otpLabel", "6-Digit OTP Code")}
+            </Label>
             <div className="relative">
               <KeyRound className="absolute left-3.5 top-3.5 h-4 w-4" style={{ color: THEME.TOSCA }} />
               <DashboardInput 
-                type="text" maxLength={6} placeholder="••••••" required disabled={ui.loading}
+                type="text" 
+                maxLength={6} 
+                placeholder="••••••" 
+                required 
+                disabled={ui.loading}
                 className="pl-10 font-black tracking-[0.5em] text-center" 
                 style={{ borderColor: `${THEME.TOSCA}4D` }}
-                value={formData.otp} onChange={(e) => setFormData({...formData, otp: e.target.value})} 
+                value={formData.otp} 
+                onChange={(e) => setFormData({...formData, otp: e.target.value})} 
               />
             </div>
           </div>
 
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">New Password</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+              {t("auth.forgotPassword.newPasswordLabel", "New Password")}
+            </Label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
-                type="password" placeholder="••••••••" required disabled={ui.loading} 
+                type="password" 
+                placeholder="••••••••" 
+                required 
+                disabled={ui.loading} 
                 className="pl-10"
-                value={formData.newPassword} onChange={(e) => setFormData({...formData, newPassword: e.target.value})} 
+                value={formData.newPassword} 
+                onChange={(e) => setFormData({...formData, newPassword: e.target.value})} 
               />
             </div>
           </div>
 
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Confirm Password</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+              {t("auth.forgotPassword.confirmPasswordLabel", "Confirm Password")}
+            </Label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400" />
               <DashboardInput 
-                type="password" placeholder="••••••••" required disabled={ui.loading} 
+                type="password" 
+                placeholder="••••••••" 
+                required 
+                disabled={ui.loading} 
                 className="pl-10"
-                value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
+                value={formData.confirmPassword} 
+                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
               />
             </div>
           </div>
@@ -185,7 +226,11 @@ export function ForgotPasswordPage() {
                 boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
             }}
           >
-            {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</> : <>Reset Password</>}
+            {ui.loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.forgotPassword.verifying", "Verifying...")}</>
+            ) : (
+              <>{t("auth.forgotPassword.resetPasswordBtn", "Reset Password")}</>
+            )}
           </Button>
 
           <div className="text-center pt-2">
@@ -196,7 +241,7 @@ export function ForgotPasswordPage() {
                 onMouseOver={(e) => (e.currentTarget.style.color = THEME.TOSCA)}
                 onMouseOut={(e) => (e.currentTarget.style.color = '')}
             >
-              Cancel
+              {t("auth.forgotPassword.cancel", "Cancel")}
             </button>
           </div>
         </form>
@@ -213,7 +258,7 @@ export function ForgotPasswordPage() {
           </div>
           <div className="space-y-2">
             <p className="text-sm text-gray-500 font-medium leading-relaxed">
-              You can now use your new password to log in to the CRG Dashboard.
+              {t("auth.forgotPassword.successDesc", "You can now use your new password to log in to the CRG Dashboard.")}
             </p>
           </div>
           <Button 
@@ -224,7 +269,7 @@ export function ForgotPasswordPage() {
                 boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` 
             }}
           >
-            <Link to="/login">Proceed to Login</Link>
+            <Link to="/login">{t("auth.forgotPassword.proceedToLogin", "Proceed to Login")}</Link>
           </Button>
         </div>
       )}

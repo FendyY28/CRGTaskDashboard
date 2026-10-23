@@ -27,7 +27,7 @@ export interface StatusBadgeProps {
 export const StatusBadge = ({ value, className = "" }: StatusBadgeProps) => {
   const s = getStatusStyle(value);
   return (
-    <Badge variant="outline" className={cn(`${s} border text-[10px] px-2.5 py-0.5 uppercase tracking-wide font-bold shadow-none rounded-md`, className)}>
+    <Badge variant="outline" className={cn(`${s} border text-xs px-2.5 py-0.5 uppercase tracking-wide font-bold shadow-none rounded-md`, className)}>
       {capitalize(value)}
     </Badge>
   );

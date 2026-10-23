@@ -590,13 +590,13 @@ export class ProjectService {
     return newTask;
   }
 
-  async toggleTask(taskId: number, userId: string, completedBy?: string) {
+  async toggleTask(taskId: number, userId: string) {
     const task = await this.prisma.task.findUnique({ where: { id: taskId }, include: { weeklyProgress: true } });
     if (!task) throw new NotFoundException("Task not found");
     const newStatus = task.status === 'completed' ? 'in-progress' : 'completed';
-    // Kalau frontend tidak mengirim nama, ambil dari user yang sedang login
-    // supaya "Dikerjakan Oleh" tidak selalu tertulis "Officer".
-    const actorName = completedBy?.trim() || (await this.resolveUserName(userId));
+    // Atribusi "Dikerjakan Oleh" selalu berasal dari user terautentikasi,
+    // tidak pernah dari input client (bisa dipalsukan).
+    const actorName = await this.resolveUserName(userId);
     await this.prisma.task.update({
       where: { id: taskId },
       data: {

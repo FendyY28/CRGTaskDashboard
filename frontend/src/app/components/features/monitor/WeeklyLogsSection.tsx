@@ -14,12 +14,15 @@ import type { ProjectStatus, WeeklyProgress } from "../../../types";
 
 /** Kolom header tabel weekly logs — styling terpusat di satu tempat. */
 const WEEKLY_COLUMNS = [
-  { key: "title", labelKey: "timeline.projectCard.tableHeaders.title", center: false },
-  { key: "period", labelKey: "timeline.projectCard.tableHeaders.period", center: false },
-  { key: "tasks", labelKey: "timeline.projectCard.tableHeaders.tasks", center: true },
-  { key: "progress", labelKey: "timeline.projectCard.tableHeaders.progress", center: false },
-  { key: "percent", labelKey: "timeline.projectCard.tableHeaders.percent", center: true },
+  { key: "title", labelKey: "timeline.projectCard.tableHeaders.title", align: "left" },
+  { key: "period", labelKey: "timeline.projectCard.tableHeaders.period", align: "left" },
+  { key: "tasks", labelKey: "timeline.projectCard.tableHeaders.tasks", align: "center", width: "w-[72px]" },
+  { key: "progress", labelKey: "timeline.projectCard.tableHeaders.progress", align: "left" },
+  { key: "percent", labelKey: "timeline.projectCard.tableHeaders.percent", align: "right" },
+  { key: "actions", labelKey: "common.actions", align: "right", width: "w-[64px]" },
 ] as const;
+
+const HEAD_ALIGN = { left: "text-left", center: "text-center", right: "text-right" } as const;
 
 interface WeeklyLogsSectionProps {
   weeks: WeeklyProgress[];
@@ -52,7 +55,7 @@ export const WeeklyLogsSection = memo(
     if (weeks.length === 0) {
       return (
         <div
-          className="rounded-xl border border-dashed py-6 text-center text-xs italic"
+          className="rounded-xl border border-dashed py-6 text-center text-sm italic"
           style={{ borderColor: THEME.BSI_LIGHT_GRAY + "50", color: THEME.BSI_LIGHT_GRAY }}
         >
           {t("timeline.projectCard.noWeeklyLogs")}
@@ -62,7 +65,7 @@ export const WeeklyLogsSection = memo(
 
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: THEME.BSI_GREY }}>
+        <div className="flex items-center gap-2 text-xs font-medium" style={{ color: THEME.BSI_GREY }}>
           <span>
             {t("timeline.projectCard.weeklyLogs")}: <strong>{weeks.length}</strong>
           </span>
@@ -76,13 +79,13 @@ export const WeeklyLogsSection = memo(
           className="rounded-xl border overflow-hidden shadow-sm bg-white overflow-x-auto"
           style={{ borderColor: THEME.BSI_LIGHT_GRAY + "40" }}
         >
-          <Table>
+          <Table className="table-fixed">
             <TableHeader style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + "15" }}>
               <TableRow>
-                {WEEKLY_COLUMNS.map(({ key, labelKey, center }) => (
+                {WEEKLY_COLUMNS.map(({ key, labelKey, align, ...col }) => (
                   <TableHead
                     key={key}
-                    className={`text-[10px] font-bold uppercase h-10${center ? " text-center" : ""}`}
+                    className={`text-[11px] font-bold uppercase h-10 ${HEAD_ALIGN[align]} ${'width' in col ? col.width : ""}`}
                     style={{ color: THEME.BSI_GREY }}
                   >
                     {t(labelKey)}

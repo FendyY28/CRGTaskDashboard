@@ -13,6 +13,22 @@ import {
 import { ProjectService } from './project.service';
 import { EmailVerifierService } from '../common/email-verifier.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; 
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import {
+  AddLogDto,
+  AddPhaseNoteDto,
+  AddTaskDto,
+  CreateImprovementDto,
+  CreateIssueDto,
+  CreateTestCaseDto,
+  NextCycleDto,
+  UpdateIssueDto,
+  UpdateLogDto,
+  UpdateTestCaseDto,
+} from './dto/project-payloads.dto';
 
 @Controller('project')
 export class ProjectController {
@@ -22,29 +38,15 @@ export class ProjectController {
   ) {}
 
   /**
-   * HELPER: DETEKSI USER
-   * Logika:
-   * 1. Cek apakah Frontend menitipkan ID lewat Body (performedBy)? -> PAKAI INI.
-   * 2. Cek apakah ada Token Login (req.user)? -> Pakai ini.
-   * 3. Kepepet? -> Pakai ID Hardcoded.
+   * Identitas pelaku SELALU diambil dari JWT (req.user), tidak pernah dari body.
+   * Body request dikendalikan klien, sehingga menerima userId/performedBy dari
+   * sana membuat audit trail bisa dipalsukan oleh user mana pun.
    */
-  private getUserId(req: any, bodyData?: any): string {
-    // 1. Cek Token JWT (Cara Paling Aman & Utama)
+  private getUserId(req: any): string {
     if (req.user && (req.user.id || req.user.userId)) {
       return req.user.id || req.user.userId;
     }
 
-    // 2. Fallback: Cek Body dari Frontend (jika frontend kirim userId)
-    if (bodyData && bodyData.userId) {
-       return bodyData.userId;
-    }
-    
-    // 3. Fallback: Cek performedBy (Legacy)
-    if (bodyData && bodyData.performedBy) {
-       return bodyData.performedBy;
-    }
-
-    console.error("❌ [SECURITY ALERT] User ID tidak ditemukan di Token maupun Body!");
     throw new BadRequestException("Sesi Anda tidak valid. Silakan Logout dan Login ulang.");
   }
 
@@ -55,17 +57,12 @@ export class ProjectController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard) 
-  async create(@Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-
-    delete data.performedBy;
-
-    if (data.email) {
-      const isReal = await this.emailService.verify(data.email);
-      if (!isReal) throw new BadRequestException('Email tidak aktif/valid.');
-    }
-
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  async create(@Body() data: CreateProjectDto, @Request() req) {
+    // Pelaku selalu dari JWT. Identitas kiriman client (userId/performedBy)
+    // sudah dibuang oleh ValidationPipe `whitelist`, karena tidak ada di DTO.
+    const userId = this.getUserId(req);
     return this.projectService.create(data, userId);
   }
 
@@ -81,122 +78,125 @@ export class ProjectController {
   }
 
   @Post('issue')
-  @UseGuards(JwtAuthGuard) 
-  createIssue(@Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    delete data.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  createIssue(@Body() data: CreateIssueDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.createIssue(data, userId);
   }
 
   @Patch('issue/:id')
-  @UseGuards(JwtAuthGuard) 
-  updateIssue(@Param('id') id: string, @Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    delete data.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  updateIssue(@Param('id') id: string, @Body() data: UpdateIssueDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.updateIssue(+id, data, userId);
   }
 
   @Delete('issue/:id')
-  @UseGuards(JwtAuthGuard) 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   removeIssue(@Param('id') id: string, @Request() req) {
-    // Delete biasanya tidak bawa Body, jadi kita cek req.body manual jika ada
-    const userId = this.getUserId(req, req.body);
+    const userId = this.getUserId(req);
     return this.projectService.removeIssue(+id, userId);
   }
 
   @Post('improvement')
-  @UseGuards(JwtAuthGuard) 
-  createImprovement(@Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    delete data.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  createImprovement(@Body() data: CreateImprovementDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.createImprovement(data, userId);
   }
 
   @Delete('improvement/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   removeImprovement(@Param('id') id: string, @Request() req: any) {
-     const userId = this.getUserId(req, req.body);
+     const userId = this.getUserId(req);
     return this.projectService.removeImprovement(+id, userId);
   }
 
   // 3. LOGS & TASKS ENDPOINTS
   @Post('log')
-  @UseGuards(JwtAuthGuard) 
-  async addLog(@Body() logData: any, @Request() req) {
-    const userId = this.getUserId(req, logData);
-    delete logData.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  async addLog(@Body() logData: AddLogDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.addLog(logData, userId);
   }
 
   @Delete('log/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   async deleteLog(@Param('id') id: string, @Request() req) {
     // Ambil userId (via token atau body jika dikirim)
-    const userId = this.getUserId(req, req.body); 
-    
+    const userId = this.getUserId(req);
+
     // Panggil service
     return this.projectService.removeLog(+id, userId);
   }
 
   @Patch('log/:id')
-  @UseGuards(JwtAuthGuard) 
-  async updateLog(@Param('id') id: string, @Body() updateData: any, @Request() req) {
-    const userId = this.getUserId(req, updateData);
-    delete updateData.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  async updateLog(@Param('id') id: string, @Body() updateData: UpdateLogDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.updateLog(+id, updateData, userId);
   }
 
   @Post('log/:id/task')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   async addTask(
     @Param('id') id: string,
-    @Body('taskName') taskName: string,
-    @Body('description') description: string,
+    @Body() body: AddTaskDto,
     @Request() req
   ) {
-    const userId = this.getUserId(req, req.body);
-    return this.projectService.addTask(+id, taskName, userId, description);
+    const userId = this.getUserId(req);
+    return this.projectService.addTask(+id, body.taskName, userId, body.description);
   }
 
   @Patch('task/:id/toggle')
-  @UseGuards(JwtAuthGuard) 
-  async toggleTask(@Param('id') id: string, @Body('completedBy') completedBy: string, @Request() req) {
-    // Toggle task biasanya pakai logic khusus, kita ambil dari req.body jika frontend kirim
-    const userId = this.getUserId(req, req.body);
-    return this.projectService.toggleTask(+id, userId, completedBy);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  async toggleTask(@Param('id') id: string, @Request() req) {
+    const userId = this.getUserId(req);
+    // completedBy sengaja TIDAK diterima dari body: service akan mengisinya
+    // dari user yang terautentikasi agar atribusi pekerjaan tidak bisa dipalsukan.
+    return this.projectService.toggleTask(+id, userId);
   }
 
   @Delete('task/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   async removeTask(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req, req.body);
+    const userId = this.getUserId(req);
     return this.projectService.removeTask(+id, userId);
   }
 
   // 4. TEST CASES ENDPOINTS
   @Post('test-cases')
-  @UseGuards(JwtAuthGuard) 
-  createTestCase(@Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    
-    // Bersihkan semua kemungkinan titipan frontend
-    delete data.performedBy;
-    delete data.userId; // <--- Tambahkan ini biar bersih
-    
-    return this.projectService.createTestCase(data, userId);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN', 'OFFICER')
+createTestCase(@Body() data: CreateTestCaseDto, @Request() req) {
+  const userId = this.getUserId(req);
+  return this.projectService.createTestCase(data, userId);
   }
 
   @Patch('test-cases/:testCaseId')
-  @UseGuards(JwtAuthGuard) 
-  updateTestCase(@Param('testCaseId') testCaseId: string, @Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    delete data.performedBy;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  updateTestCase(@Param('testCaseId') testCaseId: string, @Body() data: UpdateTestCaseDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.updateTestCase(testCaseId, data, userId);
   }
 
   @Delete('test-cases/:testCaseId')
-  @UseGuards(JwtAuthGuard) 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   deleteTestCase(@Param('testCaseId') testCaseId: string, @Request() req) {
-    const userId = this.getUserId(req, req.body);
+    const userId = this.getUserId(req);
     return this.projectService.deleteTestCase(testCaseId, userId);
   }
 
@@ -213,52 +213,45 @@ export class ProjectController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard) 
-  async update(@Param('id') id: string, @Body() data: any, @Request() req) {
-    const userId = this.getUserId(req, data);
-    
-    // Bersihkan field yang tidak perlu
-    delete data.performedBy;
-
-    if (data.email) {
-      const isReal = await this.emailService.verify(data.email);
-      if (!isReal) throw new BadRequestException('Email baru tidak valid.');
-    }
-
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  async update(@Param('id') id: string, @Body() data: UpdateProjectDto, @Request() req) {
+    const userId = this.getUserId(req);
     return this.projectService.update(id, data, userId);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard) 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   remove(@Param('id') id: string, @Request() req) {
-    // Untuk delete, frontend biasanya tidak kirim body. 
-    // Jika masih hardcode, biarkan fallback bekerja.
-    const userId = this.getUserId(req, req.body);
+    const userId = this.getUserId(req);
     return this.projectService.remove(id, userId);
   }
 
   // 6. CYCLE MANAGEMENT
 
   @Post(':id/next-cycle')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
     async nextCycle(
-      @Param('id') id: string, 
+      @Param('id') id: string,
       @Request() req,
-      @Body() body?: { targetPhase?: string }
+      @Body() body: NextCycleDto
     ) {
-      const userId = this.getUserId(req, body);
+      const userId = this.getUserId(req);
       return this.projectService.nextCycle(id, userId, body);
     }
 
   // 7. PHASE NOTES ENDPOINTS
   @Post('phase/:phaseId/note')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   async addPhaseNote(
     @Param('phaseId') phaseId: string,
-    @Body() body: { content: string },
+    @Body() body: AddPhaseNoteDto,
     @Request() req,
   ) {
-    const userId = this.getUserId(req, body);
+    const userId = this.getUserId(req);
     return this.projectService.addPhaseNote(parseInt(phaseId), body.content, userId);
   }
 
@@ -269,7 +262,8 @@ export class ProjectController {
   }
 
   @Delete('phase/note/:noteId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
   async deletePhaseNote(@Param('noteId') noteId: string, @Request() req) {
     const userId = this.getUserId(req);
     return this.projectService.deletePhaseNote(parseInt(noteId), userId);

@@ -1,8 +1,6 @@
 export const AUTH_TOKEN_KEY = "auth_token";
 
-/**
- * Read the raw auth token from localStorage.
- */
+// Read the raw auth token from localStorage.
 export const getAuthToken = (): string | null => {
   try {
     return localStorage.getItem(AUTH_TOKEN_KEY);
@@ -12,9 +10,7 @@ export const getAuthToken = (): string | null => {
   }
 };
 
-/**
- * Decode a JWT payload without verifying the signature.
- */
+// Decode a JWT payload without verifying its signature.
 const decodeJwtPayload = (token: string): { exp?: number } | null => {
   const parts = token.split(".");
   if (parts.length !== 3) {
@@ -23,7 +19,10 @@ const decodeJwtPayload = (token: string): { exp?: number } | null => {
 
   try {
     const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
     const json = atob(padded);
     return JSON.parse(json) as { exp?: number };
   } catch {
@@ -31,10 +30,7 @@ const decodeJwtPayload = (token: string): { exp?: number } | null => {
   }
 };
 
-/**
- * True when the stored token exists, is a decodable JWT, and has not expired.
- * Non-JWT opaque tokens (no "exp" claim) are treated as valid.
- */
+// True when a stored token exists and has not expired; opaque tokens count as valid.
 export const hasValidAuthToken = (): boolean => {
   const token = getAuthToken();
   if (!token) {

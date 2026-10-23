@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, ShieldCheck, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // UI Components
 import { Button } from "../../components/ui/button";
@@ -16,16 +17,17 @@ const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
 const inputExtraCls = "pl-10";
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Mengambil email dari URL parameter
+  // Email comes from the URL query string.
   const email = searchParams.get("email");
 
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
   const [ui, setUi] = useState({ loading: false, error: "", success: false });
 
-  // Proteksi URL: Jika tidak ada email, tendang balik ke login
+  // Bounce back to login when the email param is missing.
   useEffect(() => {
     if (!email) {
       navigate("/login");
@@ -37,32 +39,39 @@ export function ResetPasswordPage() {
     setUi({ loading: true, error: "", success: false });
 
     if (form.password !== form.confirmPassword) {
-      setUi({ loading: false, error: "Password konfirmasi tidak cocok!", success: false });
+      setUi({
+        loading: false,
+        error: t("auth.resetPassword.passwordMismatch", "Password konfirmasi tidak cocok!"),
+        success: false
+      });
       return;
     }
 
     try {
-      // Hit endpoint reset-password
+      // Hit the reset endpoint with the new password.
       await api.post("/auth/reset-password", { email, password: form.password });
 
       setUi({ loading: false, error: "", success: true });
-      
-      // Auto-redirect setelah 3 detik
+
+      // Redirect to login after a short delay.
       setTimeout(() => navigate("/login"), 3000);
     } catch (err: any) {
-      setUi({ 
-        loading: false, 
-        error: err.response?.data?.message || "Gagal memperbarui password.", 
-        success: false 
+      setUi({
+        loading: false,
+        error: err.response?.data?.message || t("auth.resetPassword.updateFailed", "Gagal memperbarui password."),
+        success: false
       });
     }
   };
 
-  // Dinamis Layout Title & Subtitle berdasarkan state Success
-  const layoutTitle = ui.success ? "Password Updated!" : "New Password";
+  // Page title/subtitle switch on success state.
+  const layoutTitle = ui.success 
+    ? t("auth.resetPassword.successTitle", "Password Updated!") 
+    : t("auth.resetPassword.title", "New Password");
+    
   const layoutSubtitle = ui.success 
-    ? "Redirecting you to login page..." 
-    : `Resetting account for: ${email}`;
+    ? t("auth.resetPassword.successSubtitle", "Redirecting you to login page...") 
+    : t("auth.resetPassword.subtitle", { email, defaultValue: `Resetting account for: ${email}` });
 
   return (
     <AuthLayout title={layoutTitle} subtitle={layoutSubtitle}>
@@ -76,8 +85,8 @@ export function ResetPasswordPage() {
             <CheckCircle2 className="h-10 w-10 animate-bounce" style={{ color: THEME.TOSCA }} />
           </div>
           <p className="text-gray-500 font-medium">
-            Your password has been changed successfully. <br />
-            Please wait while we redirect you.
+            {t("auth.resetPassword.successTitle", "Password Updated!")} <br />
+            {t("auth.resetPassword.successSubtitle", "Redirecting you to login page...")}
           </p>
         </div>
       ) : (
@@ -90,14 +99,14 @@ export function ResetPasswordPage() {
               htmlFor="password" 
               className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1"
             >
-              New Password
+              {t("auth.resetPassword.newPasswordLabel", "New Password")}
             </Label>
             <div className="relative">
               <Lock className={iconCls} />
               <DashboardInput 
                 id="password" 
                 type="password" 
-                placeholder="Enter new password" 
+                placeholder={t("auth.resetPassword.newPasswordPlaceholder", "Enter new password")} 
                 className={inputExtraCls}
                 value={form.password} 
                 onChange={(e) => setForm({...form, password: e.target.value})} 
@@ -112,14 +121,14 @@ export function ResetPasswordPage() {
               htmlFor="confirmPassword" 
               className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1"
             >
-              Confirm New Password
+              {t("auth.resetPassword.confirmPasswordLabel", "Confirm New Password")}
             </Label>
             <div className="relative">
               <ShieldCheck className={iconCls} />
               <DashboardInput 
                 id="confirmPassword" 
                 type="password" 
-                placeholder="Confirm new password" 
+                placeholder={t("auth.resetPassword.confirmPasswordPlaceholder", "Confirm new password")} 
                 className={inputExtraCls}
                 value={form.confirmPassword} 
                 onChange={(e) => setForm({...form, confirmPassword: e.target.value})} 
@@ -143,7 +152,7 @@ export function ResetPasswordPage() {
             className="w-full text-white h-12 text-sm font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] mt-4"
             style={{ 
               backgroundColor: THEME.TOSCA,
-              boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33` // Shadow dengan warna Tosca
+              boxShadow: `0 10px 15px -3px ${THEME.TOSCA}33`
             }}
             onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(0.9)')}
             onMouseOut={(e) => (e.currentTarget.style.filter = 'brightness(1)')}
@@ -151,11 +160,11 @@ export function ResetPasswordPage() {
             {ui.loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                Updating...
+                {t("auth.resetPassword.updating", "Updating...")}
               </>
             ) : (
               <>
-                Update Password 
+                {t("auth.resetPassword.updateBtn", "Update Password")} 
                 <ChevronRight className="ml-1 h-4 w-4" />
               </>
             )}

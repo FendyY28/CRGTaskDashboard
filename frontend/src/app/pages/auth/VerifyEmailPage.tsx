@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../../components/ui/button";
 
 import { AuthLayout } from "../../components/layouts/AuthLayout";
@@ -9,6 +10,7 @@ import { api } from "../../services/api";
 import { THEME } from "../../constants/projectConstants";
 
 export function VerifyEmailPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -36,9 +38,22 @@ export function VerifyEmailPage() {
   }, [token, navigate]);
 
   const getHeader = () => {
-    if (status === "loading") return { t: "Verifying...", s: "Please wait while we validate your token." };
-    if (status === "success") return { t: "Email Verified!", s: "Your account is now active. Welcome to BSI CRG." };
-    return { t: "Verification Failed", s: "Your token is invalid or has expired." };
+    if (status === "loading") {
+      return { 
+        t: t("auth.verifyEmail.verifyingTitle", "Verifying..."), 
+        s: t("auth.verifyEmail.verifyingSubtitle", "Please wait while we validate your token.") 
+      };
+    }
+    if (status === "success") {
+      return { 
+        t: t("auth.verifyEmail.successTitle", "Email Verified!"), 
+        s: t("auth.verifyEmail.successSubtitle", "Your account is now active. Welcome to BSI CRG.") 
+      };
+    }
+    return { 
+      t: t("auth.verifyEmail.failedTitle", "Verification Failed"), 
+      s: t("auth.verifyEmail.failedSubtitle", "Your token is invalid or has expired.") 
+    };
   };
 
   const header = getHeader();
@@ -67,7 +82,7 @@ export function VerifyEmailPage() {
               className="flex items-center justify-center gap-2 text-[11px] font-bold py-2.5 px-5 rounded-xl w-fit mx-auto border"
             >
                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-               Redirecting to Login...
+               {t("auth.verifyEmail.redirecting", "Redirecting to Login...")}
             </div>
           </div>
         )}
@@ -80,8 +95,7 @@ export function VerifyEmailPage() {
             </div>
             
             <p className="text-[11px] text-gray-400 font-medium leading-relaxed italic">
-              Account might be already active if you refreshed. <br/>
-              Please try logging in to confirm.
+              {t("auth.verifyEmail.errorNotice", "Account might be already active if you refreshed. Please try logging in to confirm.")}
             </p>
             
             <div className="space-y-3">
@@ -90,7 +104,7 @@ export function VerifyEmailPage() {
                 style={{ backgroundColor: THEME.TOSCA }}
                 className="w-full text-white hover:brightness-95 font-bold rounded-xl h-12 shadow-lg"
               >
-                Go to Login
+                {t("auth.verifyEmail.goToLogin", "Go to Login")}
               </Button>
 
               <Link 
@@ -98,7 +112,8 @@ export function VerifyEmailPage() {
                 style={{ color: THEME.TOSCA }}
                 className="flex items-center justify-center gap-1.5 opacity-70 hover:opacity-100 font-bold text-xs transition-opacity group"
               >
-                Need a new token? Register <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                {t("auth.verifyEmail.needToken", "Need a new token? Register")}{" "}
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
           </div>

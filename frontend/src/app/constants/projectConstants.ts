@@ -19,11 +19,7 @@ export const SDLC_PHASE_ORDER = [
   SDLC_PHASES.LIVE,
 ] as const;
 
-/**
- * Pasangan label pendek <-> nama fase lengkap.
- * Satu-satunya sumber kebenaran untuk pemetaan "Req" -> "Requirement"
- * yang dipakai di chart analytics dan komponen timeline.
- */
+// Short phase label -> full phase name, shared by analytics and timeline views.
 export const PHASE_LABELS: ReadonlyArray<{ short: string; full: string }> = [
   { short: "Req", full: SDLC_PHASES.REQUIREMENT },
   { short: "TF", full: SDLC_PHASES.TF_MEETING },

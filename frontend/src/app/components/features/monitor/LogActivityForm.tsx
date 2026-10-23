@@ -9,7 +9,7 @@ import type { Project } from "../../../types";
 import { weekRangeFrom } from "../../../../lib/utils";
 import { useTranslation } from "react-i18next";
 
-// Pemisah antara nama tugas dan deskripsinya pada tiap baris input.
+// Separator between task name and description on each input line.
 const DESCRIPTION_SEPARATOR = "|";
 
 interface LogActivityFormProps {
@@ -25,13 +25,10 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Tanggal acuan -> label periode "DD/MM/YYYY - DD/MM/YYYY".
-  // weekRange tetap string bebas di DB, jadi log lama tidak ikut berubah.
+  // Period label derived from the anchor date.
   const week = useMemo(() => (anchorDate ? weekRangeFrom(anchorDate) : ""), [anchorDate]);
 
-  // Setiap baris = "Nama tugas | Deskripsi pekerjaan" (lihat DESCRIPTION_SEPARATOR).
-  // Baris kosong / spasi dobel dibuang. Task tanpa deskripsi tidak digagalkan
-  // di sini, cukup diberi peringatan, karena backend juga memvalidasinya.
+  // Each line is "Task name | Work description"; blank lines are dropped.
   const taskLines = useMemo(
     () => logForm.tasks.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean),
     [logForm.tasks]

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Download,
@@ -76,6 +76,8 @@ export function AuditTrailPage() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get("/audit/meta/options").then(setMeta).catch(() => undefined);
@@ -126,30 +128,49 @@ export function AuditTrailPage() {
     setPage(1);
   };
 
-  const exportCsv = () => {
-    const headers = [
-      t("audit.table.timestamp", "Timestamp"),
-      t("audit.table.actor", "Actor"),
-      t("audit.table.project", "Project"),
-      t("audit.table.action", "Action"),
-      t("audit.table.details", "Details"),
-    ];
-    const rows = logs.map((l) => [
-      new Date(l.createdAt).toISOString(),
-      l.userName,
-      l.project?.name || t("audit.table.systemGlobal", "Sistem / Global"),
-      t(`audit.actions.${l.action}`, l.action.replace(/_/g, " ")),
-      l.details,
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+  // Fetch every row matching the current filters, then build the CSV file.
+  const exportCsv = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const raw = await api.get(`/audit/export?${new URLSearchParams(query)}`);
+      const exportLogs: Log[] = Array.isArray(raw) ? raw : raw?.data || [];
+
+      const headers = [
+        t("audit.table.timestamp", "Timestamp"),
+        t("audit.table.actor", "Actor"),
+        t("audit.table.project", "Project"),
+        t("audit.table.action", "Action"),
+        t("audit.table.details", "Details"),
+      ];
+      const rows = exportLogs.map((l) => [
+        new Date(l.createdAt).toISOString(),
+        l.userName,
+        l.project?.name || t("audit.table.systemGlobal", "Sistem / Global"),
+        t(`audit.actions.${l.action}`, l.action.replace(/_/g, " ")),
+        l.details,
+      ]);
+
+      if (rows.length === 0) {
+        setExportError(t("audit.exportEmpty", "Tidak ada data untuk diekspor dengan filter ini."));
+        return;
+      }
+
+      const csv = [headers, ...rows]
+        .map((row) => row.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(","))
+        .join("\n");
+      // BOM so Excel reads the file as UTF-8 instead of mangling accents.
+      const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setExportError(err?.message || t("audit.exportFailed", "Gagal mengekspor data."));
+    } finally {
+      setExporting(false);
+    }
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -183,13 +204,23 @@ export function AuditTrailPage() {
           )}
           <button
             onClick={exportCsv}
-            className="flex items-center gap-2 rounded-lg bg-[#38A79C] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#2c8e85]"
+            disabled={exporting}
+            className="flex items-center gap-2 rounded-lg bg-[#38A79C] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#2c8e85] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Download className="h-4 w-4" />
-            {t("audit.exportCsv", "Export CSV")}
+            {exporting ? t("common.loading", "Memuat...") : t("audit.exportCsv", "Export CSV")}
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700">
+          <span>{exportError}</span>
+          <button onClick={() => setExportError(null)} className="text-xs font-bold underline">
+            {t("common.close", "Tutup")}
+          </button>
+        </div>
+      )}
 
       {/* Filter Section */}
       <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-3 lg:grid-cols-6">
@@ -400,7 +431,7 @@ export function AuditTrailPage() {
                 start: startRecord,
                 end: endRecord,
                 total,
-                defaultValue: `Menampilkan ${startRecord}–${endRecord} dari ${total} log`,
+                defaultValue: `Menampilkan ${startRecord}â€“${endRecord} dari ${total} log`,
               })}
             </span>
           </div>

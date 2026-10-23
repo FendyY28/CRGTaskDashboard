@@ -11,6 +11,16 @@ import {
 import { AuthService } from './auth.service';
 import { EmailVerifierService } from '../common/email-verifier.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+  ResetPasswordDto,
+  ValidateEmailDto,
+  VerifyEmailDto,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,62 +29,56 @@ export class AuthController {
     private readonly emailService: EmailVerifierService,
   ) {}
 
-  // 1. Validasi Email (Cek aktif/tidaknya email via Abstract API)
+  // Check that an email address is reachable (Abstract API).
   @Post('validate-email')
-  async validateEmail(@Body('email') email: string) {
-    const isValid = await this.emailService.verify(email); 
+  async validateEmail(@Body() body: ValidateEmailDto) {
+    const isValid = await this.emailService.verify(body.email);
     if (!isValid) throw new BadRequestException('Email tidak aktif atau tidak valid.');
     return { success: true };
   }
 
-  // 2. Verifikasi Email (Aktivasi akun via link email)
+  // Activate an account from the emailed token.
   @Post('verify-email')
-  async verifyEmail(@Body('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    return this.authService.verifyEmail(body.token);
   }
-  
-  // 3. Login Utama
+
   @Post('login')
-  async login(@Body() data: any) {
+  async login(@Body() data: LoginDto) {
     return this.authService.login(data);
   }
 
-  // 4. Lupa Password (Mandiri - Kirim kode OTP ke email)
+  // Send a password-reset OTP to the user's email.
   @Post('forgot-password')
-  async forgotPassword(@Body('email') email: string) {
-    return this.authService.forgotPassword(email);
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.authService.forgotPassword(body.email);
   }
 
-  // 5. Reset Password (Mandiri - Eksekusi perubahan via OTP)
+  // Finish a self-service reset using the OTP.
   @Post('reset-password')
-  async resetPassword(@Body() data: any) {
+  async resetPassword(@Body() data: ResetPasswordDto) {
     return this.authService.resetPassword(data);
   }
 
-  // FITUR GANTI PASSWORD DENGAN VERIFIKASI OTP (SECURE)
-
-  // 6. Minta Kode OTP (Langkah pertama sebelum ganti password)
+  // Authenticated change-password flow, step 1: request the OTP.
   @UseGuards(JwtAuthGuard)
   @Post('request-change-password-otp')
   async requestChangePasswordOtp(@Req() req) {
-    // req.user.id didapat dari JWT Strategy
     const userId = req.user.id;
     return this.authService.sendChangePasswordOTP(userId);
   }
 
-  // 7. Eksekusi Ganti Password (Langkah kedua, kirim password & OTP)
+  // Step 2: apply the new password with the OTP.
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
-  async changePassword(@Req() req, @Body() body: any) {
-    const userId = req.user.id; 
-    // Body wajib berisi: { oldPassword, newPassword, otp }
+  async changePassword(@Req() req, @Body() body: ChangePasswordDto) {
+    const userId = req.user.id;
     return this.authService.changePassword(userId, body);
   }
 
-  // 8. ADMIN RESET PASSWORD (KHUSUS MANAGEMENT USER)
-  // Endpoint ini dipanggil ketika Admin melakukan reset dari dashboard.
-  // Akan men-generate password acak dan mengirimnya via email.
-  @UseGuards(JwtAuthGuard)
+  // Admin resets another user's password (random password emailed).
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id/admin-reset-password')
   async adminResetPassword(@Param('id') id: string) {
     return this.authService.adminResetPassword(id);

@@ -13,6 +13,10 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  /** Bcrypt hash of an arbitrary value, used to equalise login timing. */
+  private static readonly DUMMY_PASSWORD_HASH =
+    '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
   constructor(
     private prisma: PrismaService,
     private mailerService: MailerService,
@@ -49,7 +53,15 @@ export class AuthService {
   async login(data: any) {
     const user = await this.prisma.user.findUnique({ where: { email: data.email } });
 
-    if (!user || !await bcrypt.compare(data.password, user.password)) {
+    // Selalu jalankan bcrypt.compare, bahkan ketika email tidak terdaftar.
+    // Tanpa ini, respons untuk email yang tidak ada kembali jauh lebih cepat
+    // sehingga penyerang bisa memetakan email karyawan yang valid.
+    const passwordMatches = await bcrypt.compare(
+      data.password ?? '',
+      user?.password ?? AuthService.DUMMY_PASSWORD_HASH,
+    );
+
+    if (!user || !passwordMatches) {
       throw new UnauthorizedException('Email atau password salah');
     }
 

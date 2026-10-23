@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Lock, Mail, ChevronRight, User, Loader2, ShieldCheck, ArrowRight, RefreshCw, AlertCircle } from "lucide-react"; 
+import { useTranslation } from "react-i18next";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 
@@ -12,6 +13,7 @@ const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
 const inputExtraCls = "pl-10"; 
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   
   const [ui, setUi] = useState({ 
@@ -40,7 +42,6 @@ export function RegisterPage() {
     if (ui.error) setUi(prev => ({ ...prev, error: "" }));
   };
 
-  // Logic API menggunakan Service (Sangat bersih!)
   const performRegister = async () => {
     return await api.post("/auth/register", {
       name: form.name,
@@ -54,7 +55,11 @@ export function RegisterPage() {
     setUi(prev => ({ ...prev, loading: true, error: "" }));
 
     if (form.password !== form.confirmPassword) {
-      setUi(prev => ({ ...prev, loading: false, error: "Konfirmasi password tidak cocok!" }));
+      setUi(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: t("auth.register.passwordMismatch", "Konfirmasi password tidak cocok!") 
+      }));
       return;
     }
 
@@ -63,7 +68,7 @@ export function RegisterPage() {
       setUi(prev => ({ ...prev, success: true }));
       setCooldown(30); 
     } catch (err: any) {
-      setUi(prev => ({ ...prev, error: err.message || "Registration failed" }));
+      setUi(prev => ({ ...prev, error: err.message || t("auth.register.failed", "Registration failed") }));
     } finally {
       setUi(prev => ({ ...prev, loading: false }));
     }
@@ -77,7 +82,7 @@ export function RegisterPage() {
       await performRegister(); 
       setCooldown(60); 
     } catch (err: any) {
-      setUi(prev => ({ ...prev, error: err.message || "Gagal mengirim ulang email" }));
+      setUi(prev => ({ ...prev, error: err.message || t("auth.register.resendFailed", "Gagal mengirim ulang email") }));
     } finally {
       setUi(prev => ({ ...prev, resendLoading: false }));
     }
@@ -89,16 +94,16 @@ export function RegisterPage() {
     setCooldown(0); 
   };
 
-  // Dinamis Layout Title & Subtitle berdasarkan state Success
-  const layoutTitle = ui.success ? "Check Your Inbox!" : "Create Account";
+  const layoutTitle = ui.success 
+    ? t("auth.register.successTitle", "Check Your Inbox!") 
+    : t("auth.register.title", "Create Account");
+    
   const layoutSubtitle = ui.success 
-    ? "Verification required to continue." 
-    : "Join CRG Monitoring Access Portal";
+    ? t("auth.register.successSubtitle", "Verification required to continue.") 
+    : t("auth.register.subtitle", "Join CRG Monitoring Access Portal");
 
   return (
-    // Bungkus dengan AuthLayout (Hanya ditulis 1 kali untuk kedua state!)
     <AuthLayout title={layoutTitle} subtitle={layoutSubtitle}>
-      
       {ui.success ? (
         /* --- TAMPILAN SUKSES --- */
         <div className="text-center animate-in fade-in zoom-in-95 duration-300">
@@ -109,9 +114,9 @@ export function RegisterPage() {
           </div>
           
           <p className="text-gray-500 mb-6 leading-relaxed text-sm">
-            We have sent a verification link to <br />
+            {t("auth.register.successDesc", "We have sent a verification link to")} <br />
             <span className="font-bold text-gray-900">{form.email}</span>. 
-            <br/>Please verify your account before logging in.
+            <br/>{t("auth.register.successDesc2", "Please verify your account before logging in.")}
           </p>
 
           {/* Menampilkan pesan error jika resend gagal */}
@@ -124,7 +129,7 @@ export function RegisterPage() {
 
           <div className="space-y-3">
             <Button onClick={handleReset} className="w-full bg-[#36A39D] hover:bg-[#2b8580] text-white h-12 font-bold rounded-xl transition-all shadow-lg shadow-[#36A39D]/20">
-              Back to Register <ArrowRight className="ml-2 h-4 w-4" />
+              {t("auth.register.backToRegister", "Back to Register")} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             
             <Button
@@ -134,16 +139,16 @@ export function RegisterPage() {
               className={`w-full h-12 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-[#36A39D] transition-colors ${cooldown > 0 ? "opacity-70 cursor-not-allowed" : ""}`}
             >
               {ui.resendLoading ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.register.resending", "Sending...")}</>
               ) : cooldown > 0 ? (
-                  <span className="flex items-center">Resend Email in {cooldown}s</span>
+                  <span className="flex items-center">{t("auth.register.resendIn", { count: cooldown, defaultValue: `Resend Email in ${cooldown}s` })}</span>
               ) : (
-                  <span className="flex items-center"><RefreshCw className="mr-2 h-4 w-4" /> Resend Email</span>
+                  <span className="flex items-center"><RefreshCw className="mr-2 h-4 w-4" /> {t("auth.register.resendBtn", "Resend Email")}</span>
               )}
             </Button>
 
             <p className="text-[11px] text-gray-400 font-medium pt-2 uppercase tracking-wider">
-                Didn't receive email? Check spam or click Resend.
+                {t("auth.register.spamNotice", "Didn't receive email? Check spam or click Resend.")}
             </p>
           </div>
         </div>
@@ -151,35 +156,79 @@ export function RegisterPage() {
         /* TAMPILAN FORM */
         <form onSubmit={handleRegister} className="space-y-5 animate-in fade-in duration-300">
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Full Name</Label>
+            <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+              {t("auth.register.nameLabel", "Full Name")}
+            </Label>
             <div className="relative">
               <User className={iconCls} />
-              <DashboardInput id="name" type="text" placeholder="Enter your full name" className={inputExtraCls} value={form.name} onChange={updateForm} disabled={ui.loading} required />
+              <DashboardInput 
+                id="name" 
+                type="text" 
+                placeholder={t("auth.register.namePlaceholder", "Enter your full name")} 
+                className={inputExtraCls} 
+                value={form.name} 
+                onChange={updateForm} 
+                disabled={ui.loading} 
+                required 
+              />
             </div>
           </div>
 
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Work Email</Label>
+            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+              {t("auth.register.emailLabel", "Work Email")}
+            </Label>
             <div className="relative">
               <Mail className={iconCls} />
-              <DashboardInput id="email" type="email" placeholder="name@bankbsi.id" className={inputExtraCls} value={form.email} onChange={updateForm} disabled={ui.loading} required />
+              <DashboardInput 
+                id="email" 
+                type="email" 
+                placeholder={t("auth.register.emailPlaceholder", "name@bankbsi.id")} 
+                className={inputExtraCls} 
+                value={form.email} 
+                onChange={updateForm} 
+                disabled={ui.loading} 
+                required 
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 text-left relative">
-                  <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Password</Label>
+                  <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+                    {t("auth.register.passwordLabel", "Password")}
+                  </Label>
                   <div className="relative">
                       <Lock className={iconCls} />
-                      <DashboardInput id="password" type="password" placeholder="••••••••" className={inputExtraCls} value={form.password} onChange={updateForm} disabled={ui.loading} required />
+                      <DashboardInput 
+                        id="password" 
+                        type="password" 
+                        placeholder={t("auth.register.passwordPlaceholder", "••••••••")} 
+                        className={inputExtraCls} 
+                        value={form.password} 
+                        onChange={updateForm} 
+                        disabled={ui.loading} 
+                        required 
+                      />
                   </div>
               </div>
 
               <div className="space-y-2 text-left relative">
-                  <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">Confirm</Label>
+                  <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+                    {t("auth.register.confirmLabel", "Confirm")}
+                  </Label>
                   <div className="relative">
                       <ShieldCheck className={iconCls} />
-                      <DashboardInput id="confirmPassword" type="password" placeholder="••••••••" className={inputExtraCls} value={form.confirmPassword} onChange={updateForm} disabled={ui.loading} required />
+                      <DashboardInput 
+                        id="confirmPassword" 
+                        type="password" 
+                        placeholder={t("auth.register.confirmPlaceholder", "••••••••")} 
+                        className={inputExtraCls} 
+                        value={form.confirmPassword} 
+                        onChange={updateForm} 
+                        disabled={ui.loading} 
+                        required 
+                      />
                   </div>
               </div>
           </div>
@@ -191,15 +240,23 @@ export function RegisterPage() {
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-[#36A39D] hover:bg-[#2b8580] text-white h-12 text-sm font-bold rounded-xl shadow-lg shadow-[#36A39D]/20 mt-4 transition-all active:scale-[0.98]" disabled={ui.loading}>
-            {ui.loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <>Register Account <ChevronRight className="ml-1 h-4 w-4" /></>}
+          <Button 
+            type="submit" 
+            className="w-full bg-[#36A39D] hover:bg-[#2b8580] text-white h-12 text-sm font-bold rounded-xl shadow-lg shadow-[#36A39D]/20 mt-4 transition-all active:scale-[0.98]" 
+            disabled={ui.loading}
+          >
+            {ui.loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("auth.register.processing", "Processing...")}</>
+            ) : (
+              <>{t("auth.register.registerBtn", "Register Account")} <ChevronRight className="ml-1 h-4 w-4" /></>
+            )}
           </Button>
 
           <div className="text-center pt-2">
             <p className="text-xs text-gray-500 font-medium">
-              Already have an account?{" "}
+              {t("auth.register.alreadyHaveAccount", "Already have an account?")}{" "}
               <Link to="/login" className="text-[#36A39D] font-bold hover:underline transition-colors">
-                Login here
+                {t("auth.register.loginHere", "Login here")}
               </Link>
             </p>
           </div>

@@ -15,7 +15,7 @@ interface UserTableProps {
 export function UserTable({ users, isLoading, onDelete, onEdit, onResetPassword }: UserTableProps) {
   const { t, i18n } = useTranslation();
 
-  // LOADING STATE
+  // Loading placeholder.
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px] flex flex-col items-center justify-center">

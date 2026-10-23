@@ -70,7 +70,7 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
     setDeletingId(noteId);
     try {
       await api.delete(`/project/phase/note/${noteId}`);
-      // Hapus dari local state langsung
+      // Clear the note from local state immediately after deletion.
       setNotes(prev => prev.filter(n => n.id !== noteId));
       onRefresh();
     } catch (err: any) {
