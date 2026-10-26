@@ -271,7 +271,9 @@ Before running the application, ensure you have the following installed:
    ```bash
    npm run setup --prefix backend
    ```
-   This expands to `db:create`, `prisma generate`, `prisma migrate deploy` and `prisma db seed`.
+   This expands to `npm run db:create` (`scripts/create-db.js`), `npm run prisma:generate`
+   (`prisma generate`), `npm run db:migrate` (`prisma migrate deploy`) and `npm run db:seed`
+   (`prisma db seed`), so you never need to call the Prisma CLI by hand.
    The seed creates the admin account, sample projects, test cases and PIR logs.
 
 5. Start the backend development server:
