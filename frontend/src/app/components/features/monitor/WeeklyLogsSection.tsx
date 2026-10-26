@@ -85,7 +85,7 @@ export const WeeklyLogsSection = memo(
                 {WEEKLY_COLUMNS.map(({ key, labelKey, align, ...col }) => (
                   <TableHead
                     key={key}
-                    className={`text-[11px] font-bold uppercase h-10 ${HEAD_ALIGN[align]} ${'width' in col ? col.width : ""}`}
+                    className={`text-label font-bold uppercase h-10 ${HEAD_ALIGN[align]} ${'width' in col ? col.width : ""}`}
                     style={{ color: THEME.BSI_GREY }}
                   >
                     {t(labelKey)}

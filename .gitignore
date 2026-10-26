@@ -11,6 +11,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Logs
 *.log
@@ -23,6 +24,14 @@ Thumbs.db
 .idea/
 *.swp
 
+# Local databases (Postgres data lives in the DB service, not in git)
+*.db
+*.db-journal
+
 # Temp
 .temp
 .tmp
+
+# Windows helper scripts keep a backup of this repo from before the second
+# `npm install`; never ship it.
+my-project/

@@ -147,7 +147,7 @@ export function RegisterPage() {
               )}
             </Button>
 
-            <p className="text-[11px] text-gray-400 font-medium pt-2 uppercase tracking-wider">
+            <p className="text-meta text-gray-500 font-medium pt-2 uppercase tracking-wider">
                 {t("auth.register.spamNotice", "Didn't receive email? Check spam or click Resend.")}
             </p>
           </div>
@@ -156,65 +156,65 @@ export function RegisterPage() {
         /* TAMPILAN FORM */
         <form onSubmit={handleRegister} className="space-y-5 animate-in fade-in duration-300">
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            <Label htmlFor="name" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
               {t("auth.register.nameLabel", "Full Name")}
             </Label>
             <div className="relative">
               <User className={iconCls} />
-              <DashboardInput 
-                id="name" 
-                type="text" 
-                placeholder={t("auth.register.namePlaceholder", "Enter your full name")} 
-                className={inputExtraCls} 
-                value={form.name} 
-                onChange={updateForm} 
-                disabled={ui.loading} 
-                required 
+              <DashboardInput
+                id="name"
+                type="text"
+                placeholder={t("auth.register.namePlaceholder", "Enter your full name")}
+                className={inputExtraCls}
+                value={form.name}
+                onChange={updateForm}
+                disabled={ui.loading}
+                required
               />
             </div>
           </div>
 
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            <Label htmlFor="email" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
               {t("auth.register.emailLabel", "Work Email")}
             </Label>
             <div className="relative">
               <Mail className={iconCls} />
-              <DashboardInput 
-                id="email" 
-                type="email" 
-                placeholder={t("auth.register.emailPlaceholder", "name@bankbsi.id")} 
-                className={inputExtraCls} 
-                value={form.email} 
-                onChange={updateForm} 
-                disabled={ui.loading} 
-                required 
+              <DashboardInput
+                id="email"
+                type="email"
+                placeholder={t("auth.register.emailPlaceholder", "name@bankbsi.id")}
+                className={inputExtraCls}
+                value={form.email}
+                onChange={updateForm}
+                disabled={ui.loading}
+                required
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 text-left relative">
-                  <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+                  <Label htmlFor="password" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
                     {t("auth.register.passwordLabel", "Password")}
                   </Label>
                   <div className="relative">
                       <Lock className={iconCls} />
-                      <DashboardInput 
-                        id="password" 
-                        type="password" 
-                        placeholder={t("auth.register.passwordPlaceholder", "••••••••")} 
-                        className={inputExtraCls} 
-                        value={form.password} 
-                        onChange={updateForm} 
-                        disabled={ui.loading} 
-                        required 
+                      <DashboardInput
+                        id="password"
+                        type="password"
+                        placeholder={t("auth.register.passwordPlaceholder", "••••••••")}
+                        className={inputExtraCls}
+                        value={form.password}
+                        onChange={updateForm}
+                        disabled={ui.loading}
+                        required
                       />
                   </div>
               </div>
 
               <div className="space-y-2 text-left relative">
-                  <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+                  <Label htmlFor="confirmPassword" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
                     {t("auth.register.confirmLabel", "Confirm")}
                   </Label>
                   <div className="relative">

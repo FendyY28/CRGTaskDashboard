@@ -30,8 +30,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
 
   const { globalPct, completedPhases } = useMemo(() => {
     if (project.status === PROJECT_STATUS.COMPLETED) return { globalPct: 100, completedPhases: 6 };
-    const idx = PHASES_ARRAY.indexOf(project.currentPhase);
-    const progressInCurrentPhase = Number(project.overallProgress) || 0;
+    const idx = PHASES_ARRAY.indexOf(project.currentPhase);    const progressInCurrentPhase = Number(project.overallProgress) || 0;
     return { globalPct: Math.round(((idx * 100) + progressInCurrentPhase) / 600 * 100), completedPhases: progressInCurrentPhase === 100 ? idx + 1 : idx };
   }, [project.currentPhase, project.overallProgress, project.status]);
 
@@ -47,6 +46,10 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
   }, [project.sdlcPhases, project.cycle]);
 
   const accentColor = project.status.includes('track') || project.status === PROJECT_STATUS.COMPLETED ? PROGRESS_COLORS.track : PROGRESS_COLORS.risk;
+
+  // Hoisted out of the row loop: it was recomputed for every one of the 6 rows.
+  const currentPhaseIndex = PHASES_ARRAY.indexOf(project.currentPhase);
+  const isCurrentPhaseDone = Number(project.overallProgress) === 100;
 
   const weeklyLogs = useMemo(() => project.weeklyProgress ?? [], [project.weeklyProgress]);
 
@@ -82,7 +85,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
             </div>
           </div>
           <div className="text-right min-w-[120px] pl-6 border-l hidden md:block" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '40' }}>
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('timeline.projectCard.overallProgress')}</p>
+            <p className="text-label font-bold uppercase tracking-widest mb-1" style={{ color: THEME.BSI_LIGHT_GRAY }}>{t('timeline.projectCard.overallProgress')}</p>
             <p className="text-4xl font-black" style={{ color: THEME.TOSCA }}>{globalPct}<span className="text-2xl ml-1" style={{ color: THEME.BSI_LIGHT_GRAY }}>%</span></p>
             <p className="text-xs mt-1 font-medium" style={{ color: THEME.BSI_GREY }}>{t('timeline.projectCard.phasesDone', { completed: completedPhases })}</p>
           </div>
@@ -95,14 +98,13 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
             <Table>
               <TableHeader style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + '15' }}>
                 <TableRow>
-                  {[t('timeline.projectCard.tableHeaders.phaseStep'), t('timeline.projectCard.tableHeaders.timeline'), t('timeline.projectCard.tableHeaders.status')].map((h, i) => <TableHead key={i} className={`text-[11px] font-bold uppercase h-10 ${i===2?'text-center':''}`} style={{ color: THEME.BSI_GREY }}>{h}</TableHead>)}
+                  {[t('timeline.projectCard.tableHeaders.phaseStep'), t('timeline.projectCard.tableHeaders.timeline'), t('timeline.projectCard.tableHeaders.status')].map((h, i) => <TableHead key={i} className={`text-label font-bold uppercase h-10 ${i===2?'text-center':''}`} style={{ color: THEME.BSI_GREY }}>{h}</TableHead>)}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {PHASES_ARRAY.map((ph, idx) => {
                   const pData = phaseDict[ph];
-                  const curIdx = PHASES_ARRAY.indexOf(project.currentPhase);
-                  const stat = idx < curIdx ? PROJECT_STATUS.COMPLETED : (idx === curIdx ? (Number(project.overallProgress) === 100 ? PROJECT_STATUS.COMPLETED : project.status) : PROJECT_STATUS.PENDING);
+                  const stat = idx < currentPhaseIndex ? PROJECT_STATUS.COMPLETED : (idx === currentPhaseIndex ? (isCurrentPhaseDone ? PROJECT_STATUS.COMPLETED : project.status) : PROJECT_STATUS.PENDING);
                   return (
                     <TableRow key={ph} className={stat === PROJECT_STATUS.PENDING ? "opacity-60" : ""} style={{ backgroundColor: stat === PROJECT_STATUS.PENDING ? THEME.BSI_LIGHT_GRAY + '10' : '' }}>
                       <TableCell className="py-3 font-semibold text-sm" style={{ color: THEME.BSI_DARK_GRAY }}>{idx + 1}. {ph}</TableCell>
@@ -120,7 +122,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
           <h4 className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}><CheckCircle2 className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.tasksDone', 'Tasks Done')}</h4>
           <DoneTasksTable project={project} />
         </div>
-{/* WEEKLY LOGS â€” catatan mingguan + task (toggle / tambah / hapus) */}
+{/* WEEKLY LOGS - catatan mingguan + task (toggle / tambah / hapus) */}
         <div className="space-y-4">
           <button
             type="button"
@@ -131,7 +133,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
             <h4 className="text-sm font-bold flex items-center gap-2 uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
               <ClipboardList className="h-4 w-4" style={{ color: THEME.TOSCA }} /> {t('timeline.projectCard.weeklyLogs')}
               <span
-                className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                className="text-label font-bold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: THEME.TOSCA + '15', color: THEME.TOSCA }}
               >
                 {weeklyLogs.length}

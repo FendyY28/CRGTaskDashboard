@@ -17,7 +17,7 @@ export const ProjectRow = memo(({ proj, onEdit, onDelete }: ProjectRowProps) => 
       <p className="text-sm font-bold text-gray-800 truncate group-hover/item:text-[#36A39D] transition-colors">
         {proj.name}
       </p>
-      <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide flex items-center gap-1.5 mt-1">
+      <p className="text-meta text-gray-600 font-medium uppercase tracking-wide flex items-center gap-1.5 mt-1">
         <Users className="h-3 w-3 text-[#F9AD3C]"/> {proj.pic || "Unassigned"}
       </p>
     </div>

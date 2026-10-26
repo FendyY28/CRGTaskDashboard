@@ -9,14 +9,14 @@ import { toast } from "sonner";
 import { TestCaseRow } from "../../components/features/testing/TestCaseRow";
 import { TestingModals } from "../../components/modals/TestingModals";
 import { ProtectAction } from "../../components/auth/ProtectAction";
-import { ProjectSidebar } from "../../components/layouts/ProjectSidebar"; 
+import { ProjectSidebar } from "../../components/layouts/ProjectSidebar";
 
 import { useTranslation } from "react-i18next";
 
 export function TestingStatus() {
-  const { 
-    projects, testCases, loading: isLoading, 
-    fetchUatProjects, fetchTestCases, updateTestCase 
+  const {
+    projects, testCases, loading: isLoading,
+    fetchUatProjects, fetchTestCases, updateTestCase
   } = useTestCases();
 
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
@@ -38,10 +38,10 @@ export function TestingStatus() {
     if (actionType === 'reset') {
       toast.promise(
         updateTestCase(targetTestCase.id, { status: TEST_CASE_STATUS.PENDING, notes: null }, selectedProject.id),
-        { 
-          loading: t('testing.toast.resetting'), 
-          success: t('testing.toast.resetSuccess'), 
-          error: t('testing.toast.resetFail') 
+        {
+          loading: t('testing.toast.resetting'),
+          success: t('testing.toast.resetSuccess'),
+          error: t('testing.toast.resetFail')
         }
       );
       return;
@@ -52,26 +52,26 @@ export function TestingStatus() {
   const executionStats = useMemo(() => {
     const activeTestCases = testCases.filter(testCase => !testCase.isDeleted);
     const calculatedStats = { passedCount: 0, failedCount: 0, pendingCount: 0, progressPercentage: 0 };
-    
+
     activeTestCases.forEach(testCase => {
       if (testCase.status === TEST_CASE_STATUS.PASS) calculatedStats.passedCount++;
       else if (testCase.status === TEST_CASE_STATUS.FAIL) calculatedStats.failedCount++;
       else calculatedStats.pendingCount++;
     });
-    
-    calculatedStats.progressPercentage = activeTestCases.length 
-        ? Math.round((calculatedStats.passedCount / activeTestCases.length) * 100) 
+
+    calculatedStats.progressPercentage = activeTestCases.length
+        ? Math.round((calculatedStats.passedCount / activeTestCases.length) * 100)
         : 0;
-        
+
     return calculatedStats;
   }, [testCases]);
 
   const testCasesBySuite = useMemo(() => {
-    const categorizedSuites = { 
-        [TEST_CASE_TYPE.POSITIVE]: [] as any[], 
-        [TEST_CASE_TYPE.NEGATIVE]: [] as any[] 
+    const categorizedSuites = {
+        [TEST_CASE_TYPE.POSITIVE]: [] as any[],
+        [TEST_CASE_TYPE.NEGATIVE]: [] as any[]
     };
-    
+
     testCases.forEach(testCase => {
       const isMatchingCurrentView = isShowingDeleted ? testCase.isDeleted : !testCase.isDeleted;
       if (isMatchingCurrentView) {
@@ -79,7 +79,7 @@ export function TestingStatus() {
         else categorizedSuites[TEST_CASE_TYPE.NEGATIVE].push(testCase);
       }
     });
-    
+
     return categorizedSuites;
   }, [testCases, isShowingDeleted]);
 
@@ -99,9 +99,9 @@ export function TestingStatus() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
+
         {/* 🔥 PANGGIL GENERIC SIDEBAR DI SINI */}
-        <ProjectSidebar 
+        <ProjectSidebar
           title={t('testing.sidebarTitle')}
           projects={projects}
           selectedProject={selectedProject}
@@ -143,7 +143,7 @@ export function TestingStatus() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider">
+                    <div className="flex justify-between text-label font-bold uppercase tracking-wider">
                       <span style={{ color: THEME.TOSCA }}>{executionStats.progressPercentage}% {t('testing.stats.qualityIndex')}</span>
                       <span className="text-gray-400">{testCases.filter(testCase => !testCase.isDeleted).length} {t('testing.stats.totalScenarios')}</span>
                     </div>

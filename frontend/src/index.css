@@ -4,3 +4,31 @@
 body {
   font-family: 'Inter', sans-serif;
 }
+
+/*
+ * Typography floor.
+ *
+ * The app previously used raw `text-[8px]` .. `text-[11px]` throughout, which
+ * made metadata (dates, PICs, audit details) unreadable at 100% zoom. These
+ * three tokens are the only sub-`text-xs` sizes allowed:
+ *
+ *   text-label  11px  uppercase micro-labels (KPI captions, role, badge tags)
+ *   text-meta   12px  metadata that must be read: dates, IDs, names, helper text
+ *   text-body   14px  ordinary body copy
+ *
+ * Interaction targets (buttons, nav links) never go below text-meta.
+ */
+@utility text-label {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+@utility text-meta {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@utility text-body {
+  font-size: 14px;
+  line-height: 1.55;
+}

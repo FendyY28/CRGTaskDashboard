@@ -31,7 +31,7 @@ export function NextCycleModal({ open, onOpenChange, project, isLoading, onConfi
           className="border p-4 rounded-2xl flex items-start gap-3 my-4"
         >
           <AlertCircle style={{ color: THEME.BSI_YELLOW }} className="h-5 w-5 mt-0.5" />
-          <p style={{ color: THEME.BSI_YELLOW }} className="text-[11px] font-semibold leading-tight uppercase tracking-wider">
+          <p style={{ color: THEME.BSI_LIGHT_GOLD }} className="text-label font-semibold leading-tight uppercase tracking-wider">
             {t('editProject.warnings.noteAutoSave')}
           </p>
         </div>
@@ -79,7 +79,7 @@ export function RollbackModal({ open, onOpenChange, project, targetPhase, isLoad
         
         <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-start gap-3 my-4">
           <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-          <p className="text-[11px] text-red-600 font-semibold leading-tight">Ketika anda menekan tombol konfirmasi ini, akan tersimpan di History.</p>
+          <p className="text-meta text-red-700 font-semibold leading-tight">Ketika anda menekan tombol konfirmasi ini, akan tersimpan di History.</p>
         </div>
         
         <DialogFooter className="flex flex-row gap-3 pt-2">

@@ -208,7 +208,7 @@ export function EditUserModal({ open, onOpenChange, userData, onSubmitAction }: 
                 disabled 
                 className={`${inputClass} cursor-not-allowed bg-gray-100/50 border-gray-100 font-medium`} 
             />
-            <p className="text-[10px] text-gray-400 italic px-1">Nama lengkap hanya dapat diubah oleh pemilik akun.</p>
+            <p className="text-meta text-gray-500 italic px-1">Nama lengkap hanya dapat diubah oleh pemilik akun.</p>
           </div>
           
           <div className="space-y-2 opacity-70">
@@ -221,7 +221,7 @@ export function EditUserModal({ open, onOpenChange, userData, onSubmitAction }: 
                 disabled 
                 className={`${inputClass} cursor-not-allowed bg-gray-100/50 border-gray-100 font-medium`} 
             />
-            <p className="text-[10px] text-gray-400 italic px-1">Alamat email terikat pada identitas sistem.</p>
+            <p className="text-meta text-gray-500 italic px-1">Alamat email terikat pada identitas sistem.</p>
           </div>
           
           <div className="space-y-2">

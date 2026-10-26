@@ -73,8 +73,8 @@ export const LogRow = memo(({ item, onClick }: LogRowProps) => {
             </div>
             <p className="text-xs line-clamp-1 mt-2 pr-8 italic" style={{ color: THEME.BSI_GREY }}>{description}</p>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t" style={{ borderColor: THEME.BSI_LIGHT_GRAY + '30' }}>
-              <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: THEME.BSI_GREY }}><User className="h-3 w-3" /> {reporterName}</span>
-              <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: THEME.BSI_GREY }}><Calendar className="h-3 w-3" /> {formatDate(dateReported, i18n.language, t('pirComponents.modal.unknownDate', 'Unknown Date'))}</span>
+              <span className="flex items-center gap-1.5 text-meta font-medium uppercase tracking-wide" style={{ color: THEME.BSI_GREY }}><User className="h-3 w-3" /> {reporterName}</span>
+              <span className="flex items-center gap-1.5 text-meta font-medium" style={{ color: THEME.BSI_GREY }}><Calendar className="h-3 w-3" /> {formatDate(dateReported, i18n.language, t('pirComponents.modal.unknownDate', 'Unknown Date'))}</span>
             </div>
           </div>
         </div>

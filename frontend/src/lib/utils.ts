@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export interface WeeklyTotals {
+interface WeeklyTotals {
   taskCount: number;
   doneCount: number;
   overall: number;
@@ -32,14 +32,8 @@ export const computeWeeklyTotals = (weeks: WeeklyProgress[]): WeeklyTotals => {
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Format Tanggal (DD MMM YYYY)
-export const fmtDate = (d?: string | null) => 
+export const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : "-";
-
-/** Ubah "YYYY-MM-DD" -> "DD/MM/YYYY". */
-export const toSlashDate = (d: string) => {
-  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
-};
 
 /** Format objek Date menjadi "DD/MM/YYYY" tanpa pergeseran zona waktu. */
 const toLocalSlashDate = (d: Date) =>
@@ -62,59 +56,43 @@ export const weekRangeFrom = (anchor: string): string => {
 };
 
 // Kapitalisasi (misal: "on-track" -> "On Track")
-export const capitalize = (s: string) => 
+export const capitalize = (s: string) =>
   s ? s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
 
-// Mengambil User ID dari JWT Token
-export const getUserIdFromToken = () => {
+interface TokenPayload {
+  role?: string;
+}
+
+/**
+ * Decode the payload segment of a JWT.
+ *
+ * Returns `null` for a missing/mock token, a malformed token, or invalid JSON,
+ * so callers can apply their own fallback instead of duplicating the decode.
+ */
+const decodeTokenPayload = (token: string | null): TokenPayload | null => {
+  if (!token || token === "mock-jwt-token") return null;
+
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
   try {
-    const token = localStorage.getItem('auth_token');
-    const backupEmail = localStorage.getItem('user_email');
-    const backupName = localStorage.getItem('user_name');
-
-    // Return default value jika token tidak ada / mock
-    if (!token || token === "mock-jwt-token") return backupEmail || backupName || "system";
-    
-    const parts = token.split('.');
-    if (parts.length !== 3) return backupEmail || "system";
-
-    // Decode Base64 Payload
+    // Base64url -> Base64, then percent-decode to handle UTF-8 payloads.
     const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => 
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c =>
         '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
     ).join(''));
-    
-    const parsed = JSON.parse(jsonPayload);
-    
-    // Fleksibel mengambil field ID (id, sub, userId, atau email)
-    return parsed.id || parsed.sub || parsed.userId || parsed.email || backupEmail || "system"; 
-  } catch (e) {
-    return localStorage.getItem('user_email') || "system";
+
+    return JSON.parse(jsonPayload) as TokenPayload;
+  } catch {
+    return null;
   }
 };
 
-// 🔥 BARU: Mengambil Role dari JWT Token
+// Mengambil Role dari JWT Token
 export const getUserRoleFromToken = () => {
-  try {
-    const token = localStorage.getItem('auth_token');
-    const backupRole = localStorage.getItem('user_role'); // Jika Anda menyimpan role di localStorage saat login
+  const backupRole = localStorage.getItem('user_role'); // Disimpan saat login
+  const payload = decodeTokenPayload(localStorage.getItem('auth_token'));
 
-    if (!token || token === "mock-jwt-token") return backupRole || null;
-    
-    const parts = token.split('.');
-    if (parts.length !== 3) return backupRole || null;
-
-    // Decode Base64 Payload
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => 
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-    ).join(''));
-    
-    const parsed = JSON.parse(jsonPayload);
-    
-    // Kembalikan role dari token, atau fallback ke localStorage
-    return parsed.role || backupRole || null; 
-  } catch (e) {
-    return localStorage.getItem('user_role') || null;
-  }
+  // Kembalikan role dari token, atau fallback ke localStorage
+  return payload?.role || backupRole || null;
 };

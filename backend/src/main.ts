@@ -63,7 +63,15 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }
-bootstrap().catch((err) => {
+bootstrap().catch((err: any) => {
+  // Port already taken: say so plainly instead of a bare stack trace.
+  if (err?.code === 'EADDRINUSE') {
+    console.error(
+      `Port ${process.env.PORT ?? 3000} is already in use. Stop the other process ` +
+        '(see Troubleshooting in the README) or change PORT in backend/.env.',
+    );
+    process.exit(1);
+  }
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });

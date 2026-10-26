@@ -164,7 +164,7 @@ export function ProfileSettingsPage() {
                 {passwordTimer.isWarning ? <AlertTriangle className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <p className="text-label font-bold text-gray-500 uppercase tracking-widest">
                   {t('settings.profile.expiryLabel', 'Masa Berlaku Password')}
                 </p>
                 <h4 className={`text-xl font-black leading-none mt-1 ${passwordTimer.isWarning ? 'text-red-600' : 'text-gray-800'}`}>
@@ -173,7 +173,7 @@ export function ProfileSettingsPage() {
               </div>
             </div>
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">
+              <p className="text-label text-gray-500 uppercase font-bold tracking-tight">
                 {t('settings.profile.untilDate', 'Hingga Tanggal')}
               </p>
               <p className="text-sm font-bold text-gray-600">{passwordTimer.expiryDateLabel}</p>
@@ -202,7 +202,7 @@ export function ProfileSettingsPage() {
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold">{t('settings.profile.emailLabel')}</Label>
                 <Input type="email" value={profileForm.email} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
-                <p className="text-[11px] text-gray-400 mt-1">{t('settings.profile.emailHelper')}</p>
+                <p className="text-meta text-gray-500 mt-1">{t('settings.profile.emailHelper')}</p>
               </div>
 
               <div className="space-y-2">
@@ -237,7 +237,7 @@ export function ProfileSettingsPage() {
               </div>
               <div>
                 <h3 className="text-md font-bold text-gray-900">{t('settings.profile.security')}</h3>
-                <p className="text-[11px] text-gray-500 leading-tight">{t('settings.profile.securityDesc')}</p>
+                <p className="text-meta text-gray-600 leading-tight">{t('settings.profile.securityDesc')}</p>
               </div>
             </div>
 

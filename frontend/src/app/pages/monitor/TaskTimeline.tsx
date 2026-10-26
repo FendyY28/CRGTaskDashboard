@@ -200,7 +200,7 @@ export function TaskTimeline() {
                 <DashboardCard color={THEME.TOSCA} title={t('timeline.quickNavigation')} icon={Filter} className="max-h-[350px] overflow-hidden" contentClassName="space-y-2 overflow-y-auto pr-2 px-3 pb-5 h-[250px] custom-scrollbar">
                   {filtered.map(p => (
                     <button key={p.id} onClick={() => navigateToProject(p.id)} className="w-full text-left p-2.5 rounded-lg flex items-center justify-between group cursor-pointer border border-transparent transition-all hover:bg-gray-50">
-                      <div className="truncate pr-2"><span className="text-xs font-bold block truncate transition-colors" style={{ color: THEME.BSI_DARK_GRAY }}>{p.name}</span><span className="text-[10px]" style={{ color: THEME.BSI_LIGHT_GRAY }}>{p.id}</span></div>
+                      <div className="truncate pr-2"><span className="text-xs font-bold block truncate transition-colors" style={{ color: THEME.BSI_DARK_GRAY }}>{p.name}</span><span className="text-meta" style={{ color: THEME.BSI_LIGHT_GRAY }}>{p.id}</span></div>
                       <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" style={{ color: THEME.BSI_LIGHT_GRAY }} />
                     </button>
                   ))}

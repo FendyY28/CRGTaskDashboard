@@ -1,16 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  LogOut, 
-  ChevronDown, 
-  LayoutDashboard, 
-  ListChecks, 
-  TestTube2, 
-  ClipboardCheck,
-  BarChart3,
-  Users,
-  User,
-  ShieldCheck
-} from "lucide-react";
+import {  LogOut, ChevronDown, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { getUserRoleFromToken } from "../../../lib/utils";
 
 import { THEME } from "../../constants/projectConstants";
+import { getNavItemsForRole, isNavItemActive } from "../../constants/navigation";
 
 export function Header() {
   const navigate = useNavigate();
@@ -43,18 +33,7 @@ export function Header() {
     return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
   };
 
-  const baseNavItems = [
-    { id: "dashboard", label: t('header.menu.dashboard', 'Dashboard'), icon: <LayoutDashboard className="h-4 w-4" /> },
-    { id: "analytics", label: t('header.menu.analytics', 'Analytics'), icon: <BarChart3 className="h-4 w-4" /> },
-    { id: "timeline", label: t('header.menu.timeline', 'Timeline'), icon: <ListChecks className="h-4 w-4" /> },
-    { id: "testing", label: t('header.menu.testing', 'Testing'), icon: <TestTube2 className="h-4 w-4" /> },
-    { id: "post-implementation", label: t('header.menu.pir', 'PIR'), icon: <ClipboardCheck className="h-4 w-4" /> },
-    { id: "audit-trail", label: t('header.menu.audit', 'Audit Trail'), icon: <ShieldCheck className="h-4 w-4" /> },
-  ];
-
-  const navItems = userData.role === 'ADMIN' 
-    ? [...baseNavItems, { id: "users", label: t('header.menu.users', 'Users'), icon: <Users className="h-4 w-4" /> }]
-    : baseNavItems;
+  const navItems = getNavItemsForRole(userData.role);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -69,30 +48,41 @@ export function Header() {
   return (
     <header className="bg-white/85 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-[40] shadow-xs">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer focus:outline-none shrink-0">
-            <img src={BSILogo} alt="BSI Logo" className="h-8 w-auto object-contain" />
-            <div className="hidden sm:block leading-tight">
-              <h1 className="font-bold text-gray-900">Bank Syariah Indonesia</h1>
-              <p style={{ color: THEME.BSI_YELLOW }} className="text-[12px] font-bold uppercase tracking-wider">CRG Division</p>
-            </div>
-          </Link>
+        <div className="flex items-center justify-between gap-3 h-16">
+          <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-3 rounded-lg cursor-pointer transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38A79C] focus-visible:ring-offset-2"
+            >
+              <img src={BSILogo} alt="BSI Logo" className="h-8 w-auto object-contain" />
+              <div className="hidden sm:block leading-tight">
+                <h1 className="font-bold text-gray-900">Bank Syariah Indonesia</h1>
+                <p
+                  className="text-[12px] font-bold uppercase tracking-wider"
+                  style={{ color: THEME.BSI_LIGHT_GOLD }}
+                >
+                  CRG Division
+                </p>
+              </div>
+            </Link>
+          </div>
 
           <nav className="hidden lg:flex items-center justify-center flex-1 gap-1 px-4">
             {navItems.map((item) => {
-              const isActive = location.pathname === `/${item.id}`;
+              const Icon = item.icon;
+              const isActive = isNavItemActive(location.pathname, item.id);
               return (
                 <Link
                   key={item.id}
                   to={`/${item.id}`}
+                  aria-current={isActive ? "page" : undefined}
                   style={isActive ? { backgroundColor: THEME.TOSCA, color: "#fff" } : {}}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] xl:text-sm font-semibold transition-all duration-200 ${
-                    isActive ? "shadow-md shadow-teal-600/25" : "text-gray-600 hover:bg-gray-50 hover:text-[#38A79C]"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] xl:text-sm font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#38A79C] ${
+                    isActive ? "shadow-md shadow-teal-600/25" : "text-gray-700 hover:bg-gray-50 hover:text-[#2B7C74]"
                   }`}
                 >
-                  {item.icon}
-                  <span className="hidden xl:inline whitespace-nowrap">{item.label}</span>
-                  <span className="inline xl:hidden">{item.label.substring(0,4)}.</span>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{t(`header.menu.${item.id}`, item.id)}</span>
                 </Link>
               );
             })}
@@ -102,10 +92,10 @@ export function Header() {
             <LanguageSwitcher />
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <button className="h-12 flex items-center gap-3 px-2 hover:bg-gray-50 transition-colors focus:outline-none group cursor-pointer border-none bg-transparent rounded-lg relative">
+                <button className="h-12 flex items-center gap-2 sm:gap-3 px-2 hover:bg-gray-50 transition-colors group cursor-pointer border-none bg-transparent rounded-lg relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38A79C] focus-visible:ring-offset-2">
                   <div className="text-right hidden md:block">
                     <p className="text-sm font-bold text-gray-900 leading-none mb-1 capitalize">{userData.name}</p>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">{userData.role}</p>
+                    <p className="text-label text-gray-600 uppercase font-bold tracking-tight">{userData.role}</p>
                   </div>
 
                   <Avatar style={{ borderColor: THEME.TOSCA }} className="h-9 w-9 border-2">
@@ -122,7 +112,7 @@ export function Header() {
                   <DropdownMenuLabel className="font-normal px-3 py-4 text-left">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-bold text-gray-900 leading-none capitalize">{userData.name}</p>
-                      <p className="text-[11px] text-gray-400 font-medium italic truncate">{userData.email}</p>
+                      <p className="text-meta text-gray-500 font-medium italic truncate">{userData.email}</p>
                     </div>
                   </DropdownMenuLabel>                
                   <div className="h-px bg-gray-100 my-1 mx-1" />

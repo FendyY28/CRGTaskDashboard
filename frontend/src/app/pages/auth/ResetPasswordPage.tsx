@@ -97,7 +97,7 @@ export function ResetPasswordPage() {
           <div className="space-y-2 text-left relative">
             <Label 
               htmlFor="password" 
-              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1"
+              className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1"
             >
               {t("auth.resetPassword.newPasswordLabel", "New Password")}
             </Label>
@@ -119,7 +119,7 @@ export function ResetPasswordPage() {
           <div className="space-y-2 text-left relative">
             <Label 
               htmlFor="confirmPassword" 
-              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1"
+              className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1"
             >
               {t("auth.resetPassword.confirmPasswordLabel", "Confirm New Password")}
             </Label>

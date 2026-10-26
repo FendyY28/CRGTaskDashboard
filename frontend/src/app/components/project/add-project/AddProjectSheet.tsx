@@ -146,12 +146,12 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><Hash className="h-3.5 w-3.5 text-gray-400" /> {t('addProject.labels.projectCode')}</Label>
+              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><Hash className="h-3.5 w-3.5 text-gray-500" /> {t('addProject.labels.projectCode')}</Label>
               <Input value={formData.code} onChange={e => handleChange("code", e.target.value)} placeholder={t('addProject.placeholders.projectCode')} className={inputClass(errors.code)} />
               <ErrorMsg msgKey={errors.code} />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><User className="h-3.5 w-3.5 text-gray-400" /> {t('addProject.labels.picName')}</Label>
+              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2"><User className="h-3.5 w-3.5 text-gray-500" /> {t('addProject.labels.picName')}</Label>
               <Input required value={formData.pic} onChange={e => handleChange("pic", e.target.value)} placeholder={t('addProject.placeholders.picName')} className={inputClass()} />
             </div>
           </div>
@@ -190,7 +190,7 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
              <div className={`grid grid-cols-2 gap-5 p-2 rounded-md ${errors.phaseDates ? "bg-red-50/50 border border-red-100" : "bg-white/60 border border-slate-200"}`}>
                 {['phaseStartDate', 'phaseDeadline'].map((field, i) => (
                    <div key={field} className="space-y-1">
-                      <Label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
+                      <Label className="text-label font-bold text-gray-500 uppercase flex items-center gap-1">
                           {i === 0 ? <PlayCircle className="w-3 h-3"/> : <AlertCircle className="w-3 h-3"/>} {i === 0 ? t('addProject.labels.phaseStart') : t('addProject.labels.phaseDeadline')}
                       </Label>
                       <Input type="date" required value={formData[field as keyof typeof formData]} onChange={e => handleChange(field as any, e.target.value)} className="h-8 text-xs bg-white border-gray-200 focus-visible:ring-[#36A39D]" />

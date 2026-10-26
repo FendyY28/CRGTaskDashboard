@@ -22,11 +22,11 @@ const LogItem = memo(({ log, isLast }: { log: any; isLast: boolean }) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-0.5">
-          <span className="text-[11px] font-bold text-gray-900 truncate pr-2">
+          <span className="text-meta font-bold text-gray-900 truncate pr-2">
             {log.user?.name || log.userName || "System"}
           </span>
-          <span className="text-[9px] text-gray-400 flex items-center gap-1 shrink-0 bg-gray-50 px-1.5 py-0.5 rounded-full">
-            <Clock className="h-2 w-2" />
+          <span className="text-meta text-gray-500 flex items-center gap-1 shrink-0 bg-gray-50 px-1.5 py-0.5 rounded-full">
+            <Clock className="h-3 w-3" />
             {log.createdAt && !isNaN(new Date(log.createdAt).getTime())
               ? formatDistanceToNow(new Date(log.createdAt), {
                   addSuffix: true,
@@ -36,11 +36,11 @@ const LogItem = memo(({ log, isLast }: { log: any; isLast: boolean }) => {
           </span>
         </div>
 
-        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#38A79C]/10 text-[#38A79C] mb-1.5 border border-[#38A79C]/10 uppercase tracking-wider">
+        <span className="inline-block px-1.5 py-0.5 rounded text-label font-semibold bg-[#38A79C]/10 text-[#26736B] mb-1.5 border border-[#38A79C]/20 uppercase tracking-wider">
           {t(`audit.actions.${log.action}`, log.action ? log.action.replace(/_/g, " ") : "UPDATE")}
         </span>
 
-        <p className="text-[11px] text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 leading-relaxed">
+        <p className="text-meta text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 leading-relaxed">
           {log.details || t("audit.activityLog.noDetails", "No details provided.")}
         </p>
       </div>
@@ -64,7 +64,7 @@ export function ActivityLog() {
             <CardTitle className="text-sm font-bold text-gray-800">
               {t("audit.activityLog.title", "Activity Log")}
             </CardTitle>
-            <p className="text-[10px] text-gray-500">
+            <p className="text-meta text-gray-600">
               {t("audit.activityLog.subtitle", "Real-time system updates")}
             </p>
           </div>

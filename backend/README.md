@@ -4,33 +4,47 @@ Backend RESTful API service built with **NestJS**, **Prisma ORM**, and **Postgre
 
 ---
 
+> The fastest path is to use the commands in the [root README](../README.md#-quick-start-clone--running-in-3-steps)
+> (`npm run setup` once, then `npm run dev` from the repository root).
+
 ## 🚀 Getting Started
 
-### 1. Install Dependencies
+### 1. Environment Variables (.env)
+Copy the template, then fill in `DATABASE_URL` and `JWT_SECRET`:
 ```bash
-npm install
+copy .env.example .env      # Windows
+cp .env.example .env        # macOS / Linux
 ```
-
-### 2. Environment Variables (.env)
-Create a `.env` file in the root of the `backend/` directory:
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/crg_dashboard?schema=public"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/bsi_crg_db?schema=public"
 PORT=3000
+JWT_SECRET="<openssl rand -hex 32>"
 
 MAIL_HOST="smtp.gmail.com"
 MAIL_USER="your_email@gmail.com"
 MAIL_PASS="your_gmail_app_password"
 MAIL_FROM="your_email@gmail.com"
 ```
+`.env` is git-ignored; only `.env.example` is committed. The server refuses to start while
+`JWT_SECRET` is missing, shorter than 32 chars, or still the placeholder.
 
-### 3. Database Migration & Seeding
+### 2. Install Dependencies
 ```bash
-# Run migrations
-npx prisma migrate dev --name init
-
-# Seed database with super admin & sample projects
-npx prisma db seed
+npm install
 ```
+
+### 3. Database Setup (create + migrate + seed)
+```bash
+npm run setup      # db:create -> prisma generate -> migrate deploy -> seed
+```
+Individual steps:
+```bash
+npm run db:create  # create the database from DATABASE_URL if missing
+npm run db:migrate # prisma migrate deploy (replays committed migrations)
+npm run db:seed    # super admin + sample projects
+```
+Use `npx prisma migrate dev --name <name>` only when you change `prisma/schema.prisma`.
+Re-running the seed wipes and repopulates the local data.
 
 ### 4. Run Development Server
 ```bash

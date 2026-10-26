@@ -95,7 +95,7 @@ export function ForgotPasswordPage() {
       {step === 1 && (
         <form onSubmit={handleRequestOtp} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-2 text-left relative">
-            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            <Label htmlFor="email" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
               {t("auth.forgotPassword.emailLabel", "Work Email Address")}
             </Label>
             <div className="relative">
@@ -155,7 +155,7 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleResetPassword} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
           
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest ml-1" style={{ color: THEME.TOSCA }}>
+            <Label className="text-label font-bold uppercase tracking-widest ml-1" style={{ color: THEME.TOSCA }}>
               {t("auth.forgotPassword.otpLabel", "6-Digit OTP Code")}
             </Label>
             <div className="relative">
@@ -175,7 +175,7 @@ export function ForgotPasswordPage() {
           </div>
 
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            <Label className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
               {t("auth.forgotPassword.newPasswordLabel", "New Password")}
             </Label>
             <div className="relative">
@@ -193,7 +193,7 @@ export function ForgotPasswordPage() {
           </div>
 
           <div className="space-y-2 text-left">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+            <Label className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
               {t("auth.forgotPassword.confirmPasswordLabel", "Confirm Password")}
             </Label>
             <div className="relative">

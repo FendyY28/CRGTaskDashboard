@@ -71,7 +71,7 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
             {item.title}
           </p>
           
-          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-gray-500 font-medium">
+          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-meta text-gray-600 font-medium">
              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md" style={isDel ? { backgroundColor: '#FEF2F2', color: '#DC2626' } : { backgroundColor: '#F3F4F6' }}>
                 <User className="h-3 w-3 opacity-70" />
                 <span className="truncate max-w-[100px]">{isDel ? (item.deletedBy || t('testing.row.unknown')) : displayUser}</span>
@@ -132,7 +132,7 @@ export const TestCaseRow = memo(({ item, onAction }: TestCaseRowProps) => {
             </ProtectAction>
           </>
         ) : (
-          <span className="text-[10px] font-bold uppercase text-red-500 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider flex items-center gap-1">
+          <span className="text-label font-bold uppercase text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 tracking-wider flex items-center gap-1">
             <ArchiveX className="h-3 w-3" /> {t('testing.row.takeoutBadge')}
           </span>
         )}

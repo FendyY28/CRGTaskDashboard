@@ -190,8 +190,8 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
                <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.takeoutReason || t('testing.modals.noReason')}</p>
             ) : modal.item?.status === TEST_CASE_STATUS.FAIL && modal.item?.defect ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2"><span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">{t('testing.modals.labels.severity')}:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-[10px] font-black">{modal.item.defect.severity}</Badge></div>
-                <div className="space-y-1"><span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">{t('testing.modals.labels.issueSummary')}</span><p className="font-medium text-gray-700">{modal.item.defect.description}</p></div>
+                <div className="flex items-center gap-2"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t('testing.modals.labels.severity')}:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-label font-black">{modal.item.defect.severity}</Badge></div>
+                <div className="space-y-1"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t('testing.modals.labels.issueSummary')}</span><p className="font-medium text-gray-700">{modal.item.defect.description}</p></div>
               </div>
             ) : (
               <p className="whitespace-pre-wrap font-medium">{modal.item?.notes || t('testing.modals.noNotes')}</p>

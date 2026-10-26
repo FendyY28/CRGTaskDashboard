@@ -91,12 +91,12 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
       >
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4" style={{ color: THEME.TOSCA }} />
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
+          <span className="text-meta font-bold uppercase tracking-widest" style={{ color: THEME.BSI_GREY }}>
             {t("editProject.phaseNotes.title", "Catatan Fase")}
           </span>
           {notes.length > 0 && (
             <span
-              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+              className="text-label font-bold px-1.5 py-0.5 rounded-full"
               style={{ backgroundColor: THEME.TOSCA + "20", color: THEME.TOSCA }}
             >
               {notes.length}
@@ -109,14 +109,14 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setIsAdding(true); setExpanded(true); }}
-                className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg border border-dashed border-gray-300 hover:border-[#38A79C] hover:text-[#38A79C] text-gray-400 transition-all cursor-pointer"
+                className="flex items-center gap-1 text-meta font-semibold px-2 py-1 rounded-lg border border-dashed border-gray-300 hover:border-[#38A79C] hover:text-[#38A79C] text-gray-500 transition-all cursor-pointer"
               >
                 <Plus className="h-3 w-3" />
                 {t("editProject.phaseNotes.addNote", "Tambah")}
               </button>
             </ProtectAction>
           )}
-          {expanded ? <ChevronUp className="h-3.5 w-3.5 text-gray-400" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-400" />}
+          {expanded ? <ChevronUp className="h-3.5 w-3.5 text-gray-500" /> : <ChevronDown className="h-3.5 w-3.5 text-gray-500" />}
         </div>
       </div>
 
@@ -142,14 +142,14 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
                 disabled={isSaving}
               />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400">Ctrl+Enter untuk simpan</span>
+                <span className="text-meta text-gray-500">Ctrl+Enter untuk simpan</span>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => { setIsAdding(false); setContent(""); }}
-                    className="h-7 text-xs text-gray-400 cursor-pointer"
+                    className="h-7 text-xs text-gray-500 cursor-pointer"
                   >
                     {t("common.cancel", "Batal")}
                   </Button>
@@ -170,7 +170,7 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
 
           {/* Daftar catatan */}
           {notes.length === 0 && !isAdding ? (
-            <p className="text-[11px] italic text-center py-3" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+            <p className="text-meta italic text-center py-3" style={{ color: THEME.BSI_LIGHT_GRAY }}>
               {t("editProject.phaseNotes.noNotes", "Belum ada catatan untuk fase ini.")}
             </p>
           ) : (
@@ -182,7 +182,7 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
                 >
                   {/* Avatar */}
                   <div
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-white text-meta font-bold shrink-0"
                     style={{ backgroundColor: THEME.TOSCA }}
                   >
                     {getInitials(note.createdBy)}
@@ -191,10 +191,10 @@ export function PhaseNotes({ phaseId, initialNotes, onRefresh }: PhaseNotesProps
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-bold" style={{ color: THEME.BSI_DARK_GRAY }}>
+                        <span className="text-meta font-bold" style={{ color: THEME.BSI_DARK_GRAY }}>
                           {note.createdBy}
                         </span>
-                        <span className="text-[10px]" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+                        <span className="text-meta" style={{ color: THEME.BSI_LIGHT_GRAY }}>
                           {fmtDate(note.createdAt)}
                         </span>
                       </div>

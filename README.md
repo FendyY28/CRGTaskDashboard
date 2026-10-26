@@ -6,6 +6,7 @@
 
 ## 📌 Table of Contents
 
+- [Quick Start (clone ➔ running in 3 steps)](#-quick-start-clone--running-in-3-steps)
 - [Overview](#-overview)
 - [Key Feature Modules](#-key-feature-modules)
 - [Tech Stack](#-tech-stack)
@@ -16,8 +17,79 @@
   - [2. Frontend Setup](#2-frontend-setup)
   - [3. Default Credentials](#3-default-credentials)
 - [Environment Variables Reference](#-environment-variables-reference)
+- [Troubleshooting](#-troubleshooting)
 - [Security & Compliance Highlights](#-security--compliance-highlights)
 - [Testing & Quality Assurance](#-testing--quality-assurance)
+
+---
+
+## 🚀 Quick Start (clone ➔ running in 3 steps)
+
+### Step 1 - Install the prerequisites
+
+| Tool | Version | Notes |
+| :--- | :--- | :--- |
+| Node.js | 20 LTS or newer | <https://nodejs.org> |
+| PostgreSQL | 14 or newer | Use Docker (below) or an existing local install |
+
+Database via Docker (recommended, matches `docker-compose.yml`):
+
+```bash
+docker compose up -d postgres
+```
+
+That starts PostgreSQL on `localhost:5432` with user `postgres`, password `superuser` and database `bsi_crg_db`.
+Using an existing PostgreSQL install instead? Keep it running and point `DATABASE_URL` at it in step 2.
+
+### Step 2 - Create your `.env` files and install dependencies
+
+**Windows:** double-click **`setup-local.bat`** (asks for your DB credentials, then does everything below).
+
+**Any OS from a terminal:**
+
+```bash
+npm run setup
+```
+
+Prefer to do it manually?
+
+```bash
+npm run env:init                 # copies backend/.env.example + frontend/.env.example
+# then edit backend/.env (DATABASE_URL, JWT_SECRET)
+npm install --prefix backend
+npm install --prefix frontend
+npm run setup --prefix backend   # creates DB, migrates, seeds
+```
+
+> **Never commit `backend/.env`** - it is git-ignored. Only the `.env.example` files are tracked.
+
+### Step 3 - Run
+
+**Windows:** double-click **`run-local.bat`** (opens backend + frontend in two windows and your browser).
+
+**Any OS:**
+
+```bash
+npm run dev
+```
+
+| Service | URL |
+| :--- | :--- |
+| Frontend | <http://localhost:5173> |
+| Backend API | <http://localhost:3000> |
+| Login | `admin@example.com` / `password123` |
+
+### Cheat sheet (run from the repository root)
+
+| Command | What it does |
+| :--- | :--- |
+| `npm run setup` | One-time setup: env files, install, create DB, migrate, seed |
+| `npm run dev` | Start backend + frontend together (alias: `npm run start:all`) |
+| `npm run build` | Production build of backend and frontend |
+| `npm run test` | Backend (Jest) + frontend (Vitest) test suites |
+| `npm run db:setup --prefix backend` | Re-run migrate + seed only |
+| `npm run prisma:generate --prefix backend` | Regenerate the Prisma Client |
+| `setup-local.bat` / `run-local.bat` | Windows double-click equivalents of `setup` / `dev` |
 
 ---
 
@@ -105,11 +177,18 @@ The system empowers team leads, project managers, and officers to:
 
 ```
 CRGTaskDashboard/
+├── setup-local.bat             # Windows: one-time setup (install + DB + seed)
+├── run-local.bat               # Windows: start backend + frontend
+├── scripts/                    # npm run setup / env:init helpers
+├── docker-compose.yml          # PostgreSQL + backend + frontend containers
+│
 ├── backend/
+│   ├── .env.example            # Template for backend/.env (copy, don't commit .env)
 │   ├── prisma/
 │   │   ├── migrations/         # PostgreSQL database migrations
 │   │   ├── schema.prisma       # Database models & relations
 │   │   └── seed.ts             # Initial master database seed
+│   ├── scripts/create-db.js    # Creates the database if it does not exist
 │   ├── src/
 │   │   ├── audit/              # Activity log service & controller
 │   │   ├── auth/               # JWT authentication, guards, OTP & strategies
@@ -123,6 +202,7 @@ CRGTaskDashboard/
 │   └── tsconfig.json
 │
 ├── frontend/
+│   ├── .env.example            # Template for frontend/.env (VITE_API_URL)
 │   ├── public/                 # Static assets & logos
 │   ├── src/
 │   │   ├── app/
@@ -148,31 +228,31 @@ CRGTaskDashboard/
 Before running the application, ensure you have the following installed:
 - **Node.js**: `v20.x` or higher
 - **npm**: `v10.x` or higher (or `pnpm` / `yarn`)
-- **PostgreSQL**: `v14.x` or higher (running locally or in cloud)
+- **PostgreSQL**: `v14.x` or higher (running locally or via Docker)
 
 ---
 
 ## 🚀 Step-by-Step Installation & Running Guide
 
+> In a hurry? Use the [Quick Start](#-quick-start-clone--running-in-3-steps) above, or just run `npm run setup` then `npm run dev`.
+
 ### 1. Backend Setup
 
-1. Open your terminal and navigate to the `backend` directory:
+1. Open your terminal at the **repository root** (not inside `backend/`) and create the env files:
    ```bash
-   cd backend
+   npm run env:init
    ```
 
-2. Install all dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create your `.env` file in the `backend/` folder:
+2. Fill in `backend/.env` (it was copied from `backend/.env.example`):
    ```env
    # Database Connection String (PostgreSQL)
-   DATABASE_URL="postgresql://postgres:your_password@localhost:5432/crg_dashboard?schema=public"
+   DATABASE_URL="postgresql://postgres:your_password@localhost:5432/bsi_crg_db?schema=public"
 
    # Server Port
    PORT=3000
+
+   # JWT signing secret — generate with: openssl rand -hex 32
+   JWT_SECRET="replace-with-a-long-random-secret"
 
    # SMTP Email Configuration (for OTP & Notifications)
    MAIL_HOST="smtp.gmail.com"
@@ -180,57 +260,97 @@ Before running the application, ensure you have the following installed:
    MAIL_PASS="your_gmail_app_password"
    MAIL_FROM="your_email@gmail.com"
    ```
+   *The backend refuses to start while `JWT_SECRET` is still the placeholder.*
 
-4. Run database migrations to generate database tables:
+3. Install dependencies:
    ```bash
-   npx prisma migrate dev --name init
+   npm install --prefix backend
    ```
 
-5. Seed initial data (Creates Admin account, sample projects, test cases, and PIR logs):
+4. Create the database (if it does not exist), run migrations and seed sample data:
    ```bash
-   npx prisma db seed
+   npm run setup --prefix backend
    ```
+   This expands to `db:create`, `prisma generate`, `prisma migrate deploy` and `prisma db seed`.
+   The seed creates the admin account, sample projects, test cases and PIR logs.
 
-6. Start the backend development server:
+5. Start the backend development server:
    ```bash
-   npm run start:dev
+   npm run start:dev --prefix backend
    ```
    *The backend will be running at `http://localhost:3000`.*
+
+> `prisma migrate deploy` replays the committed migrations (use it on any database you did not create yourself).
+> `prisma migrate dev --name <name>` is only for developers **changing** `schema.prisma`.
 
 ---
 
 ### 2. Frontend Setup
 
-1. Open a new terminal tab/window and navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. (Optional) Create a `.env` file in the `frontend/` folder:
+1. `frontend/.env` was already created by `npm run env:init`. It only needs one variable:
    ```env
    VITE_API_URL="http://localhost:3000"
    ```
+   (Defaults to `http://localhost:3000` when unset. It is baked in at build time, so it must be reachable from the browser.)
 
-4. Start the frontend development server:
+2. Install dependencies:
    ```bash
-   npm run dev
+   npm install --prefix frontend
+   ```
+
+3. Start the frontend development server:
+   ```bash
+   npm run dev --prefix frontend
    ```
    *The frontend dashboard will be running at `http://localhost:5173`.*
+
+> Or start both servers at once from the repo root with `npm run dev`.
 
 ---
 
 ### 3. Default Credentials
 
-After seeding the database (`npx prisma db seed`), log in with the following default Super Admin account:
+After seeding the database (`npm run db:seed --prefix backend`), log in with the following default Super Admin account:
 
 - **Email**: `admin@example.com`
 - **Password**: `password123`
 - **Role**: `ADMIN`
+
+---
+
+## 🔧 Environment Variables Reference
+
+### `backend/.env` (copied from `backend/.env.example`)
+
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | ✅ | PostgreSQL connection string, e.g. `postgresql://postgres:superuser@localhost:5432/bsi_crg_db?schema=public` |
+| `JWT_SECRET` | ✅ | Signing secret, at least 32 chars. The backend refuses to start otherwise. |
+| `PORT` | — | Backend port (default `3000`) |
+| `CORS_ORIGINS` | — | Comma-separated allowed origins (default `http://localhost:5173`) |
+| `FRONTEND_URL` | — | Base URL used in verification e-mail links |
+| `MAIL_HOST` / `MAIL_USER` / `MAIL_PASS` / `MAIL_FROM` | — | SMTP for OTP and notification e-mails. Without it, e-mail flows fail but local login still works. |
+| `ABSTRACT_API_KEY` | — | Optional e-mail deliverability check on registration |
+
+### `frontend/.env` (copied from `frontend/.env.example`)
+
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `VITE_API_URL` | — | Backend base URL used by the browser (default `http://localhost:3000`) |
+
+---
+
+## 🧭 Troubleshooting
+
+| Symptom | Cause / Fix |
+| :--- | :--- |
+| `EADDRINUSE :3000` or `:5173` | An old dev server is still running. Stop it: `netstat -ano \| findstr :3000` then `taskkill /PID <pid> /F` (Windows), or `lsof -i :3000` (macOS/Linux). |
+| `Can't reach database server at localhost:5432` | PostgreSQL is not running. Start it with `docker compose up -d postgres` or your local service. |
+| `database "bsi_crg_db" does not exist` | Run `npm run db:create --prefix backend`, or create it in pgAdmin/psql. |
+| `JWT_SECRET is still a placeholder or too short` | Generate one: `openssl rand -hex 32` (or `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) and paste it into `backend/.env`. |
+| `P1001` / `EPERM` from Prisma on Windows | Stop running `node` processes (dev server, editors) and re-run `npm run prisma:generate --prefix backend`. |
+| OTP / verification e-mails never arrive | SMTP is optional for local work; log in directly with the seeded admin account instead. |
+| Browser shows network errors calling the API | `VITE_API_URL` in `frontend/.env` must point at the backend URL reachable from your browser, then restart `npm run dev`. |
 
 ---
 
@@ -259,18 +379,21 @@ location.reload();
 
 ## 📦 Build & Production Commands
 
+Everything at once (from the repo root):
+```bash
+npm run build
+```
+
 ### Backend Build
 ```bash
-cd backend
-npm run build
-npm run start:prod
+npm run build --prefix backend
+npm run start:prod --prefix backend
 ```
 
 ### Frontend Build
 ```bash
-cd frontend
-npm run build
-npm run preview
+npm run build --prefix frontend
+npm run preview --prefix frontend
 ```
 
 ---

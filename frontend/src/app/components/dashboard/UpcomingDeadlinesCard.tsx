@@ -82,7 +82,7 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
   );
 
   const BADGE_BASE =
-    "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px]";
+    "inline-flex items-center rounded-full border px-2 py-0.5 text-label";
 
   const badgeClass = (daysLeft: number) => {
     if (daysLeft <= 3)
@@ -95,7 +95,7 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
   const renderBadge = (daysLeft: number) => {
     if (daysLeft < 0) {
       return (
-        <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+        <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-label font-bold text-red-700">
           {t("upcoming.overdueBy", {
             count: Math.abs(daysLeft),
             defaultValue: `Terlambat ${Math.abs(daysLeft)} hari`,
@@ -105,7 +105,7 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
     }
     if (daysLeft === 0) {
       return (
-        <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 shadow-xs animate-pulse">
+        <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-label font-extrabold text-amber-800 shadow-xs animate-pulse">
           ⚡ {t("upcoming.today", "Hari ini")}
         </span>
       );
@@ -143,7 +143,7 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
             <p className="text-xs font-bold text-red-700">
               {t("upcoming.urgent", "Urgent project alerts")}
             </p>
-            <p className="text-[11px] text-red-600">
+            <p className="text-meta text-red-700">
               {urgentProjects.length}{" "}
               {t("upcoming.urgentDescription", "project(s) require attention")}
             </p>
@@ -193,7 +193,7 @@ export function UpcomingDeadlinesCard({ projects }: UpcomingDeadlinesCardProps) 
                       {item.project.name}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-gray-500">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-meta text-gray-600">
                     <span className="font-semibold text-gray-700">
                       {item.phaseName}
                     </span>

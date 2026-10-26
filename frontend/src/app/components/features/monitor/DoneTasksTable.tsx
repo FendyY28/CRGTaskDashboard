@@ -117,7 +117,7 @@ const DoneTaskRow = memo(({ task }: DoneTaskRowProps) => {
           {task.taskName || t("timeline.projectCard.untitledTask", "Untitled Task")}
         </p>
         {task.taskId && (
-          <p className="text-[11px] font-mono ml-5" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+          <p className="text-meta font-mono ml-5" style={{ color: THEME.BSI_LIGHT_GRAY }}>
             {task.taskId}
           </p>
         )}
@@ -205,25 +205,25 @@ export const DoneTasksTable = memo(({ project }: DoneTasksTableProps) => {
           <TableHeader style={{ backgroundColor: THEME.BSI_LIGHT_GRAY + "15" }}>
             <TableRow>
               <TableHead
-                className="text-[11px] font-bold uppercase h-10"
+                className="text-meta font-bold uppercase h-10"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.period")}
               </TableHead>
               <TableHead
-                className="text-[11px] font-bold uppercase h-10"
+                className="text-meta font-bold uppercase h-10"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.description", "Deskripsi")}
               </TableHead>
               <TableHead
-                className="text-[11px] font-bold uppercase h-10 text-center"
+                className="text-meta font-bold uppercase h-10 text-center"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.doneBy", "Dikerjakan Oleh")}
               </TableHead>
               <TableHead
-                className="text-[11px] font-bold uppercase h-10 text-center"
+                className="text-meta font-bold uppercase h-10 text-center"
                 style={{ color: THEME.BSI_GREY }}
               >
                 {t("timeline.projectCard.tableHeaders.date", "Tanggal")}

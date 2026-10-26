@@ -23,7 +23,11 @@
       "testing": "Pengujian",
       "pir": "PIR",
       "users": "Pengguna",
-      "audit": "Jejak Audit"
+      "audit": "Jejak Audit",
+      "post-implementation": "PIR",
+      "audit-trail": "Jejak Audit",
+      "navigation": "Navigasi",
+      "openNavigation": "Buka menu navigasi"
     },
     "logout": "Keluar dari Sistem"
   },

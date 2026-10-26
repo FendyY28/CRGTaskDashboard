@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { 
   PieChart, Pie, Cell, 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend 
@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { THEME } from "../../constants/projectConstants";
 import { DashboardCard } from "../../components/dashboard/index";
 import { useAnalyticsData } from "../../hooks/useAnalyticsData";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 // --- TOOLTIPS ---
 const CustomPieTooltip = ({ active, payload }: any) => {
@@ -57,26 +58,17 @@ const CustomAvgProgressTooltip = ({ active, payload, label }: any) => {
 
 export function Analytics() {
   const { t } = useTranslation();
-  
+
   // STATE UNTUK FILTER PROJECT
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const data = useAnalyticsData(selectedProjects); 
-  const DANGER_COLOR = "#E11D48"; 
+  const data = useAnalyticsData(selectedProjects);
+  const DANGER_COLOR = "#E11D48";
 
-  // LOGIC KLIK LUAR
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setIsFilterOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(filterRef, () => setIsFilterOpen(false));
 
   // LOGIC TOGGLE PROJECT
   const toggleProject = (projectId: string) => {
@@ -136,7 +128,7 @@ export function Analytics() {
                 {selectedProjects.length > 0 && (
                   <button 
                     onClick={resetFilter} 
-                    className="text-[10px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                    className="text-label font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
                   >
                     <X className="h-3 w-3" /> {t('analytics.filter.reset', 'RESET')}
                   </button>

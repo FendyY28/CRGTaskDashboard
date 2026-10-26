@@ -198,7 +198,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   <h4 className="text-sm font-bold uppercase">{t('editProject.labels.phaseManagement')}</h4>
                 </div>
                 <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border shadow-sm border-gray-100">
-                  <Label className="text-[11px] font-bold text-gray-400 uppercase">{t('editProject.labels.status')}</Label>
+                  <Label className="text-label font-bold text-gray-500 uppercase">{t('editProject.labels.status')}</Label>
                   <Select value={form.phaseStatus} onValueChange={v => handleChange("status", v)}>
                     <SelectTrigger className={`h-7 w-auto min-w-[110px] border-none text-xs font-bold uppercase text-right focus:ring-0 focus:ring-offset-0 shadow-none ${getStatusColor(form.phaseStatus)}`}>
                       <SelectValue/>
@@ -213,7 +213,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold text-gray-400 uppercase">{t('editProject.labels.activePhase')}</Label>
+                    <Label className="text-label font-bold text-gray-500 uppercase">{t('editProject.labels.activePhase')}</Label>
                     <Select value={form.currentPhase} onValueChange={handleSmartPhaseChange}>
                       <SelectTrigger className={`bg-white h-9 border-gray-200 focus:ring-0 focus:ring-offset-0 focus:border-[${THEME.TOSCA}] transition-all duration-300`}>
                         <SelectValue />
@@ -226,7 +226,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <Label className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-1"><BarChart3 className="w-3 h-3" /> {t('editProject.labels.completion')}</Label>
+                      <Label className="text-label font-bold text-gray-500 uppercase flex items-center gap-1"><BarChart3 className="w-3 h-3" /> {t('editProject.labels.completion')}</Label>
                       <span style={{ color: THEME.BSI_YELLOW, borderColor: `${THEME.BSI_YELLOW}4D` }} className="text-xs font-bold bg-white border px-2 py-0.5 rounded">{form.overallProgress}%</span>
                     </div>
                     <Input 
@@ -243,7 +243,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                 <div className="space-y-3 p-3 rounded-lg border border-white bg-white shadow-sm">
                   {[{ l: t('editProject.labels.start'), v: form.phaseStartDate, k: "phaseStartDate", i: PlayCircle }, { l: t('editProject.labels.end'), v: form.phaseDeadline, k: "phaseDeadline", i: AlertCircle }].map((f, i) => (
                     <div key={i} className="space-y-1">
-                      <Label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><f.i className="w-3 h-3" /> {f.l}</Label>
+                      <Label className="text-label font-bold text-gray-500 uppercase flex items-center gap-1"><f.i className="w-3 h-3" /> {f.l}</Label>
                       <Input 
                         type="date" 
                         value={f.v} 
@@ -252,7 +252,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                       />
                     </div>
                   ))}
-                  {errs.ph && <p className="text-[10px] text-red-500"><AlertCircle className="w-2.5 h-2.5 inline" /> {t(`editProject.errors.${errs.ph}`)}</p>}
+                  {errs.ph && <p className="text-label text-red-500"><AlertCircle className="w-2.5 h-2.5 inline" /> {t(`editProject.errors.${errs.ph}`)}</p>}
                 </div>
               </div>
 
@@ -262,14 +262,14 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                 initialNotes={phaseNotes}
                 onRefresh={onProjectUpdated}
               />
-              {isFormValidButUnsaved && <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100"><AlertCircle className="h-3 w-3" /> {t('editProject.warnings.saveFirst')}</div>}
+              {isFormValidButUnsaved && <div className="mt-2 flex items-center gap-2 text-label font-semibold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100"><AlertCircle className="h-3 w-3" /> {t('editProject.warnings.saveFirst')}</div>}
             </div>
 
             {/* GLOBAL TIMELINE & STATUS */}
             <div className="grid grid-cols-2 gap-5 pt-4 border-t border-gray-100">
               {[{ l: t('editProject.labels.projectStart'), v: form.projectStartDate, k: "projectStartDate" }, { l: t('editProject.labels.projectDeadline'), v: form.projectDeadline, k: "projectDeadline" }].map((f, i) => (
                 <div key={i} className="space-y-2">
-                  <Label className="text-[11px] font-bold text-gray-400 uppercase">{f.l}</Label>
+                  <Label className="text-label font-bold text-gray-500 uppercase">{f.l}</Label>
                   <Input 
                     type="date" 
                     value={f.v} 
@@ -278,11 +278,11 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   />
                 </div>
               ))}
-              {errs.dates && <div className="col-span-2 mt-[-5px] text-[10px] text-red-500"><AlertCircle className="w-2.5 h-2.5 inline" /> {t(`editProject.errors.${errs.dates}`)}</div>}
+              {errs.dates && <div className="col-span-2 mt-[-5px] text-label text-red-500"><AlertCircle className="w-2.5 h-2.5 inline" /> {t(`editProject.errors.${errs.dates}`)}</div>}
             </div>
             
             <div className="space-y-2 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
-              <Label className="text-[11px] font-bold text-gray-400 uppercase">{t('editProject.labels.globalStatus')}</Label>
+              <Label className="text-label font-bold text-gray-500 uppercase">{t('editProject.labels.globalStatus')}</Label>
               <Select value={form.status} onValueChange={v => handleChange("status", v)}>
                 <SelectTrigger className={`bg-white h-10 capitalize border-gray-200 focus:ring-0 focus:ring-offset-0 focus:border-[${THEME.TOSCA}] transition-all duration-300`}>
                   <SelectValue/>
@@ -301,7 +301,7 @@ export function EditProjectSheet({ project, open, onOpenChange, onProjectUpdated
                   onClick={() => setShowConfirm(true)} 
                   disabled={!isReadyForNextCycle || isLoading} 
                   style={isReadyForNextCycle ? { backgroundColor: THEME.TOSCA } : {}}
-                  className={`w-full sm:w-auto font-bold h-10 px-5 rounded-xl shadow-md gap-2 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-300 ${isReadyForNextCycle ? "text-white hover:brightness-95 hover:scale-105" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+                  className={`w-full sm:w-auto font-bold h-10 px-5 rounded-xl shadow-md gap-2 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-300 ${isReadyForNextCycle ? "text-white hover:brightness-95 hover:scale-105" : "bg-gray-100 text-gray-500 cursor-not-allowed"}`}
                 >
                   <Rocket className="h-4 w-4" /> 
                   {isReadyForNextCycle ? t('editProject.buttons.startCycle', { cycle: (project?.cycle || 1) + 1 }) : isFormValidButUnsaved ? t('editProject.buttons.saveChangesFirst') : t('editProject.buttons.setLiveFirst')}

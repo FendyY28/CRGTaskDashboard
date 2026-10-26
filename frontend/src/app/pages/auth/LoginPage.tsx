@@ -110,7 +110,7 @@ export function LoginPage() {
         
         {/* Input Email */}
         <div className="space-y-2 text-left relative">
-          <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+          <Label htmlFor="email" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
             {t("auth.login.emailLabel", "Email Address")}
           </Label>
           <div className="relative">
@@ -130,7 +130,7 @@ export function LoginPage() {
 
         {/* Input Password */}
         <div className="space-y-2 text-left relative">
-          <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-1">
+          <Label htmlFor="password" className="text-label font-bold uppercase tracking-widest text-gray-600 ml-1">
             {t("auth.login.passwordLabel", "Password")}
           </Label>
           <div className="relative">

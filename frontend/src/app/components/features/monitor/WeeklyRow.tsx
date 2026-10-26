@@ -146,7 +146,7 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                         {task.description?.trim() && (
                           <p className="text-xs leading-relaxed mt-0.5 max-w-[520px]" style={{ color: THEME.BSI_GREY }}>{task.description}</p>
                         )}
-                        <p className="text-[10px] font-mono mt-0.5" style={{ color: THEME.BSI_LIGHT_GRAY }}>{task.taskId}</p>
+                        <p className="text-meta font-mono mt-0.5" style={{ color: THEME.BSI_LIGHT_GRAY }}>{task.taskId}</p>
                       </div>
                     </div>
 
@@ -154,17 +154,17 @@ export const WeeklyRow = memo(({ week, projectStatus, onTaskToggle, onRequestDel
                     <div className="flex flex-col items-end gap-0.5">
                         {isDone ? (
                           <>
-                            <Badge variant="outline" className="text-[10px] font-bold" style={{ color: THEME.TOSCA, borderColor: THEME.TOSCA + '40' }}>
+                            <Badge variant="outline" className="text-meta font-bold" style={{ color: THEME.TOSCA, borderColor: THEME.TOSCA + '40' }}>
                               {t('timeline.projectCard.completedOn', { date: formatCompletedDate(task.completedDate), defaultValue: `Selesai ${formatCompletedDate(task.completedDate)}` })}
                             </Badge>
                             {task.completedBy && (
-                              <span className="text-[10px] italic" style={{ color: THEME.BSI_GREY }}>
+                              <span className="text-meta italic" style={{ color: THEME.BSI_GREY }}>
                                 {t('timeline.projectCard.by', { name: task.completedBy, defaultValue: `oleh ${task.completedBy}` })}
                               </span>
                             )}
                           </>
                         ) : (
-                          <Badge variant="outline" className={`text-[10px] font-bold`} style={{ color: THEME.BSI_GREY, borderColor: THEME.BSI_LIGHT_GRAY + '50' }}>WIP</Badge>
+                          <Badge variant="outline" className={`text-meta font-bold`} style={{ color: THEME.BSI_GREY, borderColor: THEME.BSI_LIGHT_GRAY + '50' }}>WIP</Badge>
                         )}
                       </div>
 

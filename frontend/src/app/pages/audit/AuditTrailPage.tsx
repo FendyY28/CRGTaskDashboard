@@ -381,20 +381,20 @@ export function AuditTrailPage() {
                         {log.project ? (
                           <div>
                             <span className="font-medium text-gray-800">{log.project.name}</span>
-                            <span className="block font-mono text-[10px] text-gray-400">
+                            <span className="block font-mono text-meta text-gray-500">
                               {log.project.id}
                             </span>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                            <Layers className="h-2.5 w-2.5" />
+                          <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-meta font-medium text-gray-600">
+                            <Layers className="h-3 w-3" />
                             {t("audit.table.systemGlobal", "Sistem / Global")}
                           </span>
                         )}
                       </td>
                       <td className="p-3.5">
                         <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-label font-bold uppercase tracking-wider ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}
                         >
                           {t(`audit.actions.${log.action}`, log.action.replace(/_/g, " "))}
                         </span>
@@ -431,7 +431,7 @@ export function AuditTrailPage() {
                 start: startRecord,
                 end: endRecord,
                 total,
-                defaultValue: `Menampilkan ${startRecord}â€“${endRecord} dari ${total} log`,
+                defaultValue: `Menampilkan ${startRecord}-${endRecord} dari ${total} log`,
               })}
             </span>
           </div>

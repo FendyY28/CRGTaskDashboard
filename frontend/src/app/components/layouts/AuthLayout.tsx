@@ -30,7 +30,7 @@ export const AuthLayout = ({ title, subtitle, children }: AuthLayoutProps) => {
               <div className="h-8 w-[1.5px] bg-gray-200 mx-1" />
               <div className="flex flex-col text-left">
                 <span className="text-lg font-bold text-gray-900 leading-none tracking-tight">Bank Syariah Indonesia</span>
-                <span className="text-[11px] font-bold text-[#F9AD3C] uppercase tracking-widest mt-1">CRG Division</span>
+                <span className="text-label font-bold text-[#B0851E] uppercase tracking-widest mt-1">CRG Division</span>
               </div>
             </div>
             <div className="text-center space-y-1">
@@ -44,7 +44,7 @@ export const AuthLayout = ({ title, subtitle, children }: AuthLayoutProps) => {
         </CardContent>
       </Card>
       
-      <p className="fixed bottom-6 text-[10px] font-bold text-gray-400 tracking-widest uppercase opacity-70">
+      <p className="fixed bottom-6 text-label font-bold text-gray-500 tracking-widest uppercase">
         © {new Date().getFullYear()} Bank Syariah Indonesia • CRG Division
       </p>
     </div>

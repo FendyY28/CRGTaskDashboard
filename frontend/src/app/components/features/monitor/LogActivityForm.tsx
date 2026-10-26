@@ -95,7 +95,7 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
   return (
     <form onSubmit={handleLog} className="space-y-4">
       <div className="space-y-1.5">
-        <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.project')}</Label>
+        <Label className="text-meta font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.project')}</Label>
         <DashboardSelect value={logForm.pid} onChange={(e: any) => setLogForm({ ...logForm, pid: e.target.value })}>
           <option value="">{t('timeline.logForm.selectProject')}</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -103,7 +103,7 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.title')}</Label>
+        <Label className="text-meta font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.title')}</Label>
         <input
           type="text"
           value={logForm.title}
@@ -114,14 +114,14 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.period')}</Label>
+        <Label className="text-meta font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.period')}</Label>
         <input
           type="date"
           value={anchorDate}
           onChange={(e) => setAnchorDate(e.target.value)}
           className="w-full text-sm p-3 rounded-xl h-auto bg-gray-50 border border-gray-200 text-gray-700 outline-none focus-visible:ring-1 focus-visible:ring-[#36A39D] focus-visible:ring-offset-0"
         />
-        <p className="text-[10px] font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+        <p className="text-meta font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>
           {week
             ? t('timeline.logForm.periodPreview', { range: week })
             : t('timeline.logForm.periodHint')}
@@ -130,25 +130,25 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-[10px] font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.tasks')}</Label>
+          <Label className="text-meta font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('timeline.logForm.tasks')}</Label>
           {parsedTasks.length > 0 && (
-            <span className="text-[10px] font-bold" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+            <span className="text-meta font-bold" style={{ color: THEME.BSI_LIGHT_GRAY }}>
               {parsedTasks.length} {t('timeline.logForm.tasksUnit')}
             </span>
           )}
         </div>
         <DashboardTextarea value={logForm.tasks} onChange={(e: any) => setLogForm({ ...logForm, tasks: e.target.value })} placeholder={t('timeline.logForm.tasksPlaceholder')} className="min-h-[120px]" />
-        <p className="text-[10px] font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>
+        <p className="text-meta font-medium" style={{ color: THEME.BSI_LIGHT_GRAY }}>
           {t('timeline.logForm.tasksHint')}
         </p>
         {duplicateCount > 0 && (
-          <p className="flex items-start gap-1.5 text-[10px] font-medium" style={{ color: THEME.BSI_LIGHT_GOLD }}>
+          <p className="flex items-start gap-1.5 text-meta font-medium" style={{ color: THEME.BSI_LIGHT_GOLD }}>
             <AlertCircle className="h-3 w-3 mt-px shrink-0" />
             {t('timeline.logForm.duplicateWarning', { count: duplicateCount })}
           </p>
         )}
         {missingDescriptionCount > 0 && (
-          <p className="flex items-start gap-1.5 text-[10px] font-medium" style={{ color: THEME.BSI_LIGHT_GOLD }}>
+          <p className="flex items-start gap-1.5 text-meta font-medium" style={{ color: THEME.BSI_LIGHT_GOLD }}>
             <AlertCircle className="h-3 w-3 mt-px shrink-0" />
             {t('timeline.logForm.missingDescription', { count: missingDescriptionCount })}
           </p>
@@ -156,13 +156,13 @@ export const LogActivityForm = memo(({ projects, onSuccess }: LogActivityFormPro
       </div>
 
       {error && (
-        <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-red-50 px-2.5 py-2 text-[11px] font-medium text-red-600">
+        <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-red-50 px-2.5 py-2 text-meta font-medium text-red-600">
           <AlertCircle className="h-3.5 w-3.5 mt-px shrink-0" />
           <span className="break-words">{error}</span>
         </p>
       )}
       {success && (
-        <p role="status" className="flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-medium" style={{ backgroundColor: THEME.BSI_GREEN + '10', color: THEME.BSI_GREEN }}>
+        <p role="status" className="flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-meta font-medium" style={{ backgroundColor: THEME.BSI_GREEN + '10', color: THEME.BSI_GREEN }}>
           <CheckCircle2 className="h-3.5 w-3.5 mt-px shrink-0" />
           {success}
         </p>

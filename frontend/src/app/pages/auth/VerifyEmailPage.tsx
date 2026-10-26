@@ -79,7 +79,7 @@ export function VerifyEmailPage() {
             </div>
             <div 
               style={{ backgroundColor: `${THEME.TOSCA}0D`, color: THEME.TOSCA, borderColor: `${THEME.TOSCA}1A` }} 
-              className="flex items-center justify-center gap-2 text-[11px] font-bold py-2.5 px-5 rounded-xl w-fit mx-auto border"
+              className="flex items-center justify-center gap-2 text-meta font-bold py-2.5 px-5 rounded-xl w-fit mx-auto border"
             >
                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                {t("auth.verifyEmail.redirecting", "Redirecting to Login...")}
@@ -94,7 +94,7 @@ export function VerifyEmailPage() {
               <XCircle className="h-10 w-10 text-rose-500" />
             </div>
             
-            <p className="text-[11px] text-gray-400 font-medium leading-relaxed italic">
+            <p className="text-meta text-gray-500 font-medium leading-relaxed italic">
               {t("auth.verifyEmail.errorNotice", "Account might be already active if you refreshed. Please try logging in to confirm.")}
             </p>
             

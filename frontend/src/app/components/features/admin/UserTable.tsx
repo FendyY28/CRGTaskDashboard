@@ -59,7 +59,7 @@ export function UserTable({ users, isLoading, onDelete, onEdit, onResetPassword 
                         <div className="font-bold text-gray-800 flex items-center gap-2">
                           {user.name}
                           {isNewUser(user.createdAt) && (
-                            <Badge className="h-4 text-[9px] px-1.5 bg-green-100 text-green-700 border-none shadow-none font-bold">
+                            <Badge className="h-4 text-label px-1.5 bg-green-100 text-green-700 border-none shadow-none font-bold">
                               {t('admin.userManagement.badge.new', 'NEW')}
                             </Badge>
                           )}

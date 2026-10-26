@@ -23,7 +23,11 @@
       "testing": "Testing",
       "pir": "PIR",
       "users": "Users",
-      "audit": "Audit Trail"
+      "audit": "Audit Trail",
+      "post-implementation": "PIR",
+      "audit-trail": "Audit Trail",
+      "navigation": "Navigation",
+      "openNavigation": "Open navigation menu"
     },
     "logout": "Logout from System"
   },

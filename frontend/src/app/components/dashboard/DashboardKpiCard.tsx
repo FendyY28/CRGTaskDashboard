@@ -28,7 +28,7 @@ export const DashboardKpiCard = ({ label, count, icon: Icon, color, onClick, act
     <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div className="space-y-1 text-left">
-          <p className="text-[11px] font-bold text-gray-400 tracking-wider uppercase">{label}</p>
+          <p className="text-label font-bold text-gray-500 tracking-wider uppercase">{label}</p>
           <h3 className="text-4xl font-black text-gray-900 tracking-tight">{count}</h3>
         </div>
         <div className="h-12 w-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 shadow-xs" style={{ backgroundColor: `${color}18`, color: color }}>
