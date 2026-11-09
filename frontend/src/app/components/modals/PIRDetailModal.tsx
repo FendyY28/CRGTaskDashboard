@@ -9,7 +9,8 @@ import { THEME } from "../../constants/projectConstants";
 import { capitalize } from "../../../lib/utils";
 import { usePIR } from "../../hooks/usePIR";
 import { toast } from "sonner";
-import type { ProjectIssue, ImprovementNote } from "../../types";
+import type { ImprovementNote, ProjectIssue } from "../../types";
+import { normalizeStr, getItemId, getItemDate, type PIRItem } from "../../utils/pir";
 
 import { ProtectAction } from "../auth/ProtectAction";
 import { useTranslation } from "react-i18next";
@@ -24,12 +25,7 @@ const formatDate = (dateString?: string, tFallback?: string) => {
   return DATE_FORMATTER.format(new Date(dateString));
 };
 
-const normalizeStr = (str?: string) => {
-  if (!str) return '';
-  return str.toLowerCase().replace(/[-_]/g, ' ').trim();
-};
-
-type LogItem = ProjectIssue | ImprovementNote;
+type LogItem = PIRItem;
 
 interface PIRDetailModalProps {
   selectedItem: LogItem | null;
@@ -49,12 +45,11 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
     onClose();
   };
 
-  const getTargetId = () => {
-      if (!selectedItem) return undefined;
-      return (selectedItem as any).id || (selectedItem as any).issueId;
-  };
+  const getTargetId = () => (selectedItem ? getItemId(selectedItem) : undefined);
 
   const onUpdateStatus = async (status: string) => {
+    // Only issues have a status; improvements are read-only notes here.
+    if (!selectedItem || selectedItem.type === 'improvement') return;
     const id = getTargetId();
     if (!id) return;
     setIsBusy(true);
@@ -166,7 +161,7 @@ export function PIRDetailModal({ selectedItem, onClose, onActionComplete, onLoca
                   <span className="text-label font-bold uppercase" style={{ color: THEME.BSI_GREY }}>{t('pirComponents.modal.labels.submitted')}</span>
                   <p className="font-medium flex items-center gap-1.5" style={{ color: THEME.BSI_DARK_GRAY }}>
                     <Calendar className="h-4 w-4" style={{ color: THEME.BSI_LIGHT_GRAY }}/> 
-                    {formatDate(selectedItem.type === 'improvement' ? (selectedItem as ImprovementNote).createdDate : (selectedItem as ProjectIssue).reportedDate, t('pirComponents.modal.unknownDate'))}
+                    {formatDate(getItemDate(selectedItem), t('pirComponents.modal.unknownDate'))}
                   </p>
                 </div>
               </div>

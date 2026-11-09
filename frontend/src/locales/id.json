@@ -20,7 +20,8 @@
       "dashboard": "Dasbor",
       "analytics": "Analitik",
       "timeline": "Linimasa",
-      "testing": "Pengujian",
+      "sit": "SIT",
+      "testing": "UAT",
       "pir": "PIR",
       "users": "Pengguna",
       "audit": "Jejak Audit",
@@ -174,9 +175,9 @@
   "pir": {
     "title": "Tinjauan Pasca Implementasi (PIR)",
     "description": "Pantau isu pasca-peluncuran dan kumpulkan ide optimasi untuk proyek yang sudah live.",
-    "sidebarTitle": "Proyek Live",
+    "sidebarTitle": "Proyek",
     "emptyState": "Silakan pilih proyek di bilah samping kiri.",
-    "noLiveProjects": "Belum ada proyek yang live saat ini.",
+    "noLiveProjects": "Belum ada proyek saat ini.",
     "criticalIssues": "Isu Kritis",
     "inProgressIssues": "Isu Sedang Dikerjakan",
     "openIssues": "Isu Terbuka",
@@ -284,8 +285,21 @@
     "loading": "Menyiapkan Konsol UAT...",
     "title": "Konsol Eksekusi UAT",
     "description": "Kelola dan eksekusi Pengujian Penerimaan Pengguna (UAT) untuk proyek aktif.",
-    "sidebarTitle": "Proyek UAT Aktif",
-    "noUatProjects": "Belum ada proyek UAT aktif saat ini.",
+    "sidebarTitle": "Proyek",
+    "noProjects": "Belum ada proyek saat ini.",
+    "filter": {
+      "all": "Semua",
+      "pending": "Tertunda",
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "clear": "Hapus filter"
+    },
+    "search": {
+      "placeholder": "Cari judul, catatan, atau cacat...",
+      "clear": "Hapus pencarian",
+      "noResults": "Tidak ada kasus uji yang cocok dengan pencarian atau filter."
+    },
+
     "stats": {
       "pass": "Lulus",
       "fail": "Gagal",
@@ -332,6 +346,7 @@
       "takenOut": "Dikeluarkan",
       "viewTakeoutReason": "Lihat Alasan Dikeluarkan",
       "viewDefect": "Lihat Cacat",
+      "defectMissing": "Detail cacat belum tercatat",
       "viewNotes": "Lihat Catatan",
       "editNotes": "Edit Catatan",
       "addNotes": "Tambah Catatan",
@@ -358,7 +373,7 @@
         "negative": "Negatif",
         "notes": "Catatan / Keterangan",
         "severity": "Tingkat Keparahan",
-        "description": "Deskripsi",
+        "description": "Deskripsi Cacat *",
         "reason": "Alasan",
         "issueSummary": "Ringkasan Masalah:"
       },
@@ -379,6 +394,129 @@
         "addFail": "Gagal menambahkan skenario.",
         "updating": "Memperbarui catatan eksekusi...",
         "defectSuccess": "Cacat berhasil dicatat.",
+        "defectDescReq": "Jelaskan cacatnya sebelum menandai pengujian ini gagal.",
+        "updateSuccess": "Kasus uji diperbarui!",
+        "updateFail": "Gagal memperbarui kasus uji.",
+        "takeoutReasonReq": "Harap berikan alasan pengeluaran.",
+        "takeoutProcessing": "Memproses pengeluaran...",
+        "takeoutSuccess": "Skenario dipindahkan ke tempat sampah.",
+        "takeoutFail": "Gagal mengeluarkan skenario."
+      }
+    }
+  },
+  "sit": {
+    "loading": "Menyiapkan Konsol SIT...",
+    "title": "Konsol Eksekusi SIT",
+    "description": "Kelola dan eksekusi Pengujian Integrasi Sistem (SIT) untuk proyek aktif.",
+    "sidebarTitle": "Proyek",
+    "noProjects": "Belum ada proyek yang berada di fase SIT.",
+    "filter": {
+      "all": "Semua",
+      "pending": "Tertunda",
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "clear": "Hapus filter"
+    },
+    "search": {
+      "placeholder": "Cari judul, catatan, atau cacat...",
+      "clear": "Hapus pencarian",
+      "noResults": "Tidak ada kasus uji yang cocok dengan pencarian atau filter."
+    },
+    "stats": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "pending": "Tertunda",
+      "qualityIndex": "Indeks Kualitas",
+      "totalScenarios": "Total Skenario"
+    },
+    "buttons": {
+      "showActive": "Tampilkan Aktif",
+      "takeoutCases": "Skenario Dikeluarkan",
+      "addTestCase": "Tambah Kasus Uji"
+    },
+    "suite": {
+      "positive": "Pengujian Positif",
+      "negative": "Pengujian Negatif",
+      "noActive": "Tidak ada item aktif di rangkaian ini.",
+      "noTakenOut": "Tidak ada item yang dikeluarkan di rangkaian ini."
+    },
+    "emptyState": "Pilih proyek untuk memulai eksekusi.",
+    "toast": {
+      "resetting": "Mengatur ulang kasus uji...",
+      "resetSuccess": "Status kasus uji diatur kembali ke Tertunda.",
+      "resetFail": "Gagal mengatur ulang kasus uji."
+    },
+    "actions": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "defect": "Catat Cacat",
+      "reset": "Atur Ulang",
+      "takeout": "Keluarkan",
+      "restore": "Pulihkan",
+      "edit": "Edit"
+    },
+    "rowStatus": {
+      "pass": "Lulus",
+      "fail": "Gagal",
+      "pending": "Tertunda"
+    },
+    "row": {
+      "system": "Sistem",
+      "unknown": "Tidak Diketahui",
+      "updated": "Diperbarui",
+      "created": "Dibuat",
+      "takenOut": "Dikeluarkan",
+      "viewTakeoutReason": "Lihat Alasan Dikeluarkan",
+      "viewDefect": "Lihat Cacat",
+      "defectMissing": "Detail cacat belum tercatat",
+      "viewNotes": "Lihat Catatan",
+      "editNotes": "Edit Catatan",
+      "addNotes": "Tambah Catatan",
+      "takeoutBadge": "DIKELUARKAN",
+      "takeoutTooltip": "Keluarkan skenario ini"
+    },
+    "modals": {
+      "addTitle": "Buat Skenario Baru",
+      "editTitle": "Edit Catatan Skenario",
+      "passTitle": "Validasi Berhasil",
+      "failTitle": "Catat Laporan Cacat",
+      "takeoutTitle": "Keluarkan Skenario?",
+      "takeoutDesc": "Berikan alasan mengapa skenario ini dikeluarkan.",
+      "viewTakeoutTitle": "Alasan Dikeluarkan",
+      "viewDefectTitle": "Log Cacat",
+      "viewNotesTitle": "Catatan Internal",
+      "noReason": "Tidak ada alasan yang diberikan.",
+      "noNotes": "Tidak ada informasi tambahan yang diberikan.",
+      "projectPrefix": "Proyek: ",
+      "labels": {
+        "title": "Judul",
+        "type": "Tipe",
+        "positive": "Positif",
+        "negative": "Negatif",
+        "notes": "Catatan / Keterangan",
+        "severity": "Tingkat Keparahan",
+        "description": "Deskripsi Cacat *",
+        "reason": "Alasan",
+        "issueSummary": "Ringkasan Masalah:"
+      },
+      "placeholders": {
+        "notes": "Tambahkan observasi teknis...",
+        "description": "Hasil yang diharapkan vs Hasil aktual...",
+        "reason": "Misal: Fitur tidak digunakan lagi, logika berubah..."
+      },
+      "buttons": {
+        "cancel": "Batal",
+        "confirmChanges": "Konfirmasi Perubahan",
+        "confirmTakeout": "Konfirmasi Pengeluaran",
+        "gotIt": "Mengerti"
+      },
+      "toast": {
+        "adding": "Menambahkan skenario baru...",
+        "addSuccess": "Skenario uji berhasil ditambahkan!",
+        "addFail": "Gagal menambahkan skenario.",
+        "updating": "Memperbarui catatan eksekusi...",
+        "defectSuccess": "Cacat berhasil dicatat.",
+        "defectDescReq": "Jelaskan cacatnya sebelum menandai pengujian ini gagal.",
         "updateSuccess": "Kasus uji diperbarui!",
         "updateFail": "Gagal memperbarui kasus uji.",
         "takeoutReasonReq": "Harap berikan alasan pengeluaran.",

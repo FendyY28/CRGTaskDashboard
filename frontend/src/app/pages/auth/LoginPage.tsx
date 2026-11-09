@@ -16,7 +16,12 @@ const AUTH_KEYS = {
 };
 
 const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
-const inputExtraCls = "pl-10"; 
+const inputExtraCls = "pl-10";
+
+interface LoginResponse {
+  access_token: string;
+  user: { name: string; email: string; role: string; passwordChangedAt?: string };
+} 
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -62,7 +67,7 @@ export function LoginPage() {
     setUi(prev => ({ ...prev, loading: true, error: "", isResend: false }));
     
     try {
-      const result = await api.post("/auth/login", { 
+      const result = await api.post<LoginResponse>("/auth/login", { 
         email: form.email, 
         password: form.password 
       });

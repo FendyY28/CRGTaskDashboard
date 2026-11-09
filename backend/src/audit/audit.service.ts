@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface AuditQueryDto {
@@ -14,6 +15,12 @@ export interface AuditQueryDto {
 
 /** Upper bound for a single CSV export so one request cannot load the whole table. */
 const EXPORT_MAX_ROWS = 10_000;
+
+/** Relations every audit-log listing returns, defined once. */
+const AUDIT_LOG_INCLUDE = {
+  user: { select: { id: true, name: true, email: true, role: true } },
+  project: { select: { id: true, name: true } },
+} satisfies Prisma.AuditLogInclude;
 
 @Injectable()
 export class AuditService {
@@ -61,10 +68,7 @@ export class AuditService {
     return this.prisma.auditLog.findMany({
       take: 50,
       orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { id: true, name: true, email: true, role: true } },
-        project: { select: { id: true, name: true } },
-      },
+      include: AUDIT_LOG_INCLUDE,
     });
   }
 
@@ -81,10 +85,7 @@ export class AuditService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { id: true, name: true, email: true, role: true } },
-          project: { select: { id: true, name: true } },
-        },
+        include: AUDIT_LOG_INCLUDE,
       }),
     ]);
 
@@ -105,22 +106,36 @@ export class AuditService {
       where,
       orderBy: { createdAt: 'desc' },
       take: EXPORT_MAX_ROWS,
-      include: {
-        user: { select: { id: true, name: true, email: true, role: true } },
-        project: { select: { id: true, name: true } },
-      },
+      include: AUDIT_LOG_INCLUDE,
     });
   }
 
+  /**
+   * Filter for "belongs to this project": the FK match plus a details-text
+   * match, so older rows logged before the FK existed still show up.
+   */
+  private projectScopeFilter(projectId: string): Prisma.AuditLogWhereInput[] {
+    return [
+      { projectId },
+      { details: { contains: projectId, mode: 'insensitive' as const } },
+    ];
+  }
+
+  /** Parse a `YYYY-MM-DD` (or ISO) filter value, rejecting unparseable input. */
+  private parseFilterDate(value: string, field: string): Date {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException(`Format ${field} tidak valid.`);
+    }
+    return date;
+  }
+
   /** Shared filter -> Prisma `where` builder for listing and export. */
-  private buildWhere(query: AuditQueryDto): { where: any } {
-    const where: any = {};
+  private buildWhere(query: AuditQueryDto): { where: Prisma.AuditLogWhereInput } {
+    const where: Prisma.AuditLogWhereInput = {};
 
     if (query.projectId && query.projectId !== 'ALL') {
-      where.OR = [
-        { projectId: query.projectId },
-        { details: { contains: query.projectId, mode: 'insensitive' } }
-      ];
+      where.OR = this.projectScopeFilter(query.projectId);
     }
 
     if (query.userId && query.userId !== 'ALL') {
@@ -132,21 +147,34 @@ export class AuditService {
     }
 
     if (query.startDate || query.endDate) {
-      where.createdAt = {};
+      const createdAt: Prisma.DateTimeFilter = {};
       if (query.startDate) {
-        where.createdAt.gte = new Date(query.startDate);
+        createdAt.gte = this.parseFilterDate(query.startDate, 'startDate');
       }
       if (query.endDate) {
-        const end = new Date(query.endDate);
+        const end = this.parseFilterDate(query.endDate, 'endDate');
         end.setHours(23, 59, 59, 999);
-        where.createdAt.lte = end;
+        createdAt.lte = end;
       }
+      if (
+        createdAt.gte instanceof Date &&
+        createdAt.lte instanceof Date &&
+        createdAt.gte > createdAt.lte
+      ) {
+        throw new BadRequestException('startDate tidak boleh lebih besar dari endDate.');
+      }
+      where.createdAt = createdAt;
     }
 
     if (query.search && query.search.trim()) {
       const s = query.search.trim();
+      const existingAnd = Array.isArray(where.AND)
+        ? where.AND
+        : where.AND
+          ? [where.AND]
+          : [];
       where.AND = [
-        ...(where.AND || []),
+        ...existingAnd,
         {
           OR: [
             { details: { contains: s, mode: 'insensitive' } },
@@ -164,18 +192,10 @@ export class AuditService {
 
   async getLogsByProject(projectId: string, limit = 50) {
     return this.prisma.auditLog.findMany({
-      where: {
-        OR: [
-          { projectId },
-          { details: { contains: projectId, mode: 'insensitive' } }
-        ],
-      },
+      where: { OR: this.projectScopeFilter(projectId) },
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { id: true, name: true, email: true, role: true } },
-        project: { select: { id: true, name: true } },
-      },
+      include: AUDIT_LOG_INCLUDE,
     });
   }
 

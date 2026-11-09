@@ -56,7 +56,7 @@ export const ProjectCard = memo(({ project, onRefresh, onViewGantt, highlight, o
   const filteredWeeks = useMemo(() => {
     const q = logSearch.trim().toLowerCase();
     if (!q) return weeklyLogs;
-    return weeklyLogs.filter((w) => w.weekRange?.toLowerCase().includes(q));
+    return weeklyLogs.filter((w: any) => w.weekRange?.toLowerCase().includes(q));
   }, [weeklyLogs, logSearch]);
 
   return (

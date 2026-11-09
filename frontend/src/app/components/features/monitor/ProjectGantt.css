@@ -1,0 +1,18 @@
+/* Gantt chart overrides, scoped to the ProjectGantt wrapper. */
+
+.gantt-chart-container rect[fill="transparent"] {
+  stroke: #9ca3af;
+  stroke-width: 1.5px;
+  stroke-dasharray: 4;
+  opacity: 0.8;
+}
+
+.gantt-chart-container .gantt-table-cell {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* The month view's top row contains only the year (for example, "2026"). */
+.gantt-chart-container.gantt-view-month .calendarTop text {
+  display: none;
+}

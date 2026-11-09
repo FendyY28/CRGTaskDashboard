@@ -62,6 +62,8 @@ export interface TestCase {
   uatStatus?: UatStatus;
   tester?: string;
   notes?: string;
+  takeoutReason?: string; // Kenapa test case dikeluarkan (soft delete)
+  defect?: { id?: number; description: string; severity: string; status?: string } | null;
   defects?: Defect[];
   
   // Field tambahan untuk Soft Delete & Audit
@@ -72,6 +74,7 @@ export interface TestCase {
   createdAt?: string;
   updatedAt?: string;
   
+  projectId?: string; // Owning project, sent flat by GET /project/:id/test-cases
   projectName?: string; 
 }
 
@@ -86,6 +89,7 @@ export interface ProjectIssue {
   reportedBy: string;
   reportedDate: string;
   status: string; // 'open', 'in-progress', 'resolved'
+  projectId?: string; // Owning project, sent flat by GET /project/issue
   projectName?: string;
   type: 'issue';
 }
@@ -100,6 +104,7 @@ export interface ImprovementNote {
   recommendations: string;
   priority: string;
   createdDate: string;
+  projectId?: string;
   projectName?: string;
   type: 'improvement';
   status?: string;

@@ -10,15 +10,17 @@ export const useProjects = () => {
   const fetchProjects = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      // TypeScript sekarang tahu 'data' adalah array dari Project
       const data: Project[] = await api.get('/project', { signal });
       setProjects(Array.isArray(data) ? data : []);
       setError(null);
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        setError(err.message || "Gagal mengambil data proyek.");
+      setLoading(false);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // A stale/unmounted request: leave `loading` to whichever request replaced it.
+        return;
       }
-    } finally {
+      const message = err instanceof Error ? err.message : undefined;
+      setError(message || "Gagal mengambil data proyek.");
       setLoading(false);
     }
   }, []);
@@ -28,8 +30,11 @@ export const useProjects = () => {
       await api.delete(`/project/${id}`);
       await fetchProjects();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, message: err.message };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : "Gagal menghapus proyek.",
+      };
     }
   }, [fetchProjects]);
 

@@ -109,6 +109,33 @@ describe('Global ValidationPipe', () => {
     });
   });
 
+  describe('test case defects', () => {
+    it('accepts the capitalised severity the UI sends and normalises it', async () => {
+      const result = await pipe.transform(
+        {
+          status: 'fail',
+          notes: '',
+          defect: { description: 'Save button returns 500', severity: 'Low' },
+        },
+        meta(UpdateTestCaseDto),
+      );
+
+      expect(result.defect).toEqual({
+        description: 'Save button returns 500',
+        severity: 'low',
+      });
+    });
+
+    it('rejects a fail without a defect description', async () => {
+      await expect(
+        pipe.transform(
+          { status: 'fail', defect: { description: '', severity: 'low' } },
+          meta(UpdateTestCaseDto),
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   describe('null handling (skipUndefinedProperties skips undefined, not null)', () => {
     it('still rejects an explicit null for an optional field', async () => {
       await expect(

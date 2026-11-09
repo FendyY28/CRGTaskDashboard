@@ -37,7 +37,19 @@ export const STATUS_COLORS = {
 
 export type StatusKey = keyof typeof STATUS_COLORS;
 
-interface SdlcPhase {
+/** Icon + colour used to render a status cue in the tooltip and legend. */
+export const STATUS_ICONS: Record<
+  StatusKey,
+  { icon: "alert" | "check"; color: string }
+> = {
+  ON_TRACK: { icon: "check", color: "#00A39D" },
+  AT_RISK: { icon: "alert", color: "#F59E0B" },
+  OVERDUE: { icon: "alert", color: "#DC2626" },
+  NOT_STARTED: { icon: "check", color: "#9CA3AF" },
+};
+
+/** One SDLC phase row as stored for a project. */
+export interface GanttPhase {
   phaseName: string;
   cycle?: number | null;
   startDate?: string | null;
@@ -46,15 +58,22 @@ interface SdlcPhase {
   status?: string | null;
 }
 
-interface ProjectLike {
+/** The subset of a project the Gantt view needs. */
+export interface ProjectGanttProject {
+  id?: string | null;
+  name?: string | null;
   cycle?: number | null;
   currentPhase?: string | null;
   overallProgress?: number | string | null;
   status?: string | null;
   projectStartDate?: string | null;
   projectDeadline?: string | null;
-  sdlcPhases?: SdlcPhase[] | null;
+  sdlcPhases?: GanttPhase[] | null;
 }
+
+/** Normalise a project's cycle number to a positive integer (defaults to 1). */
+export const normalizeCycle = (cycle?: number | string | null): number =>
+  Math.max(1, Math.floor(Number(cycle) || 1));
 
 /** Parse to a valid Date, or `null` when the value is absent/unparseable. */
 const parseDate = (value?: string | null): Date | null => {
@@ -65,9 +84,9 @@ const parseDate = (value?: string | null): Date | null => {
 
 /** Filter the project's phases down to the selected cycle. */
 export const getCyclePhases = (
-  project: ProjectLike | null | undefined,
-  selectedCycle: number
-): SdlcPhase[] => {
+  project: ProjectGanttProject | null | undefined,
+  selectedCycle: number,
+): GanttPhase[] => {
   if (!project?.sdlcPhases) return [];
   return project.sdlcPhases.filter((p) => (p.cycle || 1) === selectedCycle);
 };
@@ -77,8 +96,8 @@ export const getCyclePhases = (
  * the project-level dates when the cycle has no dated phases.
  */
 export const getCycleDateRange = (
-  cyclePhases: SdlcPhase[],
-  project: ProjectLike | null | undefined
+  cyclePhases: GanttPhase[],
+  project: ProjectGanttProject | null | undefined,
 ) => {
   let minStart: Date | null = null;
   let maxEnd: Date | null = null;
@@ -95,8 +114,12 @@ export const getCycleDateRange = (
   }
 
   return {
-    start: minStart ? fmtDate(minStart.toISOString()) : fmtDate(project?.projectStartDate),
-    end: maxEnd ? fmtDate(maxEnd.toISOString()) : fmtDate(project?.projectDeadline),
+    start: minStart
+      ? fmtDate(minStart.toISOString())
+      : fmtDate(project?.projectStartDate),
+    end: maxEnd
+      ? fmtDate(maxEnd.toISOString())
+      : fmtDate(project?.projectDeadline),
   };
 };
 
@@ -107,10 +130,10 @@ export const getCycleDateRange = (
  * The active cycle mirrors the live project progress for `currentPhase`.
  */
 const resolvePhaseProgress = (
-  dbPhase: SdlcPhase | undefined,
+  dbPhase: GanttPhase | undefined,
   phaseName: string,
-  project: ProjectLike,
-  isArchived: boolean
+  project: ProjectGanttProject,
+  isArchived: boolean,
 ): { progress: number; effectiveStatus: string } => {
   if (isArchived) {
     if (!dbPhase) return { progress: 0, effectiveStatus: "pending" };
@@ -135,7 +158,9 @@ const resolvePhaseProgress = (
   if (!dbPhase) return { progress: 0, effectiveStatus: "pending" };
 
   let progress = Number(dbPhase.progress) || 0;
-  let effectiveStatus = dbPhase.status ? dbPhase.status.toLowerCase() : "pending";
+  let effectiveStatus = dbPhase.status
+    ? dbPhase.status.toLowerCase()
+    : "pending";
 
   if (phaseName === project.currentPhase) {
     progress = Number(project.overallProgress) || 0;
@@ -149,7 +174,7 @@ const resolvePhaseProgress = (
 const resolveStatusKey = (
   progress: number,
   effectiveStatus: string,
-  isDateOverdue: boolean
+  isDateOverdue: boolean,
 ): StatusKey => {
   const isNotStarted = progress === 0 && effectiveStatus === "pending";
 
@@ -167,10 +192,10 @@ const resolveStatusKey = (
  * deadline spans 7 days.
  */
 export const buildGanttTasks = (
-  project: ProjectLike | null | undefined,
-  cyclePhases: SdlcPhase[],
+  project: ProjectGanttProject | null | undefined,
+  cyclePhases: GanttPhase[],
   selectedCycle: number,
-  maxCycle: number
+  maxCycle: number,
 ): Task[] => {
   if (!project) return [];
 
@@ -208,11 +233,15 @@ export const buildGanttTasks = (
         dbPhase,
         phaseName,
         project,
-        isArchived
+        isArchived,
       );
 
       const isDateOverdue = new Date() > end && progress < 100;
-      const statusKey = resolveStatusKey(progress, effectiveStatus, isDateOverdue);
+      const statusKey = resolveStatusKey(
+        progress,
+        effectiveStatus,
+        isDateOverdue,
+      );
       const statusConfig = STATUS_COLORS[statusKey];
 
       const barColor =

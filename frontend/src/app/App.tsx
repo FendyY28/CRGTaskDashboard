@@ -9,6 +9,8 @@ import { PasswordWarningModal } from "./components/modals/PasswordWarningModal";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 import { AdminRoute } from "./components/routes/AdminRoute";
+import { TestingConsole } from "./components/features/testing/TestingConsole";
+import { SDLC_PHASES } from "./constants/projectConstants";
 
 // LAZY LOADING HALAMAN AUTH
 const LoginPage = lazy(() => import("./pages/auth/LoginPage").then(module => ({ default: module.LoginPage })));
@@ -21,6 +23,7 @@ const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage").then(m
 const OverviewDashboard = lazy(() => import("./pages/monitor/OverviewDashboard").then(module => ({ default: module.OverviewDashboard })));
 const TaskTimeline = lazy(() => import("./pages/monitor/TaskTimeline").then(module => ({ default: module.TaskTimeline })));
 const TestingStatus = lazy(() => import("./pages/monitor/TestingStatus").then(module => ({ default: module.TestingStatus })));
+
 const PostImplementation = lazy(() => import("./pages/monitor/PostImplementation").then(module => ({ default: module.PostImplementation })));
 const Analytics = lazy(() => import("./pages/monitor/Analytics").then(module => ({ default: module.Analytics })));
 const AuditTrailPage = lazy(() => import("./pages/audit/AuditTrailPage").then(module => ({ default: module.AuditTrailPage })));
@@ -82,6 +85,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<OverviewDashboard />} />
                 <Route path="/timeline" element={<TaskTimeline />} />
+                <Route path="/sit" element={<TestingConsole phase={SDLC_PHASES.SIT} ns="sit" />} />
                 <Route path="/testing" element={<TestingStatus />} />
                 <Route path="/post-implementation" element={<PostImplementation />} />
                 <Route path="/analytics" element={<Analytics />} />

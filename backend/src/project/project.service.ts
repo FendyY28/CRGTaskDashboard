@@ -2,6 +2,18 @@ import { Injectable, NotFoundException, BadRequestException, InternalServerError
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { Prisma } from '@prisma/client';
+import { CreateProjectDto } from './dto/create-project.dto';
+import type { MasterPhase } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import {
+  AddLogDto,
+  CreateImprovementDto,
+  CreateIssueDto,
+  CreateTestCaseDto,
+  UpdateIssueDto,
+  UpdateLogDto,
+  UpdateTestCaseDto,
+} from './dto/project-payloads.dto';
 
 @Injectable()
 export class ProjectService {
@@ -40,6 +52,34 @@ export class ProjectService {
       return `${prefix}-${num.toString().padStart(3, '0')}`;
     }
     return `${prefix}-${num}`;
+  }
+
+  /** Text a task name/description off the wire. */
+  private static cleanTaskText(value: unknown): string {
+    if (typeof value === 'string') return value.replace(/\s+/g, ' ').trim();
+    return '';
+  }
+
+  /**
+   * Normalise one raw task payload (string or { taskName, description }) into
+   * `{ taskName, description }`, or `null` when there is no usable name.
+   */
+  private static normalizeTaskInput(raw: unknown): { taskName: string; description: string } | null {
+    const isRecord = typeof raw === 'object' && raw !== null;
+    const rawName = isRecord ? (raw as { taskName?: unknown }).taskName : raw;
+    const rawDesc = isRecord ? (raw as { description?: unknown }).description : '';
+    const taskName = ProjectService.cleanTaskText(rawName);
+    if (!taskName) return null;
+    return { taskName, description: ProjectService.cleanTaskText(rawDesc) };
+  }
+
+  /** Return the first existing task whose name matches `taskName` (case-insensitive). */
+  private static findTaskByName<T extends { taskName: string }>(
+    existing: T[],
+    taskName: string
+  ): T | undefined {
+    const key = taskName.toLowerCase();
+    return existing.find((t) => t.taskName.toLowerCase() === key);
   }
 
   /** Resolve a display name from a user id or email ("Unknown User" as fallback). */
@@ -143,8 +183,8 @@ export class ProjectService {
   }
 
   // 2. CREATE PROJECT
-  async create(data: any, userId: string) {
-    const initialPhase = data.currentPhase || "Requirement";
+  async create(data: CreateProjectDto, userId: string) {
+    const initialPhase: MasterPhase = data.currentPhase || "Requirement";
 
     const newProject = await this.insertWithGeneratedId(
       () => this.nextId('PRJ', 'project'),
@@ -156,7 +196,7 @@ export class ProjectService {
         pic: data.pic,
         currentPhase: initialPhase,
         status: data.status || "on-track",
-        overallProgress: typeof data.overallProgress === 'string' ? parseInt(data.overallProgress) : (data.overallProgress || 0),
+        overallProgress: data.overallProgress ?? 0,
         projectStartDate: data.startDate ? new Date(data.startDate) : new Date(),
         projectDeadline: data.deadline ? new Date(data.deadline) : new Date(new Date().setMonth(new Date().getMonth() + 1)),
         cycle: 1,
@@ -181,8 +221,92 @@ export class ProjectService {
     return newProject;
   }
 
+  /**
+   * Move the active cycle's SDLC phases to `targetPhase`: close the old phase,
+   * then update or create the target phase row. Only touches the active cycle.
+   */
+  private async applyPhaseTransition(
+    tx: Prisma.TransactionClient,
+    id: string,
+    oldProject: { currentPhase: string; cycle: number | null; status: string },
+    targetPhase: string,
+    requestData: UpdateProjectDto
+  ) {
+    const currentCycle = oldProject.cycle || 1;
+
+    // Fase berubah. Selesaikan fase lama di cycle ini.
+    const newStatusForOldPhase = oldProject.status === 'overdue' || oldProject.status === 'at-risk' ? oldProject.status : 'completed';
+
+    await tx.sDLCPhase.updateMany({
+      where: { projectId: id, phaseName: oldProject.currentPhase, cycle: currentCycle },
+      data: { status: newStatusForOldPhase, progress: 100 } // Set progress 100 saat selesai
+    });
+
+    // Cari atau buat fase baru di cycle ini
+    const targetPhaseRow = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle } });
+    const newStatus = requestData.phaseStatus || requestData.status || 'on-track';
+    const newStartDate = requestData.phaseStartDate ? new Date(requestData.phaseStartDate) : new Date();
+    const newDeadline = requestData.phaseDeadline ? new Date(requestData.phaseDeadline) : undefined;
+
+    if (targetPhaseRow) {
+      await tx.sDLCPhase.update({
+        where: { id: targetPhaseRow.id },
+        data: { status: newStatus, startDate: newStartDate, deadline: newDeadline }
+      });
+    } else {
+      await tx.sDLCPhase.create({
+        data: {
+          status: newStatus,
+          startDate: newStartDate,
+          deadline: newDeadline,
+          project: { connect: { id } },
+          phaseName: targetPhase,
+          cycle: currentCycle
+        }
+      });
+    }
+  }
+
+  /** Update detail fase aktif tanpa pindah fase (progress/deadline/status). */
+  private async updateActivePhaseDetail(
+    tx: Prisma.TransactionClient,
+    id: string,
+    targetPhase: string,
+    currentCycle: number,
+    requestData: UpdateProjectDto
+  ) {
+    const phaseUpdatePayload: Prisma.SDLCPhaseUpdateManyMutationInput = {};
+    if (requestData.phaseDeadline) phaseUpdatePayload.deadline = new Date(requestData.phaseDeadline);
+    if (requestData.phaseStartDate) phaseUpdatePayload.startDate = new Date(requestData.phaseStartDate);
+    if (requestData.phaseStatus) phaseUpdatePayload.status = requestData.phaseStatus;
+    if (requestData.overallProgress !== undefined) {
+      phaseUpdatePayload.progress = requestData.overallProgress;
+    }
+
+    if (Object.keys(phaseUpdatePayload).length > 0) {
+      await tx.sDLCPhase.updateMany({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle }, data: phaseUpdatePayload });
+    }
+  }
+
+  /**
+   * Map the request onto the project columns, assigning only fields that were
+   * actually sent so partial requests never write undefined/NaN to other columns.
+   */
+  private buildProjectUpdate(requestData: UpdateProjectDto, targetPhase: string): Prisma.ProjectUpdateInput {
+    const projectUpdateData: Prisma.ProjectUpdateInput = { currentPhase: targetPhase };
+    if (requestData.name !== undefined) projectUpdateData.name = requestData.name;
+    if (requestData.pic !== undefined) projectUpdateData.pic = requestData.pic;
+    if (requestData.status !== undefined) projectUpdateData.status = requestData.status;
+    if (requestData.overallProgress !== undefined) {
+      projectUpdateData.overallProgress = requestData.overallProgress;
+    }
+    if (requestData.projectStartDate) projectUpdateData.projectStartDate = new Date(requestData.projectStartDate);
+    if (requestData.projectDeadline) projectUpdateData.projectDeadline = new Date(requestData.projectDeadline);
+    return projectUpdateData;
+  }
+
   // 3. UPDATE PROJECT
-  async update(id: string, requestData: any, userId: string) {
+  async update(id: string, requestData: UpdateProjectDto, userId: string) {
     const oldProject = await this.prisma.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
     if (!oldProject) throw new NotFoundException("Project not found");
 
@@ -197,62 +321,17 @@ export class ProjectService {
     const currentCycle = oldProject.cycle || 1; // PENTING: Hanya modifikasi cycle aktif
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
-
       if (isPhaseChanged) {
-          // Fase berubah. Selesaikan fase lama di cycle ini.
-          let newStatusForOldPhase = oldProject.status === 'overdue' || oldProject.status === 'at-risk' ? oldProject.status : 'completed';
-
-          await tx.sDLCPhase.updateMany({
-            where: { projectId: id, phaseName: oldProject.currentPhase, cycle: currentCycle },
-            data: { status: newStatusForOldPhase, progress: 100 } // Set progress 100 saat selesai
-          });
-
-          // Cari atau buat fase baru di cycle ini
-          const targetPhaseRow = await tx.sDLCPhase.findFirst({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle } });
-          const newPhaseData: any = {
-              status: requestData.phaseStatus || requestData.status || 'on-track',
-              startDate: requestData.phaseStartDate ? new Date(requestData.phaseStartDate) : new Date(),
-              deadline: requestData.phaseDeadline ? new Date(requestData.phaseDeadline) : undefined
-          };
-
-          if (targetPhaseRow) { await tx.sDLCPhase.update({ where: { id: targetPhaseRow.id }, data: newPhaseData }); }
-          else { await tx.sDLCPhase.create({ data: { projectId: id, phaseName: targetPhase, cycle: currentCycle, ...newPhaseData } as any }); }
+        await this.applyPhaseTransition(tx, id, oldProject, targetPhase, requestData);
+      } else {
+        await this.updateActivePhaseDetail(tx, id, targetPhase, currentCycle, requestData);
       }
-      else {
-          // Fase tidak berubah, hanya update detail fase (seperti progress/deadline)
-          const phaseUpdatePayload: any = {};
-          if (requestData.phaseDeadline) phaseUpdatePayload.deadline = new Date(requestData.phaseDeadline);
-          if (requestData.phaseStartDate) phaseUpdatePayload.startDate = new Date(requestData.phaseStartDate);
-          if (requestData.phaseStatus) phaseUpdatePayload.status = requestData.phaseStatus;
-          if (requestData.overallProgress !== undefined) {
-            phaseUpdatePayload.progress = typeof requestData.overallProgress === 'string' ? parseInt(requestData.overallProgress) : requestData.overallProgress;
-          }
-
-          if (Object.keys(phaseUpdatePayload).length > 0) {
-            await tx.sDLCPhase.updateMany({ where: { projectId: id, phaseName: targetPhase, cycle: currentCycle }, data: phaseUpdatePayload });
-          }
-      }
-
-      // Update detail global project.
-      // Hanya field yang benar-benar dikirim yang di-assign, supaya request
-      // parsial tidak menulis undefined/NaN ke kolom lain.
-      const projectUpdateData: Prisma.ProjectUpdateInput = { currentPhase: targetPhase };
-      if (requestData.name !== undefined) projectUpdateData.name = requestData.name;
-      if (requestData.pic !== undefined) projectUpdateData.pic = requestData.pic;
-      if (requestData.status !== undefined) projectUpdateData.status = requestData.status;
-      if (requestData.overallProgress !== undefined) {
-        projectUpdateData.overallProgress = typeof requestData.overallProgress === 'string'
-          ? parseInt(requestData.overallProgress)
-          : requestData.overallProgress;
-      }
-      if (requestData.projectStartDate) projectUpdateData.projectStartDate = new Date(requestData.projectStartDate);
-      if (requestData.projectDeadline) projectUpdateData.projectDeadline = new Date(requestData.projectDeadline);
 
       // Bentuk response disamakan dengan findOne() supaya konsumen tidak
       // kehilangan field (tasks, testCases, issues, improvements) setelah update.
       return tx.project.update({
         where: { id },
-        data: projectUpdateData,
+        data: this.buildProjectUpdate(requestData, targetPhase),
         include: ProjectService.PROJECT_INCLUDE
       });
     });
@@ -292,7 +371,7 @@ export class ProjectService {
     });
   }
 
-  async createIssue(data: any, userId: string) {
+  async createIssue(data: CreateIssueDto, userId: string) {
     const issue = await this.insertWithGeneratedId(
       () => (data.issueId && !data.issueId.startsWith('ISS-'))
         ? Promise.resolve(data.issueId)
@@ -310,7 +389,7 @@ export class ProjectService {
     return issue;
   }
 
-  async updateIssue(id: number, data: any, userId: string) {
+  async updateIssue(id: number, data: UpdateIssueDto, userId: string) {
     const issue = await this.prisma.issue.update({
       where: { id: Number(id) },
       data: { status: data.status }
@@ -321,30 +400,34 @@ export class ProjectService {
 
   async removeIssue(id: number, userId: string) {
     const issue = await this.prisma.issue.findUnique({ where: { id: Number(id) } });
+
+    if (!issue) {
+      throw new NotFoundException("Issue not found");
+    }
+
     await this.prisma.issue.delete({ where: { id: Number(id) } });
-    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue?.title}`, issue?.projectId);
+    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue.title}`, issue.projectId);
     return issue;
   }
 
-  async createImprovement(data: any, userId: string) {
+  async createImprovement(data: CreateImprovementDto, userId: string) {
+    // noteId selalu digenerate agar format konsisten (IMP-xxx) — client tidak
+    // bisa lagi menentukan sendiri ID-nya lewat body.
     const imp = await this.insertWithGeneratedId(
-      // ID kustom hanya dipakai kalau sudah memakai prefix yang benar;
-      // selain itu selalu generate agar format noteId konsisten (IMP-xxx).
-      () => (data.noteId && String(data.noteId).startsWith('IMP-'))
-        ? Promise.resolve(String(data.noteId))
-        : this.nextId('IMP', 'improvement'),
+      () => this.nextId('IMP', 'improvement'),
       (noteId) =>
         this.prisma.improvement.create({
           data: {
             noteId: noteId,
             title: data.title || "Optimization Idea",
-            reviewer: data.reviewer,
-            developer: data.developer,
+            // Kolom ini wajib di DB, jadi beri default aman kalau form tidak mengisi.
+            reviewer: data.reviewer || "Unknown User",
+            developer: data.developer || "Unknown User",
 
             feedback: data.feedback || "",
 
-            recommendations: data.recommendations,
-            priority: data.priority,
+            recommendations: data.recommendations || "",
+            priority: data.priority || "medium",
             projectId: data.projectId
           }
         }),
@@ -381,7 +464,71 @@ export class ProjectService {
   }
 
   // 6. WEEKLY PROGRESS (TIMELINE)
-  async addLog(data: any, userId: string) {
+
+  /**
+   * Normalise the raw task payload: trim/compact text, drop nameless rows and
+   * dedup case-insensitively. Tasks may arrive as a plain string or as
+   * { taskName, description } so the per-task description is preserved.
+   */
+  private parseTaskList(rawTasks: unknown): { taskName: string; description: string }[] {
+    const list = Array.isArray(rawTasks) ? rawTasks : [rawTasks];
+    const seen = new Set<string>();
+    const tasks: { taskName: string; description: string }[] = [];
+
+    for (const raw of list) {
+      const task = ProjectService.normalizeTaskInput(raw);
+      if (!task) continue;
+      const key = task.taskName.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tasks.push(task);
+    }
+
+    return tasks;
+  }
+
+  /** Create the weekly log row and all of its tasks inside one transaction. */
+  private async persistLog(
+    tx: Prisma.TransactionClient,
+    projectId: string,
+    weekRange: string,
+    title: string,
+    taskList: { taskName: string; description: string }[]
+  ) {
+    const log = await tx.weeklyProgress.create({
+      data: {
+        projectId,
+        weekRange,
+        title,
+        progress: 0,
+        completed: 0,
+        total: taskList.length,
+      },
+    });
+
+    for (const task of taskList) {
+      // nextId() HARUS baca lewat `tx` — kalau baca lewat this.prisma, task yang
+      // baru dibuat di transaksi ini belum terlihat, jadi semua task dalam satu
+      // batch dapat nomor yang sama (ini penyebab checklist "doubling").
+      const taskId = await this.nextId('TSK', 'task', tx);
+      await tx.task.create({
+        data: {
+          taskId,
+          taskName: task.taskName,
+          description: task.description,
+          status: 'in-progress',
+          completedDate: null,
+          completedBy: null,
+          weeklyProgressId: log.id,
+        },
+      });
+    }
+
+    const tasks = await tx.task.findMany({ where: { weeklyProgressId: log.id }, orderBy: { id: 'asc' } });
+    return { ...log, tasks };
+  }
+
+  async addLog(data: AddLogDto, userId: string) {
     const projectId: string = data.projectId;
     if (!projectId) throw new BadRequestException("Project tidak boleh kosong.");
 
@@ -396,23 +543,8 @@ export class ProjectService {
     const title: string = String(data.title ?? "").replace(/\s+/g, " ").trim();
     if (!title) throw new BadRequestException("Judul log tidak boleh kosong.");
 
-    // Normalisasi input: potong spasi excess, buang baris kosong, dan dedup
-    // (case-insensitive) supaya task kembar tidak masuk sebagai dua baris terpisah.
-    // Task boleh dikirim sebagai string ("nama task") atau objek
-    // { taskName, description } supaya deskripsi per task ikut tersimpan.
-    const rawTasks: any[] = Array.isArray(data.tasks) ? data.tasks : [data.tasks];
-    const seen = new Set<string>();
-    const taskList: { taskName: string; description: string }[] = [];
-    for (const raw of rawTasks) {
-      const rawName = typeof raw === 'object' && raw !== null ? raw.taskName : raw;
-      const rawDesc = typeof raw === 'object' && raw !== null ? raw.description : "";
-      const name = String(rawName ?? "").replace(/\s+/g, " ").trim();
-      if (!name) continue;
-      const key = name.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      taskList.push({ taskName: name, description: String(rawDesc ?? "").trim() });
-    }
+    const rawTasks: unknown = data.tasks;
+    const taskList = this.parseTaskList(rawTasks);
 
     if (taskList.length === 0) throw new BadRequestException("Tidak ada task yang valid untuk disimpan.");
 
@@ -425,52 +557,33 @@ export class ProjectService {
       );
     }
 
-    // Task ID digenerate satu per satu lewat nextId(..., tx) di dalam transaksi
-    // yang sama, supaya task ke-2 dan seterusnya melihat nomor task ke-1 yang
-    // baru dibuat dan tidak memakai ulang nomor yang sama.
     // Parent log + seluruh task dibuat dalam satu transaksi supaya kalau salah
     // satu task gagal, log setengah jadi tidak ikut tersimpan.
-    return this.prisma.$transaction(async (tx) => {
-      const log = await tx.weeklyProgress.create({
-        data: {
-          projectId,
-          weekRange,
-          title,
-          progress: 0,
-          completed: 0,
-          total: taskList.length,
-        },
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Tolak task yang namanya sudah ada di weekly log lain pada project ini,
+      // supaya checklist tidak terduplikasi antar-minggu (guard yang sama dengan
+      // addTask, hanya saja scope-nya seluruh project).
+      const existingTasks = await tx.task.findMany({
+        where: { weeklyProgress: { projectId } },
+        select: { taskName: true },
       });
-
-      for (const task of taskList) {
-        // nextId() HARUS baca lewat `tx` — kalau baca lewat this.prisma, task yang
-        // baru dibuat di transaksi ini belum terlihat, jadi semua task dalam satu
-        // batch dapat nomor yang sama (ini penyebab checklist "doubling").
-        const taskId = await this.nextId('TSK', 'task', tx);
-        await tx.task.create({
-          data: {
-            taskId,
-            taskName: task.taskName,
-            description: task.description,
-            status: 'in-progress',
-            completedDate: null,
-            completedBy: null,
-            weeklyProgressId: log.id,
-          },
-        });
+      const duplicateTasks = taskList.filter((t) => ProjectService.findTaskByName(existingTasks, t.taskName));
+      if (duplicateTasks.length > 0) {
+        throw new BadRequestException(
+          `Task berikut sudah ada di weekly log project ini: ${duplicateTasks.map(t => `"${t.taskName}"`).join(', ')}`
+        );
       }
 
-      const tasks = await tx.task.findMany({ where: { weeklyProgressId: log.id }, orderBy: { id: 'asc' } });
-      return { ...log, tasks };
-    }).then(async (result) => {
-      await this.auditService.log(
-        userId,
-        "ADD_WEEKLY_LOG",
-        `Menambah Weekly Log "${title}" (${weekRange}, ${taskList.length} task)`,
-        projectId
-      );
-      return result;
+      return this.persistLog(tx, projectId, weekRange, title, taskList);
     });
+
+    await this.auditService.log(
+      userId,
+      "ADD_WEEKLY_LOG",
+      `Menambah Weekly Log "${title}" (${weekRange}, ${taskList.length} task)`,
+      projectId
+    );
+    return result;
   }
 
   async removeLog(id: number, userId: string) {
@@ -492,16 +605,14 @@ export class ProjectService {
     return deleted;
   }
 
-  async updateLog(weeklyId: number, data: any, userId: string) {
+  async updateLog(weeklyId: number, data: UpdateLogDto, userId: string) {
       // Hanya field yang benar-benar dikirim yang di-assign, supaya request
       // parsial tidak menulis undefined/NaN ke kolom lain (mis. `progress`
       // yang tidak ikut terkirim menghasilkan NaN kalau langsung di-parseInt).
       const payload: Prisma.WeeklyProgressUpdateInput = {};
 
-      if (data.progress !== undefined && data.progress !== null && data.progress !== '') {
-        const parsedProgress = typeof data.progress === 'number' ? data.progress : parseInt(String(data.progress), 10);
-        if (isNaN(parsedProgress)) throw new BadRequestException("Progress harus berupa angka.");
-        payload.progress = Math.min(100, Math.max(0, parsedProgress));
+      if (data.progress !== undefined && data.progress !== null) {
+        payload.progress = Math.min(100, Math.max(0, data.progress));
       }
 
       if (data.weekRange !== undefined) {
@@ -527,13 +638,14 @@ export class ProjectService {
 
 
   async addTask(weeklyProgressId: number, taskName: string, userId: string, description?: string) {
-    const normalizedName = (taskName ?? "").replace(/\s+/g, " ").trim();
+    const normalized = ProjectService.normalizeTaskInput({ taskName, description });
+    const normalizedName = normalized?.taskName ?? "";
     if (!normalizedName) {
       throw new BadRequestException("Nama task tidak boleh kosong");
     }
 
     // Deskripsi wajib diisi: menjelaskan pekerjaan dari task ini.
-    const normalizedDescription = (description ?? "").trim();
+    const normalizedDescription = normalized?.description ?? "";
     if (!normalizedDescription) {
       throw new BadRequestException("Deskripsi task tidak boleh kosong");
     }
@@ -552,9 +664,7 @@ export class ProjectService {
     // Ini yang bikin checklist "doubling" saat user double-click atau request retry
     // (kombinasi taskId @unique + insertWithGeneratedId hanya menangkap tabrakan ID,
     // bukan insert kedua dari user yang sama).
-    const duplicate = parent.tasks.find(
-      (t) => t.taskName.toLowerCase() === normalizedName.toLowerCase()
-    );
+    const duplicate = ProjectService.findTaskByName(parent.tasks, normalizedName);
     if (duplicate) {
       return duplicate;
     }
@@ -634,11 +744,11 @@ export class ProjectService {
   // ==========================================================
   // 7. TESTING (TEST CASES & DEFECTS) - UPDATED
   // ==========================================================
-  async getTestingStatus() { return this.prisma.project.findMany({ where: { currentPhase: 'UAT' }, select: { id: true, name: true, testCases: { include: { defect: true } } } }); }
+  async getTestingStatus() { return this.prisma.project.findMany({ select: { id: true, name: true, currentPhase: true, testCases: { include: { defect: true } } } }); }
   async getTestCases(projectId: string) { return this.prisma.testCase.findMany({ where: { projectId }, include: { defect: true }, orderBy: { createdAt: 'desc' } }); }
 
   // CREATE dengan pencarian User yang lebih standar
-  async createTestCase(data: any, userId: string) {
+  async createTestCase(data: CreateTestCaseDto, userId: string) {
       const userName = await this.resolveUserName(userId);
 
       const tc = await this.prisma.testCase.create({
@@ -656,30 +766,37 @@ export class ProjectService {
   }
 
   // UPDATE dengan pencarian User yang lebih standar
-  async updateTestCase(id: string, data: any, userId: string) {
+  async updateTestCase(id: string, data: UpdateTestCaseDto, userId: string) {
     const { status, notes, defect, takeoutReason, isDeleted } = data;
 
     const userName = await this.resolveUserName(userId);
-    const tc = await this.prisma.testCase.update({
-      where: { id },
-      data: {
-        status,
-        notes,
-        takeoutReason,
-        isDeleted,
-        updatedBy: userName
-      }
-    });
 
-    if (status === 'fail' && defect) {
-        await this.prisma.defect.upsert({
-            where: { testCaseId: id },
-            update: { description: defect.description, severity: defect.severity, status: 'open' },
-            create: { testCaseId: id, description: defect.description, severity: defect.severity, status: 'open' }
-        });
-    } else if (status === 'pass' || status === 'pending') {
-        await this.prisma.defect.deleteMany({ where: { testCaseId: id } });
-    }
+    // Test case dan defect-nya diubah dalam satu transaksi supaya tidak pernah
+    // ada status 'fail' tanpa defect (atau defect basi) kalau salah satu gagal.
+    const tc = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.testCase.update({
+        where: { id },
+        data: {
+          status,
+          notes,
+          takeoutReason,
+          isDeleted,
+          updatedBy: userName
+        }
+      });
+
+      if (status === 'fail' && defect) {
+          await tx.defect.upsert({
+              where: { testCaseId: id },
+              update: { description: defect.description, severity: defect.severity, status: 'open' },
+              create: { testCaseId: id, description: defect.description, severity: defect.severity, status: 'open' }
+          });
+      } else if (status === 'pass' || status === 'pending') {
+          await tx.defect.deleteMany({ where: { testCaseId: id } });
+      }
+
+      return updated;
+    });
 
     await this.auditService.log(userId, "UPDATE_TEST_CASE", `Update status Test Case menjadi ${status}`, tc.projectId);
     return tc;
@@ -711,6 +828,67 @@ export class ProjectService {
   }
 
   // 6. NEXT CYCLE MANAGEMENT (SMART AUTOMATION)
+
+  /** Lock the active cycle: freeze the active phase and close everything up to it. */
+  private async closeActiveCycle(
+    tx: Prisma.TransactionClient,
+    id: string,
+    oldProject: { currentPhase: string; overallProgress: number | null; status: string | null },
+    currentCycle: number
+  ) {
+    const currentActivePhase = oldProject.currentPhase;
+
+    // Simpan progress & status aktual dari fase aktif di cycle lama
+    await tx.sDLCPhase.updateMany({
+      where: { projectId: id, cycle: currentCycle, phaseName: currentActivePhase },
+      data: {
+        progress: oldProject.overallProgress || 0,
+        status: oldProject.status || 'completed'
+      }
+    });
+
+    // Kunci semua fase yang dilewati sebelum fase aktif di cycle lama menjadi completed
+    const curPhaseIdx = this.MASTER_PHASES.indexOf(currentActivePhase);
+    if (curPhaseIdx !== -1) {
+      for (let i = 0; i < curPhaseIdx; i++) {
+        await tx.sDLCPhase.updateMany({
+          where: { projectId: id, cycle: currentCycle, phaseName: this.MASTER_PHASES[i] },
+          data: { status: 'completed', progress: 100 }
+        });
+      }
+    }
+
+    // Kunci semua fase yang masih in-progress di cycle lama menjadi completed
+    await tx.sDLCPhase.updateMany({
+      where: { projectId: id, cycle: currentCycle, status: 'in-progress' },
+      data: { status: 'completed', progress: 100 }
+    });
+  }
+
+  /** Create the fresh set of master phases for a newly started cycle. */
+  private async createCyclePhases(
+    tx: Prisma.TransactionClient,
+    id: string,
+    initialPhase: string,
+    cycle: number,
+    dates: { start: Date; deadline: Date }
+  ) {
+    for (const phaseName of this.MASTER_PHASES) {
+      const isInitial = phaseName === initialPhase;
+      await tx.sDLCPhase.create({
+        data: {
+          projectId: id,
+          phaseName,
+          cycle,
+          status: isInitial ? 'on-track' : 'pending',
+          progress: 0, // Reset progress per fase
+          startDate: isInitial ? dates.start : null,
+          deadline: isInitial ? dates.deadline : null
+        }
+      });
+    }
+  }
+
   async nextCycle(id: string, userId: string, body?: { targetPhase?: string }) {
     const oldProject = await this.prisma.project.findUnique({
         where: { id },
@@ -737,37 +915,10 @@ export class ProjectService {
     newPhaseDeadline.setDate(newPhaseDeadline.getDate() + 7);
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
-        // 1. KUNCI & SIMPAN DATA FASE AKTIF DI CYCLE LAMA (termasuk UAT / fase lainnya)
-        const currentActivePhase = oldProject.currentPhase;
+        // 1. Kunci cycle lama: fase aktif disimpan, fase sebelumnya ditutup.
+        await this.closeActiveCycle(tx, id, oldProject, currentCycle);
 
-        // Simpan progress & status aktual dari fase aktif di cycle lama
-        await tx.sDLCPhase.updateMany({
-            where: { projectId: id, cycle: currentCycle, phaseName: currentActivePhase },
-            data: {
-                progress: oldProject.overallProgress || 0,
-                status: oldProject.status || 'completed'
-            }
-        });
-
-        // 2. Kunci semua fase yang dilewati sebelum fase aktif di cycle lama menjadi completed
-        const curPhaseIdx = this.MASTER_PHASES.indexOf(currentActivePhase);
-        if (curPhaseIdx !== -1) {
-            for (let i = 0; i < curPhaseIdx; i++) {
-                const passedPhase = this.MASTER_PHASES[i];
-                await tx.sDLCPhase.updateMany({
-                    where: { projectId: id, cycle: currentCycle, phaseName: passedPhase },
-                    data: { status: 'completed', progress: 100 }
-                });
-            }
-        }
-
-        // Kunci semua fase yang masih in-progress di cycle lama menjadi completed
-        await tx.sDLCPhase.updateMany({
-            where: { projectId: id, cycle: currentCycle, status: 'in-progress' },
-            data: { status: 'completed', progress: 100 }
-        });
-
-        // UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
+        // 2. UPDATE PROJECT KE CYCLE BARU & RESET PROGRESS
         await tx.project.update({
             where: { id },
             data: {
@@ -780,21 +931,11 @@ export class ProjectService {
             }
         });
 
-        // GENERATE 6 FASE BARU UNTUK CYCLE BARU
-        for (const phaseName of this.MASTER_PHASES) {
-            const isInitial = phaseName === initialPhaseForNewCycle;
-            await tx.sDLCPhase.create({
-                data: {
-                    projectId: id,
-                    phaseName,
-                    cycle: nextCycle,
-                    status: isInitial ? 'on-track' : 'pending',
-                    progress: 0, // Reset progress per fase
-                    startDate: isInitial ? today : null,
-                    deadline: isInitial ? newPhaseDeadline : null
-                }
-            });
-        }
+        // 3. GENERATE 6 FASE BARU UNTUK CYCLE BARU
+        await this.createCyclePhases(tx, id, initialPhaseForNewCycle, nextCycle, {
+            start: today,
+            deadline: newPhaseDeadline
+        });
 
         return tx.project.findUnique({
             where: { id },
@@ -840,7 +981,7 @@ export class ProjectService {
 
   async deletePhaseNote(noteId: number, userId: string) {
     const note = await this.prisma.phaseNote.findUnique({ where: { id: noteId }, include: { phase: { include: { project: true } } } });
-    if (!note) throw new Error("Catatan tidak ditemukan");
+    if (!note) throw new NotFoundException("Catatan tidak ditemukan");
 
     await this.prisma.phaseNote.delete({ where: { id: noteId } });
 

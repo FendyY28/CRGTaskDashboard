@@ -2,12 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { THEME, PHASE_LABELS } from "../constants/projectConstants";
+import type { Project, ProjectIssue, TestCase } from "../types";
+import { normalizeStr } from "../utils/pir";
 
 export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
-  const [allProjects, setAllProjects] = useState<any[]>([]);
-  const [allIssues, setAllIssues] = useState<any[]>([]);
-  const [allTestCases, setAllTestCases] = useState<any[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [allIssues, setAllIssues] = useState<ProjectIssue[]>([]);
+  const [allTestCases, setAllTestCases] = useState<TestCase[]>([]);
 
   // Label Dinamis
   const openLbl = t('pir.tabs.open') || 'Open';
@@ -17,25 +19,39 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
 
   // 1. FETCH SEMUA DATA SEKALI SAJA SAAT MOUNT
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchAnalyticsData = async () => {
       try {
-        const [prjRes, issRes, tcRes] = await Promise.all([
-          api.get('/project'),
-          api.get('/project/issue'),
-          api.get('/project').then((res: any[]) => {
-            const uatProjects = res.filter(p => p.currentPhase === 'UAT');
-            return Promise.all(uatProjects.map(p => api.get(`/project/${p.id}/test-cases`)));
-          }).then(res => res.flat())
+        const [prjRes, issRes] = await Promise.all([
+          api.get<Project[]>('/project', { signal }),
+          api.get<ProjectIssue[]>('/project/issue', { signal }),
         ]);
+
+        // Test cases live per project, so they need the project list first.
+        const uatProjects = (Array.isArray(prjRes) ? prjRes : []).filter(
+          (p) => p.currentPhase === 'UAT',
+        );
+        const tcRes = (
+          await Promise.all(
+            uatProjects.map((p) => api.get<TestCase[]>(`/project/${p.id}/test-cases`, { signal })),
+          )
+        ).flat();
+
+        if (signal.aborted) return;
 
         setAllProjects(Array.isArray(prjRes) ? prjRes : []);
         setAllIssues(Array.isArray(issRes) ? issRes : []);
         setAllTestCases(Array.isArray(tcRes) ? tcRes : []);
       } catch (error) {
+        if (signal.aborted) return;
         console.error("Failed to fetch analytics data", error);
       }
     };
     fetchAnalyticsData();
+
+    return () => controller.abort();
   }, []);
 
   const { projects, issues, testCases } = useMemo(() => {
@@ -47,8 +63,8 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
     // Jika ada filter, saring data berdasarkan ID project yang dipilih
     return {
       projects: allProjects.filter(p => selectedProjectIds.includes(p.id)),
-      issues: allIssues.filter(i => selectedProjectIds.includes(i.projectId)),
-      testCases: allTestCases.filter(tc => selectedProjectIds.includes(tc.projectId)),
+      issues: allIssues.filter(i => i.projectId && selectedProjectIds.includes(i.projectId)),
+      testCases: allTestCases.filter(tc => tc.projectId && selectedProjectIds.includes(tc.projectId)),
     };
   }, [allProjects, allIssues, allTestCases, selectedProjectIds]);
 
@@ -103,7 +119,7 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   }, [testCases, takeoutLbl]);
 
   const issueData = useMemo(() => {
-    type PriorityData = { name: string; [key: string]: any };
+    type PriorityData = { name: string; [key: string]: number | string };
     const dataMap: Record<string, PriorityData> = {
       critical: { name: t('pir.priorities.critical'), [openLbl]: 0, [inProgressLbl]: 0 },
       high: { name: t('pir.priorities.high'), [openLbl]: 0, [inProgressLbl]: 0 },
@@ -113,11 +129,11 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
 
     issues.forEach(i => {
       const p = i.priority?.toLowerCase();
-      const s = i.status?.toLowerCase();
-      const targetPriority = dataMap[p]; 
+      const s = normalizeStr(i.status);
+      const targetPriority = p ? dataMap[p] : undefined;
       if (targetPriority && s !== 'resolved') {
-        if (s === 'in progress' || s === 'in-progress') targetPriority[inProgressLbl]++;
-        else if (s === 'open') targetPriority[openLbl]++;
+        if (s === 'in progress') (targetPriority[inProgressLbl] as number)++;
+        else if (s === 'open') (targetPriority[openLbl] as number)++;
       }
     });
     return [dataMap.critical, dataMap.high, dataMap.medium, dataMap.low];
@@ -126,9 +142,9 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const issueResolutionData = useMemo(() => {
     const counts = { open: 0, 'in progress': 0, resolved: 0 };
     issues.forEach(i => {
-      const s = i.status?.toLowerCase();
+      const s = normalizeStr(i.status);
       if (s === 'open') counts.open++;
-      else if (s === 'in progress' || s === 'in-progress') counts['in progress']++;
+      else if (s === 'in progress') counts['in progress']++;
       else if (s === 'resolved') counts.resolved++;
     });
     return [

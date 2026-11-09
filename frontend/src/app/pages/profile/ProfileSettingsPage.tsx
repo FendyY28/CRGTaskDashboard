@@ -88,8 +88,8 @@ export function ProfileSettingsPage() {
 
     setIsRequestingOtp(true);
     try {
-      const res = await api.post('/auth/request-change-password-otp');
-      toast.success(res.data?.message || t('settings.profile.alerts.otpSent'));
+      const res: any = await api.post('/auth/request-change-password-otp');
+      toast.success(res.message || t('settings.profile.alerts.otpSent'));
       setShowOtpField(true);
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.profile.alerts.otpError'));

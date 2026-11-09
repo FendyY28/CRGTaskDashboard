@@ -30,6 +30,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { id: "dashboard", icon: LayoutDashboard },
   { id: "analytics", icon: BarChart3 },
   { id: "timeline", icon: ListChecks },
+  { id: "sit", icon: TestTube2 },
   { id: "testing", icon: TestTube2 },
   { id: "post-implementation", icon: ClipboardCheck },
   { id: "audit-trail", icon: ShieldCheck },

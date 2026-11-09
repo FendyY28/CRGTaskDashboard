@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -85,6 +85,12 @@ export class UpdateLogDto {
   @IsArray()
   @ArrayMaxSize(200)
   tasks?: unknown[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  progress?: number;
 }
 
 export class AddTaskDto {
@@ -206,6 +212,11 @@ export class DefectInputDto {
   @MaxLength(MAX_TEXT)
   description!: string;
 
+  // Normalised to lowercase so the API accepts both "Low" and "low"; the
+  // client sends the label shown in the dropdown.
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsIn(DEFECT_SEVERITIES, { message: 'Severity defect tidak valid.' })
   severity!: string;
 }
@@ -239,7 +250,7 @@ export class UpdateTestCaseDto {
   @IsOptional()
   @IsString()
   @MaxLength(MAX_TEXT)
-  notes?: string;
+  notes?: string | null;
 
   @IsOptional()
   @ValidateNested()

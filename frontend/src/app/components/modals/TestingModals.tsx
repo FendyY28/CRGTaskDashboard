@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { ArchiveX, AlertOctagon, StickyNote } from "lucide-react";
 import { TEST_CASE_STATUS, TEST_CASE_TYPE, THEME } from "../../constants/projectConstants";
 import { useTestCases } from "../../hooks/useTestCases";
+import type { TestCaseType } from "../../types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -17,12 +18,14 @@ interface TestingModalsProps {
   selProject: any;
   onClose: () => void;
   onSuccess: () => void;
+  /** Translation namespace: `testing` (UAT) or `sit` (SIT). */
+  ns?: string;
 }
 
-export function TestingModals({ modal, selProject, onClose, onSuccess }: TestingModalsProps) {
+export function TestingModals({ modal, selProject, onClose, onSuccess, ns = 'testing' }: TestingModalsProps) {
   const { addTestCase, updateTestCase, deleteTestCase } = useTestCases();
   const [isBusy, setIsBusy] = useState(false);
-  const [form, setForm] = useState({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low", takeoutReason: "" });
+  const [form, setForm] = useState({ title: "", type: TEST_CASE_TYPE.POSITIVE as TestCaseType, notes: "", description: "", severity: "Low", takeoutReason: "" });
   
   const { t } = useTranslation();
 
@@ -31,49 +34,64 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
     else if (modal.type === 'fail') setForm(f => ({ ...f, description: "", severity: "Low" }));
     else if (modal.type === 'edit') setForm(f => ({ ...f, notes: modal.item?.notes || "" }));
     else if (modal.type === 'takeout') setForm(f => ({ ...f, takeoutReason: "" }));
-    else if (modal.type === 'add') setForm({ title: "", type: TEST_CASE_TYPE.POSITIVE as string, notes: "", description: "", severity: "Low", takeoutReason: "" });
+    else if (modal.type === 'add') setForm({ title: "", type: TEST_CASE_TYPE.POSITIVE, notes: "", description: "", severity: "Low", takeoutReason: "" });
   }, [modal]);
 
   const handleAction = {
     add: async () => {
       setIsBusy(true);
       toast.promise(
-        addTestCase({ ...form, projectId: selProject.id }),
+        addTestCase({
+          projectId: selProject.id,
+          title: form.title,
+          type: form.type,
+          notes: form.notes,
+          defect: form.description
+            ? { description: form.description, severity: form.severity }
+            : null,
+        }),
         { 
-          loading: t('testing.modals.toast.adding'), 
+          loading: t(`${ns}.modals.toast.adding`), 
           success: () => { 
             onClose(); 
             setIsBusy(false); 
             onSuccess(); 
-            return t('testing.modals.toast.addSuccess'); 
+            return t(`${ns}.modals.toast.addSuccess`); 
           }, 
-          error: () => { setIsBusy(false); return t('testing.modals.toast.addFail'); } 
+          error: () => { setIsBusy(false); return t(`${ns}.modals.toast.addFail`); }  
         }
       );
     },
     update: async (status: string) => {
-      setIsBusy(true);
       const isFail = status === TEST_CASE_STATUS.FAIL;
+      if (isFail && !form.description.trim()) {
+        toast.error(t(`${ns}.modals.toast.defectDescReq`));
+        return;
+      }
+      setIsBusy(true);
+      // `defect` hanya dikirim saat fail. Kalau dikirim sebagai undefined,
+      // ValidationPipe (skipUndefinedProperties) bisa mengubahnya menjadi objek
+      // defect kosong sehingga request ditolak.
+      const payload: Record<string, unknown> = { status, notes: form.notes };
+      if (isFail) {
+        payload.defect = { description: form.description.trim(), severity: form.severity };
+      }
       toast.promise(
-        updateTestCase(modal.item.id, { 
-          status, 
-          notes: form.notes, 
-          defect: isFail ? { description: form.description, severity: form.severity } : undefined 
-        }, selProject.id),
+        updateTestCase(modal.item.id, payload, selProject.id),
         { 
-          loading: t('testing.modals.toast.updating'), 
+          loading: t(`${ns}.modals.toast.updating`), 
           success: () => { 
             onClose(); 
             setIsBusy(false); 
             onSuccess(); 
-            return isFail ? t('testing.modals.toast.defectSuccess') : t('testing.modals.toast.updateSuccess'); 
+            return isFail ? t(`${ns}.modals.toast.defectSuccess`) : t(`${ns}.modals.toast.updateSuccess`); 
           }, 
-          error: () => { setIsBusy(false); return t('testing.modals.toast.updateFail'); } 
+          error: () => { setIsBusy(false); return t(`${ns}.modals.toast.updateFail`); }  
         }
       );
     },
     takeout: async () => {
-      if (!form.takeoutReason.trim()) { toast.error(t('testing.modals.toast.takeoutReasonReq')); return; }
+      if (!form.takeoutReason.trim()) { toast.error(t(`${ns}.modals.toast.takeoutReasonReq`)); return; }
       setIsBusy(true);
       toast.promise(
         updateTestCase(modal.item.id, { 
@@ -82,14 +100,14 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
              isDeleted: true 
         }, selProject.id).then(() => deleteTestCase(modal.item.id, selProject.id)), 
         { 
-          loading: t('testing.modals.toast.takeoutProcessing'), 
+          loading: t(`${ns}.modals.toast.takeoutProcessing`), 
           success: () => { 
             onClose(); 
             setIsBusy(false); 
             onSuccess(); 
-            return t('testing.modals.toast.takeoutSuccess'); 
+            return t(`${ns}.modals.toast.takeoutSuccess`); 
           }, 
-          error: () => { setIsBusy(false); return t('testing.modals.toast.takeoutFail'); } 
+          error: () => { setIsBusy(false); return t(`${ns}.modals.toast.takeoutFail`); }  
         }
       );
     }
@@ -102,25 +120,25 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[500px] text-left">
           <DialogHeader>
             <DialogTitle style={{ color: modal.type === 'fail' ? "#E11D48" : THEME.TOSCA }}>
-              {modal.type === 'add' && t('testing.modals.addTitle')}
-              {modal.type === 'edit' && t('testing.modals.editTitle')}
-              {modal.type === 'pass' && t('testing.modals.passTitle')}
-              {modal.type === 'fail' && t('testing.modals.failTitle')}
+              {modal.type === 'add' && t(`${ns}.modals.addTitle`)}
+              {modal.type === 'edit' && t(`${ns}.modals.editTitle`)}
+              {modal.type === 'pass' && t(`${ns}.modals.passTitle`)}
+              {modal.type === 'fail' && t(`${ns}.modals.failTitle`)}
             </DialogTitle>
-            <DialogDescription className="font-medium">{modal.item?.title || t('testing.modals.projectPrefix') + selProject?.name}</DialogDescription>
+            <DialogDescription className="font-medium">{modal.item?.title || t(`${ns}.modals.projectPrefix`) + selProject?.name}</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             {modal.type === 'add' && (
               <>
-                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.title')}</Label><Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="rounded-xl border-gray-100 h-11" style={{ outlineColor: THEME.TOSCA }} /></div>
+                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.title`)}</Label><Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="rounded-xl border-gray-100 h-11" style={{ outlineColor: THEME.TOSCA }} /></div>
                 <div className="space-y-1.5 text-left">
-                  <Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.type')}</Label>
-                  <Select value={form.type} onValueChange={v => setForm({...form, type: v})}>
+                  <Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.type`)}</Label>
+                  <Select value={form.type} onValueChange={v => setForm({...form, type: v as TestCaseType})}>
                     <SelectTrigger className="rounded-xl border-gray-100 h-11"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value={TEST_CASE_TYPE.POSITIVE}>{t('testing.modals.labels.positive')}</SelectItem>
-                      <SelectItem value={TEST_CASE_TYPE.NEGATIVE}>{t('testing.modals.labels.negative')}</SelectItem>
+                      <SelectItem value={TEST_CASE_TYPE.POSITIVE}>{t(`${ns}.modals.labels.positive`)}</SelectItem>
+                      <SelectItem value={TEST_CASE_TYPE.NEGATIVE}>{t(`${ns}.modals.labels.negative`)}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -128,26 +146,26 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
             )}
             
             {(modal.type === 'add' || modal.type === 'edit' || modal.type === 'pass') && (
-              <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.notes')}</Label><Textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="rounded-xl border-gray-100 min-h-[120px]" placeholder={t('testing.modals.placeholders.notes')} /></div>
+              <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.notes`)}</Label><Textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="rounded-xl border-gray-100 min-h-[120px]" placeholder={t(`${ns}.modals.placeholders.notes`)} /></div>
             )}
 
             {modal.type === 'fail' && (
               <>
-                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.severity')}</Label><Select value={form.severity} onValueChange={v => setForm({...form, severity: v})}><SelectTrigger className="rounded-xl border-red-100 h-11 focus:ring-[#E11D48]"><SelectValue /></SelectTrigger><SelectContent className="bg-white">{["Low","Medium","High","Critical"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
-                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.description')}</Label><Textarea placeholder={t('testing.modals.placeholders.description')} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="rounded-xl border-red-100 focus-visible:ring-[#E11D48] min-h-[120px]" /></div>
+                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.severity`)}</Label><Select value={form.severity} onValueChange={v => setForm({...form, severity: v})}><SelectTrigger className="rounded-xl border-red-100 h-11 focus:ring-[#E11D48]"><SelectValue /></SelectTrigger><SelectContent className="bg-white">{["Low","Medium","High","Critical"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-1.5 text-left"><Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.description`)}</Label><Textarea placeholder={t(`${ns}.modals.placeholders.description`)} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="rounded-xl border-red-100 focus-visible:ring-[#E11D48] min-h-[120px]" /></div>
               </>
             )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" onClick={onClose} className="rounded-xl h-11 font-bold">{t('testing.modals.buttons.cancel')}</Button>
+            <Button variant="ghost" onClick={onClose} className="rounded-xl h-11 font-bold">{t(`${ns}.modals.buttons.cancel`)}</Button>
             <Button 
               onClick={() => modal.type === 'add' ? handleAction.add() : handleAction.update(modal.type === 'fail' ? TEST_CASE_STATUS.FAIL : modal.type === 'pass' ? TEST_CASE_STATUS.PASS : modal.item.status)} 
-              disabled={isBusy || (modal.type === 'add' && !form.title)}
+              disabled={isBusy || (modal.type === 'add' && !form.title) || (modal.type === 'fail' && !form.description.trim())}
               className="rounded-xl h-11 px-8 font-bold text-white transition-all"
               style={{ backgroundColor: modal.type === 'fail' ? '#E11D48' : THEME.TOSCA }}
             >
-              {t('testing.modals.buttons.confirmChanges')}
+              {t(`${ns}.modals.buttons.confirmChanges`)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -158,17 +176,17 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
         <DialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:max-w-[400px] text-center p-8">
           <div className="flex flex-col items-center gap-4">
             <div className="p-4 bg-red-50 rounded-full text-red-600 ring-4 ring-red-50/50"><ArchiveX className="h-8 w-8" /></div>
-            <div className="space-y-1"><h3 className="text-lg font-bold text-gray-900">{t('testing.modals.takeoutTitle')}</h3><p className="text-sm text-gray-500">{t('testing.modals.takeoutDesc')}</p></div>
+            <div className="space-y-1"><h3 className="text-lg font-bold text-gray-900">{t(`${ns}.modals.takeoutTitle`)}</h3><p className="text-sm text-gray-500">{t(`${ns}.modals.takeoutDesc`)}</p></div>
           </div>
           
           <div className="mt-4 text-left space-y-1.5">
-             <Label className="text-xs font-bold uppercase text-gray-400">{t('testing.modals.labels.reason')}</Label>
-             <Textarea value={form.takeoutReason} onChange={e => setForm({...form, takeoutReason: e.target.value})} className="rounded-xl border-red-100 focus-visible:ring-[#E11D48] min-h-[100px]" placeholder={t('testing.modals.placeholders.reason')} />
+             <Label className="text-xs font-bold uppercase text-gray-400">{t(`${ns}.modals.labels.reason`)}</Label>
+             <Textarea value={form.takeoutReason} onChange={e => setForm({...form, takeoutReason: e.target.value})} className="rounded-xl border-red-100 focus-visible:ring-[#E11D48] min-h-[100px]" placeholder={t(`${ns}.modals.placeholders.reason`)} />
           </div>
 
           <DialogFooter className="mt-6 flex gap-2 w-full">
-            <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl h-11 font-bold">{t('testing.modals.buttons.cancel')}</Button>
-            <Button onClick={handleAction.takeout} disabled={!form.takeoutReason.trim() || isBusy} className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white h-11 font-bold">{t('testing.modals.buttons.confirmTakeout')}</Button>
+            <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl h-11 font-bold">{t(`${ns}.modals.buttons.cancel`)}</Button>
+            <Button onClick={handleAction.takeout} disabled={!form.takeoutReason.trim() || isBusy} className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white h-11 font-bold">{t(`${ns}.modals.buttons.confirmTakeout`)}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -180,24 +198,24 @@ export function TestingModals({ modal, selProject, onClose, onSuccess }: Testing
             <div className="flex items-center gap-2 mb-1">
               {modal.type === 'view-takeout' ? <ArchiveX className="h-5 w-5 text-red-500"/> : modal.item?.status === TEST_CASE_STATUS.FAIL ? <AlertOctagon className="h-5 w-5 text-[#E11D48]"/> : <StickyNote className="h-5 w-5" style={{ color: THEME.BSI_YELLOW }}/>}
               <DialogTitle>
-                {modal.type === 'view-takeout' ? t('testing.modals.viewTakeoutTitle') : modal.item?.status === TEST_CASE_STATUS.FAIL ? t('testing.modals.viewDefectTitle') : t('testing.modals.viewNotesTitle')}
+                {modal.type === 'view-takeout' ? t(`${ns}.modals.viewTakeoutTitle`) : modal.item?.status === TEST_CASE_STATUS.FAIL ? t(`${ns}.modals.viewDefectTitle`) : t(`${ns}.modals.viewNotesTitle`)}
               </DialogTitle>
             </div>
             <DialogDescription className="font-bold text-gray-800 text-sm">{modal.item?.title}</DialogDescription>
           </DialogHeader>
           <div className="p-5 bg-gray-50 rounded-2xl text-sm text-gray-600 border border-gray-100 leading-relaxed shadow-inner">
             {modal.type === 'view-takeout' ? (
-               <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.takeoutReason || t('testing.modals.noReason')}</p>
+               <p className="whitespace-pre-wrap font-medium text-red-600">{modal.item?.takeoutReason || t(`${ns}.modals.noReason`)}</p>
             ) : modal.item?.status === TEST_CASE_STATUS.FAIL && modal.item?.defect ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t('testing.modals.labels.severity')}:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-label font-black">{modal.item.defect.severity}</Badge></div>
-                <div className="space-y-1"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t('testing.modals.labels.issueSummary')}</span><p className="font-medium text-gray-700">{modal.item.defect.description}</p></div>
+                <div className="flex items-center gap-2"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t(`${ns}.modals.labels.severity`)}:</span> <Badge className="bg-red-50 text-red-700 border-red-100 shadow-none text-label font-black">{modal.item.defect.severity}</Badge></div>
+                <div className="space-y-1"><span className="text-label font-black uppercase text-gray-500 tracking-tight">{t(`${ns}.modals.labels.issueSummary`)}</span><p className="font-medium text-gray-700">{modal.item.defect.description}</p></div>
               </div>
             ) : (
-              <p className="whitespace-pre-wrap font-medium">{modal.item?.notes || t('testing.modals.noNotes')}</p>
+              <p className="whitespace-pre-wrap font-medium">{modal.item?.notes || t(`${ns}.modals.noNotes`)}</p>
             )}
           </div>
-          <DialogFooter><Button onClick={onClose} className="text-white font-bold rounded-xl px-8 h-11" style={{ backgroundColor: THEME.TOSCA }}>{t('testing.modals.buttons.gotIt')}</Button></DialogFooter>
+          <DialogFooter><Button onClick={onClose} className="text-white font-bold rounded-xl px-8 h-11" style={{ backgroundColor: THEME.TOSCA }}>{t(`${ns}.modals.buttons.gotIt`)}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </>

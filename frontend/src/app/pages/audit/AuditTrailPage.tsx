@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Download,
@@ -28,6 +28,11 @@ type Meta = {
   actions: string[];
   projects: { id: string; name: string }[];
 };
+
+/** The audit list is returned either as a bare array or as `{ data, total }`. */
+type AuditResponse = Log[] | { data?: Log[]; total?: number };
+
+const toLogs = (res: AuditResponse): Log[] => (Array.isArray(res) ? res : res?.data ?? []);
 
 const ACTION_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   CREATE_PROJECT: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
@@ -80,7 +85,7 @@ export function AuditTrailPage() {
   const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get("/audit/meta/options").then(setMeta).catch(() => undefined);
+    api.get<Meta>("/audit/meta/options").then(setMeta).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -91,10 +96,11 @@ export function AuditTrailPage() {
       ...query,
     });
     api
-      .get(`/audit?${params}`)
-      .then((res: any) => {
-        setLogs(Array.isArray(res) ? res : res?.data || []);
-        setTotal(Array.isArray(res) ? res.length : res?.total || 0);
+      .get<AuditResponse>(`/audit?${params}`)
+      .then((res) => {
+        const rows = toLogs(res);
+        setLogs(rows);
+        setTotal(Array.isArray(res) ? res.length : res?.total ?? 0);
       })
       .catch(() => {
         setLogs([]);
@@ -133,8 +139,8 @@ export function AuditTrailPage() {
     setExporting(true);
     setExportError(null);
     try {
-      const raw = await api.get(`/audit/export?${new URLSearchParams(query)}`);
-      const exportLogs: Log[] = Array.isArray(raw) ? raw : raw?.data || [];
+      const raw = await api.get<AuditResponse>(`/audit/export?${new URLSearchParams(query)}`);
+      const exportLogs: Log[] = toLogs(raw);
 
       const headers = [
         t("audit.table.timestamp", "Timestamp"),

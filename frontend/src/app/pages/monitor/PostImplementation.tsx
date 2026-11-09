@@ -5,6 +5,7 @@ import { usePIR } from "../../hooks/usePIR";
 import { DashboardCard } from "../../components/dashboard/index";
 import { THEME } from "../../constants/projectConstants";
 import type { ProjectIssue, ImprovementNote } from "../../types";
+import { normalizeStr, getItemProjectId, getItemDate, type PIRItem } from "../../utils/pir";
 
 import { LogRow } from "../../components/features/report/LogRow";
 import { ProjectSidebar } from "../../components/layouts/ProjectSidebar";
@@ -14,7 +15,7 @@ import { PIRFormModal } from "../../components/modals/PIRFormModal";
 import { ProtectAction } from "../../components/auth/ProtectAction";
 import { useTranslation } from "react-i18next";
 
-const normalizeStr = (str?: string) => str ? str.toLowerCase().replace(/[-_]/g, ' ').trim() : '';
+
 
 export function PostImplementation() {
   const { liveProjects, issues, improvements, loading, addIssue, addImprovement, refresh } = usePIR();
@@ -35,7 +36,7 @@ export function PostImplementation() {
     }
   }, [liveProjects, selectedProject]);
 
-  const handleItemClick = useCallback((item: ProjectIssue | ImprovementNote) => setSelectedItem(item), []);
+  const handleItemClick = useCallback((item: PIRItem) => setSelectedItem(item), []);
 
   const handleUpdateSelectedItemStatus = useCallback((newStatus: string) => {
     setSelectedItem((prev) => prev ? { ...prev, status: newStatus } as ProjectIssue : null);
@@ -51,15 +52,14 @@ export function PostImplementation() {
 
   const filteredList = useMemo(() => {
     if (!selectedProject) return [];
-    const combinedLogs = [...issues, ...improvements] as (ProjectIssue | ImprovementNote)[];
+    const combinedLogs: PIRItem[] = [...issues, ...improvements];
     const q = searchQuery.toLowerCase().trim();
     
     return combinedLogs.filter(logItem => {
-      const itemProjectId = (logItem as any).projectId || (logItem as any).project?.id;
-      if (itemProjectId !== selectedProject.id) return false;
+      if (getItemProjectId(logItem) !== selectedProject.id) return false;
 
-      const itemStatus = normalizeStr('status' in logItem ? logItem.status : '');
-      const itemPriority = normalizeStr('priority' in logItem ? logItem.priority : '');
+      const itemStatus = normalizeStr(logItem.status);
+      const itemPriority = normalizeStr(logItem.priority);
       
       if (activeTab === 'improvements' && logItem.type !== 'improvement') return false;
       if (activeTab !== 'improvements' && logItem.type === 'improvement') return false;
@@ -107,8 +107,8 @@ export function PostImplementation() {
 
       return true;
     }).sort((a, b) => {
-      const dateA = new Date(a.type === 'improvement' ? (a as ImprovementNote).createdDate : (a as ProjectIssue).reportedDate).getTime();
-      const dateB = new Date(b.type === 'improvement' ? (b as ImprovementNote).createdDate : (b as ProjectIssue).reportedDate).getTime();
+      const dateA = new Date(getItemDate(a) ?? 0).getTime();
+      const dateB = new Date(getItemDate(b) ?? 0).getTime();
       return dateB - dateA;
     });
   }, [issues, improvements, priorityFilter, activeTab, selectedProject, searchQuery]);
@@ -121,8 +121,8 @@ export function PostImplementation() {
 
   const projectStats = useMemo(() => {
     if (!selectedProject) return { criticalCount: 0, inProgressCount: 0, openCount: 0, resolvedCount: 0, improvementCount: 0 };
-    const projectIssues = issues.filter(i => (i as any).projectId === selectedProject.id || (i as any).project?.id === selectedProject.id);
-    const projectImprovements = improvements.filter(i => (i as any).projectId === selectedProject.id || (i as any).project?.id === selectedProject.id);
+    const projectIssues = issues.filter(i => getItemProjectId(i) === selectedProject.id);
+    const projectImprovements = improvements.filter(i => getItemProjectId(i) === selectedProject.id);
 
     return {
       criticalCount: projectIssues.filter(issue => normalizeStr(issue.priority) === "critical" && normalizeStr(issue.status) !== 'resolved').length,

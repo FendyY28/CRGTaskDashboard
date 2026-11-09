@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
 import { api } from "../services/api";
-import { SDLC_PHASES } from "../constants/projectConstants";
 import type { Project, ProjectIssue, ImprovementNote } from "../types";
 
 export const usePIR = () => {
@@ -16,17 +15,34 @@ export const usePIR = () => {
         api.get('/project/issue', { signal })
       ]);
 
-      // Filter Proyek LIVE
-      const live = Array.isArray(prj) ? prj.filter((p: Project) => p.currentPhase === SDLC_PHASES.LIVE) : [];
+      // Tampilkan semua project, tanpa terikat fase SDLC tertentu.
+      const allProjects = Array.isArray(prj) ? (prj as Project[]) : [];
       
-      // Gabungkan Improvement dari proyek-proyek live
-      const imps = live.flatMap((p: Project) => (p.improvements || []).map((imp) => ({ 
-        ...imp, projectName: p.name, type: 'improvement' 
-      })));
+      // Improvements arrive nested in their project; issues arrive flat and
+      // without a project name, but both views need it to group and label.
+      const projectNameById = new Map(allProjects.map((p) => [String(p.id), p.name]));
+      const projectNameFor = (projectId?: string) =>
+        projectId ? projectNameById.get(String(projectId)) : undefined;
 
-      setLiveProjects(live);
-      setIssues(Array.isArray(iss) ? iss.map((i: any) => ({ ...i, type: 'issue' })) : []);
-      setImprovements(imps as any);
+      const imps: ImprovementNote[] = allProjects.flatMap((p) =>
+        (p.improvements || []).map((imp) => ({
+          ...imp,
+          projectName: p.name,
+          type: 'improvement' as const,
+        })),
+      );
+
+      setLiveProjects(allProjects);
+      setIssues(
+        Array.isArray(iss)
+          ? (iss as (ProjectIssue & { projectId?: string })[]).map((i) => ({
+              ...i,
+              type: 'issue' as const,
+              projectName: projectNameFor(i.projectId),
+            }))
+          : [],
+      );
+      setImprovements(imps);
     } catch (e) {
       console.error("PIR Load Failed", e);
     } finally {
@@ -40,7 +56,7 @@ export const usePIR = () => {
     return () => controller.abort();
   }, [fetchData]);
 
-  const addIssue = async (data: any) => {
+  const addIssue = async (data: ProjectIssue) => {
     await api.post('/project/issue', data);
     await fetchData();
   };
@@ -55,7 +71,7 @@ export const usePIR = () => {
     await fetchData();
   };
 
-  const addImprovement = async (data: any) => {
+  const addImprovement = async (data: ImprovementNote) => {
     await api.post('/project/improvement', data);
     await fetchData();
   };

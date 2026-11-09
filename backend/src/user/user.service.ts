@@ -57,21 +57,7 @@ export class UserService {
 
     // Email the credentials; a mail failure must not roll back the user.
     try {
-        await this.mailerService.sendMail({
-            to: newUser.email,
-            subject: '👋 Selamat Datang di BSI CRG - Kredensial Akun',
-            html: this.authService['getPremiumTemplate'](
-              newUser.name,
-              `Akun Anda telah berhasil dibuat oleh Administrator. Berikut adalah kredensial login Anda:<br><br>
-               <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: left;">
-                 <b>Email:</b> ${newUser.email}<br>
-                 <b>Password Sementara:</b> <span style="color: #36A39D; font-family: monospace; font-weight: bold;">${rawPassword}</span>
-               </div>`,
-              "http://localhost:5173/login",
-              "Masuk ke Aplikasi",
-              "🛡️ Harap segera ganti password Anda setelah masuk melalui menu Pengaturan Profil."
-            ),
-        });
+        await this.authService.sendWelcomeEmail(newUser.email, newUser.name, rawPassword);
     } catch (error) {
         console.error("Gagal mengirim email welcome:", error);
     }

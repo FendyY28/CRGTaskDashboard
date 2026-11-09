@@ -26,19 +26,19 @@ export function OverviewDashboard() {
   const executeDelete = async () => {
     if (!projectToDeleteId) return;
     setIsDeleting(true);
-    toast.promise(deleteProject(projectToDeleteId), {
-      loading: t('dashboard.toast.deleting'),
-      success: (result) => {
-        if (!result.success) throw new Error(result.message);
-        setProjectToDeleteId(null);
-        setIsDeleting(false);
-        return t('dashboard.toast.deleteSuccess');
-      },
-      error: (err) => {
-        setIsDeleting(false);
-        return err.message || t('dashboard.toast.deleteFail');
+    try {
+      const result = await deleteProject(projectToDeleteId);
+      if (!result.success) {
+        toast.error(result.message || t('dashboard.toast.deleteFail'));
+        return;
       }
-    });
+      setProjectToDeleteId(null);
+      toast.success(t('dashboard.toast.deleteSuccess'));
+    } catch (err) {
+      toast.error((err as Error).message || t('dashboard.toast.deleteFail'));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const { dashboardStats, phaseBreakdown } = useMemo(() => {

@@ -5,7 +5,8 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger, DialogFooter } from "../../../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { API_URL } from "../../../../lib/utils"; 
+import { api } from "../../../services/api";  
+import type { Project } from "../../../types";
 import { useTranslation } from "react-i18next";
 
 // Mengimpor utility functions dan constants
@@ -26,16 +27,8 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
     setStatusMsg({});
     setFormData({ ...INITIAL_FORM, startDate: getToday(), deadline: calcDate(getToday(), 2, 'M'), phaseStartDate: getToday(), phaseDeadline: calcDate(getToday(), 7, 'D') });
     
-    const url = API_URL ? `${API_URL}/project` : 'http://localhost:3000/project';
-    const token = localStorage.getItem("auth_token");
-    fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    })
-      .then(res => res.json())
-      .then((data: any[]) => Array.isArray(data) && setExistingData({
+    api.get<Project[]>('/project')
+      .then((data) => Array.isArray(data) && setExistingData({
         names: data.map(p => p.name.toLowerCase()),
         codes: data.map(p => p.id.toLowerCase())
       }))
@@ -76,8 +69,6 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
     setIsLoading(true); setStatusMsg({});
 
     try {
-      const url = API_URL ? `${API_URL}/project` : 'http://localhost:3000/project';
-
       // Pelaku dicatat backend dari JWT; client tidak mengirim identitas.
       const payload = {
         ...formData,
@@ -90,23 +81,9 @@ export function AddProjectSheet({ onProjectAdded }: { onProjectAdded?: () => voi
         code: formData.code.trim() === "" ? undefined : formData.code,
       };
 
-      const token = localStorage.getItem("auth_token");
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(payload)
-      });
+      await api.post('/project', payload);
 
-      if (!res.ok) {
-        let message = "saveFailed";
-        try { message = (await res.json())?.message || message; } catch {}
-        throw new Error(message);
-      }
-
-      setStatusMsg({ success: "created" }); 
+      setStatusMsg({ success: "created" });  
       onProjectAdded?.();
       setTimeout(() => setOpen(false), 1200);
     } catch (err: any) {

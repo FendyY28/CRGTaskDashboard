@@ -37,7 +37,7 @@ const LogItem = memo(({ log, isLast }: { log: any; isLast: boolean }) => {
         </div>
 
         <span className="inline-block px-1.5 py-0.5 rounded text-label font-semibold bg-[#38A79C]/10 text-[#26736B] mb-1.5 border border-[#38A79C]/20 uppercase tracking-wider">
-          {t(`audit.actions.${log.action}`, log.action ? log.action.replace(/_/g, " ") : "UPDATE")}
+          {t(`audit.actions.${log.action}`, { defaultValue: log.action ? log.action.replace(/_/g, " ") : "UPDATE" }) as string}
         </span>
 
         <p className="text-meta text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 leading-relaxed">

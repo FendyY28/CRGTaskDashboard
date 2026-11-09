@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { WeeklyProgress } from "../app/types";
+import { getAuthToken, decodeJwtPayload } from "../app/utils/auth";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -59,40 +60,11 @@ export const weekRangeFrom = (anchor: string): string => {
 export const capitalize = (s: string) =>
   s ? s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
 
-interface TokenPayload {
-  role?: string;
-}
-
-/**
- * Decode the payload segment of a JWT.
- *
- * Returns `null` for a missing/mock token, a malformed token, or invalid JSON,
- * so callers can apply their own fallback instead of duplicating the decode.
- */
-const decodeTokenPayload = (token: string | null): TokenPayload | null => {
-  if (!token || token === "mock-jwt-token") return null;
-
-  const parts = token.split('.');
-  if (parts.length !== 3) return null;
-
-  try {
-    // Base64url -> Base64, then percent-decode to handle UTF-8 payloads.
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c =>
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-    ).join(''));
-
-    return JSON.parse(jsonPayload) as TokenPayload;
-  } catch {
-    return null;
-  }
-};
-
-// Mengambil Role dari JWT Token
+// Mengambil Role dari JWT Token (decode-nya dipakai bersama dengan utils/auth).
 export const getUserRoleFromToken = () => {
   const backupRole = localStorage.getItem('user_role'); // Disimpan saat login
-  const payload = decodeTokenPayload(localStorage.getItem('auth_token'));
+  const payload = decodeJwtPayload(getAuthToken());
 
   // Kembalikan role dari token, atau fallback ke localStorage
-  return payload?.role || backupRole || null;
+  return (typeof payload?.role === 'string' ? payload.role : null) || backupRole || null;
 };

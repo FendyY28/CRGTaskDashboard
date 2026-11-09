@@ -1,5 +1,4 @@
 import { PlayCircle, FolderKanban } from "lucide-react";
-import { THEME } from "../../constants/projectConstants";
 
 interface ProjectSidebarProps {
   title: string;
