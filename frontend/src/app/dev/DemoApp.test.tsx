@@ -1,15 +1,31 @@
 import { describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 
-import DemoApp from "./DemoApp";
-import { SDLC_PHASES } from "../constants/projectConstants";
+// jsdom under this Node version exposes no storage implementation; DemoApp
+// writes auth tokens to localStorage on import, so stub it BEFORE DemoApp
+// loads. `vi.hoisted` lifts this above the static imports; DemoApp itself is
+// imported dynamically afterwards.
+const { localStorageStub } = vi.hoisted(() => {
+  const store = new Map<string, string>();
+  return {
+    localStorageStub: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+      clear: () => void store.clear(),
+    },
+  };
+});
+vi.stubGlobal("localStorage", localStorageStub);
 
-const consoleProps: Array<{ phase: string; ns: string }> = [];
+const { default: DemoApp } = await import("./DemoApp");
 
-vi.mock("../components/features/testing/TestingConsole", () => ({
-  TestingConsole: ({ phase, ns }: { phase: string; ns: string }) => {
-    consoleProps.push({ phase, ns });
-    return <div data-testid="testing-console" />;
+let sitRendered = false;
+
+vi.mock("../components/features/sit/SitProcessConsole", () => ({
+  SitProcessConsole: () => {
+    sitRendered = true;
+    return <div data-testid="sit-process-console" />;
   },
 }));
 
@@ -23,15 +39,13 @@ vi.mock("sonner", () => ({
 }));
 
 describe("DemoApp /sit route", () => {
-  it("renders TestingConsole with the SIT phase and sit namespace", () => {
-    consoleProps.length = 0;
+  it("renders the dedicated SitProcessConsole", async () => {
     window.history.pushState({}, "", "/sit");
 
     render(<DemoApp />);
+    // SitProcessConsole is lazy-loaded; flush the suspense resolution.
+    await act(async () => {});
 
-    expect(consoleProps).toContainEqual({
-      phase: SDLC_PHASES.SIT,
-      ns: "sit",
-    });
+    expect(sitRendered).toBe(true);
   });
 });

@@ -137,4 +137,15 @@ export const api = {
       method: "DELETE",
       body: JSON.stringify(body),
     }),
+
+  put: <T = unknown>(
+    endpoint: string,
+    body: unknown = {},
+    options?: RequestInit,
+  ) =>
+    fetchWrapper<T>(endpoint, {
+      ...options,
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
 };

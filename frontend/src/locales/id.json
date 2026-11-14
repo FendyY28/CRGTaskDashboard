@@ -405,6 +405,48 @@
     }
   },
   "sit": {
+    "page": {
+      "loading": "Menyiapkan Alur SIT...",
+      "title": "Pipeline Proses SIT",
+      "description": "Pantau proses Pengujian Integrasi Sistem untuk setiap proyek: langkah standar bersifat tetap, langkah tambahan dapat ditambahkan per proyek.",
+      "sidebarTitle": "Proyek",
+      "noProjects": "Belum ada proyek tersedia.",
+      "pipelineLabel": "Pipeline Integrasi",
+      "done": "Selesai",
+      "failed": "Gagal",
+      "pending": "Tertunda",
+      "completed": "Selesai",
+      "processesTitle": "Langkah Proses",
+      "addProcess": "Tambah Proses",
+      "newProcessPlaceholder": "Nama proses kustom...",
+      "cancel": "Batal",
+      "dynamicBadge": "Dinamis",
+      "fixedBadge": "Tetap",
+      "noProcesses": "Belum ada langkah proses.",
+      "reset": "Atur ulang ke tertunda",
+      "remove": "Hapus proses",
+      "hint": "Tips: klik centang untuk menandai langkah Selesai, X untuk menandai Gagal, dan panah untuk mengatur ulang.",
+      "emptyState": "Pilih proyek untuk melihat pipeline SIT-nya.",
+      "status": {
+        "pending": "Tertunda",
+        "done": "Selesai",
+        "failed": "Gagal"
+      },
+      "fixed": {
+        "envSetup": "Penyiapan Lingkungan & Deploy Build",
+        "dataMigration": "Verifikasi Migrasi & Sinkronisasi Data",
+        "integrationCheck": "Pemeriksaan Integrasi Antar-Modul",
+        "endToEnd": "Validasi Alur End-to-End",
+        "regression": "Pemeriksaan Sanity Regresi",
+        "signOff": "Sign-off SIT & Serah Terima ke UAT"
+      },
+      "toast": {
+        "added": "Proses kustom ditambahkan.",
+        "removed": "Proses kustom dihapus.",
+        "duplicate": "Proses dengan nama tersebut sudah ada.",
+        "saveFailed": "Gagal menyimpan pipeline SIT."
+      }
+    },
     "loading": "Menyiapkan Konsol SIT...",
     "title": "Konsol Eksekusi SIT",
     "description": "Kelola dan eksekusi Pengujian Integrasi Sistem (SIT) untuk proyek aktif.",
@@ -734,7 +776,10 @@
       "DELETE_TASK": "Hapus Tugas",
       "CREATE_TEST_CASE": "Buat Kasus Uji",
       "UPDATE_TEST_CASE": "Perbarui Kasus Uji",
-      "TAKEOUT_TEST_CASE": "Keluarkan Kasus Uji"
+      "TAKEOUT_TEST_CASE": "Keluarkan Kasus Uji",
+      "ADD_SIT_PROCESS": "Tambah Proses SIT",
+      "UPDATE_SIT_PROCESS": "Perbarui Proses SIT",
+      "DELETE_SIT_PROCESS": "Hapus Proses SIT"
     },
     "activityLog": {
       "title": "Log Aktivitas",

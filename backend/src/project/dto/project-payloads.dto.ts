@@ -271,6 +271,83 @@ export class UpdateTestCaseDto {
 // Cycle & phase notes
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// SIT process pipeline
+// ---------------------------------------------------------------------------
+
+export const SIT_PROCESS_STATUSES = ['pending', 'done', 'failed'] as const;
+
+export class CreateSitProcessDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Project wajib dipilih.' })
+  @MaxLength(64)
+  projectId!: string;
+
+  /** Locale key for a fixed step; omit/empty for a custom process. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  key?: string;
+
+  /** Display name — required for custom processes, ignored for fixed ones. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  name?: string;
+
+  @IsIn(SIT_PROCESS_STATUSES, { message: 'Status proses SIT tidak valid.' })
+  status!: string;
+
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  order!: number;
+}
+
+export class UpdateSitProcessDto {
+  @IsIn(SIT_PROCESS_STATUSES, { message: 'Status proses SIT tidak valid.' })
+  status!: string;
+}
+
+export class ReplaceSitProcessesDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Project wajib dipilih.' })
+  @MaxLength(64)
+  projectId!: string;
+
+  @IsArray()
+  @ArrayMaxSize(200, { message: 'Maksimal 200 proses SIT.' })
+  @ValidateNested({ each: true })
+  @Type(() => SitProcessInputDto)
+  processes!: SitProcessInputDto[];
+}
+
+export class SitProcessInputDto {
+  /** Stable id — "fixed:<key>" or a client-generated dyn id. */
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  id!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  key?: string | null;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  name!: string;
+
+  @IsIn(SIT_PROCESS_STATUSES, { message: 'Status proses SIT tidak valid.' })
+  status!: string;
+
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  order!: number;
+}
+
 export class NextCycleDto {
   @IsOptional()
   @IsString()

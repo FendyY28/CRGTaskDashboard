@@ -15,187 +15,208 @@ enum Role {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
-  name              String
-  password          String
-  role              String    @default("OFFICER")
-  
-  isVerified        Boolean   @default(false)
+  id       String @id @default(uuid())
+  email    String @unique
+  name     String
+  password String
+  role     String @default("OFFICER")
+
+  isVerified        Boolean @default(false)
   verificationToken String?
-  
-  verificationTokenExpiresAt DateTime? 
-  
-  passwordChangedAt          DateTime  @default(now())
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  auditLogs AuditLog[]
+
+  verificationTokenExpiresAt DateTime?
+
+  passwordChangedAt DateTime   @default(now())
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  auditLogs         AuditLog[]
 }
 
 model AuditLog {
   id        String   @id @default(uuid())
   action    String
   details   String
-  userName  String  
+  userName  String
   userId    String
   projectId String?
   createdAt DateTime @default(now())
 
   // Relasi ke User & Project
-  user      User     @relation(fields: [userId], references: [id])
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 }
 
 // PROJECT CORE
 model Project {
-  id               String   @id // Contoh: PRJ-001
-  name             String
-  
+  id   String @id // Contoh: PRJ-001
+  name String
+
   // Posisi Fase Saat Ini (Global Pointer)
-  currentPhase     String   // Requirement, Development, SIT, dll
-  
+  currentPhase String // Requirement, Development, SIT, dll
+
   // Progress Global (0-100)
-  overallProgress  Int      @default(0)
-  
+  overallProgress Int @default(0)
+
   // Status Global Project (Ditampilkan di Header Card)
-  status           String   // on-track, at-risk, overdue, completed
-  
+  status String // on-track, at-risk, overdue, completed
+
   pic              String
   projectStartDate DateTime
   projectDeadline  DateTime
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  cycle            Int      @default(1)
+  cycle Int @default(1)
 
   // Relasi
-  sdlcPhases       SDLCPhase[]
-  weeklyProgress   WeeklyProgress[]
-  testCases        TestCase[]
-  issues           Issue[]
-  improvements     Improvement[]
-  auditLogs        AuditLog[]
+  sdlcPhases     SDLCPhase[]
+  weeklyProgress WeeklyProgress[]
+  testCases      TestCase[]
+  sitProcesses   SitProcess[]
+  issues         Issue[]
+  improvements   Improvement[]
+  auditLogs      AuditLog[]
 }
 
 // TIMELINE & PROGRESS (GANTT CHART DATA)
 model SDLCPhase {
-  id        Int       @id @default(autoincrement())
-  phaseName String    // Requirement, TF Meeting, Development, SIT, UAT, Live
-  
+  id        Int    @id @default(autoincrement())
+  phaseName String // Requirement, TF Meeting, Development, SIT, UAT, Live
+
   // Tanggal Spesifik per Fase
-  startDate DateTime? 
+  startDate DateTime?
   deadline  DateTime?
 
-  status    String    @default("not-started")
+  status String @default("not-started")
 
-  progress  Int       @default(0)
-  
+  progress Int @default(0)
+
   // Penanda Fase ini milik Cycle keberapa
-  cycle     Int       @default(1)
+  cycle Int @default(1)
 
   projectId String
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // Catatan / Progress Notes per Fase
-  notes     PhaseNote[]
+  notes PhaseNote[]
 }
 
 // CATATAN PROGRES PER FASE SDLC
 model PhaseNote {
-  id        Int       @id @default(autoincrement())
-  content   String    @db.Text
-  createdBy String    // Nama user yang menulis
-  createdAt DateTime  @default(now())
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdBy String // Nama user yang menulis
+  createdAt DateTime @default(now())
 
-  phaseId   Int
-  phase     SDLCPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  phaseId Int
+  phase   SDLCPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
 }
 
 // WEEKLY LOGS
 model WeeklyProgress {
-  id          Int      @id @default(autoincrement())
-  weekRange   String   // Contoh: "Week 1 (Jan 27)"
-  title       String   @default("") // Judul log mingguan, mis. "Sprint 3 - Payment"
-  progress    Int      // Progress Mingguan (0-100)
-  completed   Int      // Jumlah Task Selesai
-  total       Int      // Total Task
+  id        Int    @id @default(autoincrement())
+  weekRange String // Contoh: "Week 1 (Jan 27)"
+  title     String @default("") // Judul log mingguan, mis. "Sprint 3 - Payment"
+  progress  Int // Progress Mingguan (0-100)
+  completed Int // Jumlah Task Selesai
+  total     Int // Total Task
 
   projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks     Task[]
 }
 
 model Task {
-  id               Int            @id @default(autoincrement())
-  taskId           String         @unique // TSK-001 — unique agar ID tabrakan terdeteksi (P2002) dan di-retry
-  taskName         String
-  description      String         @db.Text // Penjelasan pekerjaan task ini, wajib diisi
-  status           String         // completed, in-progress
-  completedDate    DateTime?
-  completedBy      String?
-  
+  id            Int       @id @default(autoincrement())
+  taskId        String    @unique // TSK-001 — unique agar ID tabrakan terdeteksi (P2002) dan di-retry
+  taskName      String
+  description   String    @db.Text // Penjelasan pekerjaan task ini, wajib diisi
+  status        String // completed, in-progress
+  completedDate DateTime?
+  completedBy   String?
+
   weeklyProgressId Int
   weeklyProgress   WeeklyProgress @relation(fields: [weeklyProgressId], references: [id], onDelete: Cascade)
 }
 
 model TestCase {
-  id        String   @id @default(uuid())
-  title     String
-  type      String   // "positive" | "negative"
-  status    String   @default("pending") // "pending" | "pass" | "fail"
-  notes     String?  @db.Text
-  
-  updatedBy String?  
+  id     String  @id @default(uuid())
+  title  String
+  type   String // "positive" | "negative"
+  status String  @default("pending") // "pending" | "pass" | "fail"
+  notes  String? @db.Text
 
-  isDeleted Boolean  @default(false)
-  deletedBy String?  // Siapa yang menghapus
-  deletedAt DateTime? // Kapan dihapus
-  takeoutReason String?  @db.Text
-  
+  updatedBy String?
+
+  isDeleted     Boolean   @default(false)
+  deletedBy     String? // Siapa yang menghapus
+  deletedAt     DateTime? // Kapan dihapus
+  takeoutReason String?   @db.Text
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  defect    Defect?
+  defect Defect?
 }
 
 model Defect {
-  id          Int      @id @default(autoincrement())
-  description String   @db.Text
-  severity    String   // Low, Medium, High, Critical
-  status      String   @default("open") // open, resolved
-  
-  testCaseId  String   @unique
-  testCase    TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  id          Int    @id @default(autoincrement())
+  description String @db.Text
+  severity    String // Low, Medium, High, Critical
+  status      String @default("open") // open, resolved
+
+  testCaseId String   @unique
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
 }
 
 model Issue {
   id           Int      @id @default(autoincrement())
   issueId      String
-  title        String   // Sesuai dengan form.issue.title
-  priority     String   // Wajib diisi, tidak boleh kosong/null
+  title        String // Sesuai dengan form.issue.title
+  priority     String // Wajib diisi, tidak boleh kosong/null
   description  String   @db.Text
-  impactArea   String   // Di-handle oleh backend (default: "General")
-  reportedBy   String   // Di-handle oleh frontend/backend
+  impactArea   String // Di-handle oleh backend (default: "General")
+  reportedBy   String // Di-handle oleh frontend/backend
   reportedDate DateTime @default(now())
   status       String   @default("open")
-  projectId    String   
+  projectId    String
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Improvement {
   id              Int      @id @default(autoincrement())
-  noteId          String   // IMP-001
+  noteId          String // IMP-001
   title           String?
   reviewer        String
   developer       String
   feedback        String   @db.Text
   recommendations String   @db.Text
-  priority        String   // high, medium, low
+  priority        String // high, medium, low
   createdDate     DateTime @default(now())
-  
-  projectId       String
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// SIT PROCESS PIPELINE (SIT page)
+// Langkah proses SIT per project. `key` kosong berarti proses dinamis (kustom);
+// key terisi berarti langkah standar yang diterjemahkan lewat locale.
+model SitProcess {
+  id     String  @id // ID deterministik: "fixed:<key>" atau "dyn-<timestamp>"
+  key    String? // Locale key langkah standar, null = proses dinamis
+  name   String // Nama tampilan proses dinamis (untuk key kosong)
+  status String  @default("pending") // pending | done | failed
+  order  Int     @default(0) // Urutan tampil di pipeline
+
+  createdBy String // Nama user yang menambahkan (dinamis)
+  updatedBy String? // User terakhir yang mengubah status
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

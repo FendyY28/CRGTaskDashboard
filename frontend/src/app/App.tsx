@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 import { AdminRoute } from "./components/routes/AdminRoute";
 import { TestingConsole } from "./components/features/testing/TestingConsole";
+import { SitProcessConsole } from "./components/features/sit/SitProcessConsole";
 import { SDLC_PHASES } from "./constants/projectConstants";
 
 // LAZY LOADING HALAMAN AUTH
@@ -85,7 +86,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<OverviewDashboard />} />
                 <Route path="/timeline" element={<TaskTimeline />} />
-                <Route path="/sit" element={<TestingConsole phase={SDLC_PHASES.SIT} ns="sit" />} />
+                <Route path="/sit" element={<SitProcessConsole />} />
                 <Route path="/testing" element={<TestingStatus />} />
                 <Route path="/post-implementation" element={<PostImplementation />} />
                 <Route path="/analytics" element={<Analytics />} />

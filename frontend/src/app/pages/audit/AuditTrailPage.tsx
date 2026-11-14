@@ -56,6 +56,9 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; border: string }
   DELETE_TASK: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
   CREATE_TEST_CASE: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
   UPDATE_TEST_CASE: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  ADD_SIT_PROCESS: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  UPDATE_SIT_PROCESS: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  DELETE_SIT_PROCESS: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
   TAKEOUT_TEST_CASE: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
 };
 

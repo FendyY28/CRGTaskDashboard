@@ -5,6 +5,8 @@ import {
   Post, 
   Body, 
   Patch, 
+  Put,
+  Query,
   Delete, 
   BadRequestException, 
   Request, 
@@ -23,10 +25,13 @@ import {
   AddTaskDto,
   CreateImprovementDto,
   CreateIssueDto,
+  CreateSitProcessDto,
   CreateTestCaseDto,
   NextCycleDto,
+  ReplaceSitProcessesDto,
   UpdateIssueDto,
   UpdateLogDto,
+  UpdateSitProcessDto,
   UpdateTestCaseDto,
 } from './dto/project-payloads.dto';
 
@@ -198,6 +203,52 @@ createTestCase(@Body() data: CreateTestCaseDto, @Request() req) {
   deleteTestCase(@Param('testCaseId') testCaseId: string, @Request() req) {
     const userId = this.getUserId(req);
     return this.projectService.deleteTestCase(testCaseId, userId);
+  }
+
+  // 4b. SIT PROCESS PIPELINE ENDPOINTS
+
+  /**
+   * Identitas pelaku selalu dari JWT, sama seperti endpoint lain: audit trail
+   * SIT tidak bisa dipalsukan oleh client.
+   */
+  @Get(':id/sit-processes')
+  @UseGuards(JwtAuthGuard)
+  getSitProcesses(@Param('id') projectId: string) {
+    return this.projectService.getSitProcesses(projectId);
+  }
+
+  @Post('sit-processes')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  createSitProcess(@Body() data: CreateSitProcessDto, @Request() req) {
+    const userId = this.getUserId(req);
+    return this.projectService.createSitProcess(data, userId);
+  }
+
+  @Patch('sit-processes/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  updateSitProcess(@Param('id') id: string, @Body() data: UpdateSitProcessDto, @Query('projectId') projectId: string, @Request() req) {
+    if (!projectId) throw new BadRequestException('Query projectId wajib diisi.');
+    const userId = this.getUserId(req);
+    return this.projectService.updateSitProcess(id, data, projectId, userId);
+  }
+
+  @Delete('sit-processes/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  deleteSitProcess(@Param('id') id: string, @Query('projectId') projectId: string, @Request() req) {
+    if (!projectId) throw new BadRequestException('Query projectId wajib diisi.');
+    const userId = this.getUserId(req);
+    return this.projectService.deleteSitProcess(id, projectId, userId);
+  }
+
+  @Put('sit-processes')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'OFFICER')
+  replaceSitProcesses(@Body() data: ReplaceSitProcessesDto, @Request() req) {
+    const userId = this.getUserId(req);
+    return this.projectService.replaceSitProcesses(data, userId);
   }
 
   // 5. PARAMETERIZED ROUTES

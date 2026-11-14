@@ -406,6 +406,48 @@
     }
   },
   "sit": {
+    "page": {
+      "loading": "Preparing SIT Pipeline...",
+      "title": "SIT Process Pipeline",
+      "description": "Track the System Integration Testing process for each project: standard steps are fixed, extra steps can be added per project.",
+      "sidebarTitle": "Projects",
+      "noProjects": "No projects available.",
+      "pipelineLabel": "Integration Pipeline",
+      "done": "Done",
+      "failed": "Failed",
+      "pending": "Pending",
+      "completed": "Complete",
+      "processesTitle": "Process Steps",
+      "addProcess": "Add Process",
+      "newProcessPlaceholder": "Custom process name...",
+      "cancel": "Cancel",
+      "dynamicBadge": "Dynamic",
+      "fixedBadge": "Fixed",
+      "noProcesses": "No process steps defined yet.",
+      "reset": "Reset to pending",
+      "remove": "Remove process",
+      "hint": "Tip: click the check to mark a step Done, X to mark it Failed, and the arrow to reset it.",
+      "emptyState": "Select a project to view its SIT pipeline.",
+      "status": {
+        "pending": "Pending",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "fixed": {
+        "envSetup": "Environment Setup & Build Deployment",
+        "dataMigration": "Data Migration & Sync Verification",
+        "integrationCheck": "Cross-Module Integration Check",
+        "endToEnd": "End-to-End Flow Validation",
+        "regression": "Regression Sanity Check",
+        "signOff": "SIT Sign-off & Handover to UAT"
+      },
+      "toast": {
+        "added": "Custom process added.",
+        "removed": "Custom process removed.",
+        "duplicate": "A process with that name already exists.",
+        "saveFailed": "Failed to save the SIT pipeline."
+      }
+    },
     "loading": "Initializing SIT Console...",
     "title": "SIT Execution Console",
     "description": "Manage and execute System Integration Testing for active projects.",
@@ -735,7 +777,10 @@
       "DELETE_TASK": "Delete Task",
       "CREATE_TEST_CASE": "Create Test Case",
       "UPDATE_TEST_CASE": "Update Test Case",
-      "TAKEOUT_TEST_CASE": "Takeout Test Case"
+      "TAKEOUT_TEST_CASE": "Takeout Test Case",
+      "ADD_SIT_PROCESS": "Add SIT Process",
+      "UPDATE_SIT_PROCESS": "Update SIT Process",
+      "DELETE_SIT_PROCESS": "Delete SIT Process"
     },
     "activityLog": {
       "title": "Activity Log",

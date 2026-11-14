@@ -23,7 +23,6 @@ import { Loader2 } from "lucide-react";
 import { Header } from "../components/layouts/Header";
 import { Footer } from "../components/layouts/Footer";
 import { PasswordWarningModal } from "../components/modals/PasswordWarningModal";
-import { TestingConsole } from "../components/features/testing/TestingConsole";
 import { SDLC_PHASES } from "../constants/projectConstants";
 
 const DEMO_ROLE = "HEAD";
@@ -86,6 +85,11 @@ const TestingStatus = lazy(() =>
     default: m.TestingStatus,
   })),
 );
+const SitProcessConsole = lazy(() =>
+  import("../components/features/sit/SitProcessConsole").then((m) => ({
+    default: m.SitProcessConsole,
+  })),
+);
 
 const PostImplementation = lazy(() =>
   import("../pages/monitor/PostImplementation").then((m) => ({
@@ -146,7 +150,7 @@ export default function DemoApp() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<OverviewDashboard />} />
             <Route path="/timeline" element={<TaskTimeline />} />
-            <Route path="/sit" element={<TestingConsole phase={SDLC_PHASES.SIT} ns="sit" />} />
+            <Route path="/sit" element={<SitProcessConsole />} />
             <Route path="/testing" element={<TestingStatus />} />
             <Route
               path="/post-implementation"

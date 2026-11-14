@@ -9,9 +9,12 @@ import {
   AddLogDto,
   CreateImprovementDto,
   CreateIssueDto,
+  CreateSitProcessDto,
   CreateTestCaseDto,
+  ReplaceSitProcessesDto,
   UpdateIssueDto,
   UpdateLogDto,
+  UpdateSitProcessDto,
   UpdateTestCaseDto,
 } from './dto/project-payloads.dto';
 
@@ -746,6 +749,131 @@ export class ProjectService {
   // ==========================================================
   async getTestingStatus() { return this.prisma.project.findMany({ select: { id: true, name: true, currentPhase: true, testCases: { include: { defect: true } } } }); }
   async getTestCases(projectId: string) { return this.prisma.testCase.findMany({ where: { projectId }, include: { defect: true }, orderBy: { createdAt: 'desc' } }); }
+
+  // ==========================================================
+  // 8. SIT PROCESS PIPELINE
+  // Semua perubahan status dicatat ke Audit Log agar jejak
+  // eksekusi SIT ikut tampil di halaman Audit Trail.
+  // ==========================================================
+
+  async getSitProcesses(projectId: string) {
+    return this.prisma.sitProcess.findMany({
+      where: { projectId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
+  async createSitProcess(data: CreateSitProcessDto, userId: string) {
+    if (!data.key && !data.name?.trim()) {
+      throw new BadRequestException('Nama proses dinamis wajib diisi.');
+    }
+
+    const actorName = await this.resolveUserName(userId);
+    const id = data.key ? `fixed:${data.key}` : `dyn-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const displayName = data.key ? data.key : data.name!.trim();
+
+    const process = await this.prisma.sitProcess.create({
+      data: {
+        id,
+        key: data.key || null,
+        name: displayName,
+        status: data.status,
+        order: data.order,
+        createdBy: actorName,
+        updatedBy: actorName,
+        projectId: data.projectId,
+      },
+    });
+
+    await this.auditService.log(
+      userId,
+      "ADD_SIT_PROCESS",
+      `Menambahkan proses SIT "${displayName}"`,
+      data.projectId,
+    );
+    return process;
+  }
+
+  async updateSitProcess(id: string, data: UpdateSitProcessDto, projectId: string, userId: string) {
+    const actorName = await this.resolveUserName(userId);
+    const existing = await this.prisma.sitProcess.findFirst({ where: { id, projectId } });
+    if (!existing) throw new NotFoundException('Proses SIT tidak ditemukan.');
+
+    const process = await this.prisma.sitProcess.update({
+      where: { id },
+      data: { status: data.status, updatedBy: actorName },
+    });
+
+    await this.auditService.log(
+      userId,
+      "UPDATE_SIT_PROCESS",
+      `Proses SIT "${existing.name}" -> ${data.status}`,
+      projectId,
+    );
+    return process;
+  }
+
+  async deleteSitProcess(id: string, projectId: string, userId: string) {
+    const existing = await this.prisma.sitProcess.findFirst({ where: { id, projectId } });
+    if (!existing) throw new NotFoundException('Proses SIT tidak ditemukan.');
+    if (existing.key) {
+      throw new BadRequestException('Proses standar tidak dapat dihapus.');
+    }
+
+    await this.prisma.sitProcess.delete({ where: { id } });
+    await this.auditService.log(
+      userId,
+      "DELETE_SIT_PROCESS",
+      `Menghapus proses SIT "${existing.name}"`,
+      projectId,
+    );
+    return { status: 'deleted' };
+  }
+
+  /**
+   * Full-state sync used when the user (de)selects statuses or reorders the
+   * pipeline locally: replaces the stored set with what the client holds and
+   * writes ONE audit entry summarising every status transition.
+   */
+  async replaceSitProcesses(data: ReplaceSitProcessesDto, userId: string) {
+    const actorName = await this.resolveUserName(userId);
+    const projectId = data.projectId;
+
+    const previous = await this.prisma.sitProcess.findMany({ where: { projectId } });
+    const prevStatusById = new Map(previous.map((p) => [p.id, p.status]));
+
+    await this.prisma.$transaction([
+      this.prisma.sitProcess.deleteMany({ where: { projectId } }),
+      this.prisma.sitProcess.createMany({
+        data: data.processes.map((p) => ({
+          id: p.id,
+          key: p.key || null,
+          name: p.name,
+          status: p.status,
+          order: p.order,
+          createdBy: actorName,
+          updatedBy: prevStatusById.get(p.id) !== p.status ? actorName : undefined,
+          projectId,
+        })),
+      }),
+    ]);
+
+    const transitions = data.processes
+      .filter((p) => prevStatusById.get(p.id) !== undefined && prevStatusById.get(p.id) !== p.status)
+      .map((p) => `"${p.name}" ${prevStatusById.get(p.id)} -> ${p.status}`);
+    const added = data.processes.filter((p) => !prevStatusById.has(p.id)).map((p) => `"${p.name}"`);
+    const removed = previous.filter((p) => !data.processes.some((n) => n.id === p.id)).map((p) => `"${p.name}"`);
+
+    const parts: string[] = [];
+    if (added.length) parts.push(`Menambahkan proses SIT: ${added.join(', ')}`);
+    if (removed.length) parts.push(`Menghapus proses SIT: ${removed.join(', ')}`);
+    if (transitions.length) parts.push(`Update proses SIT: ${transitions.join('; ')}`);
+    if (parts.length) {
+      await this.auditService.log(userId, "UPDATE_SIT_PROCESS", parts.join(' | '), projectId);
+    }
+
+    return this.getSitProcesses(projectId);
+  }
 
   // CREATE dengan pencarian User yang lebih standar
   async createTestCase(data: CreateTestCaseDto, userId: string) {
