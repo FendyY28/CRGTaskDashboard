@@ -36,6 +36,8 @@ const backendEnvPath = join(root, 'backend', '.env');
 const envRaw = existsSync(backendEnvPath) ? readFileSync(backendEnvPath, 'utf8') : '';
 const hasPlaceholders =
   envRaw.includes('your_password') || envRaw.includes('replace-with-a-long-random-secret');
+const hasMailPlaceholders =
+  envRaw.includes('your_email@gmail.com') || envRaw.includes('your_gmail_app_password');
 
 if (hasPlaceholders) {
   console.warn(
@@ -53,6 +55,18 @@ if (hasPlaceholders) {
 // 2. Dependencies ------------------------------------------------------------
 run(npm, ['install', '--prefix', 'backend']);
 run(npm, ['install', '--prefix', 'frontend']);
+
+if (hasMailPlaceholders) {
+  console.warn(
+    [
+      '',
+      '[!] MAIL_USER / MAIL_PASS masih nilai contoh dari template.',
+      '    Untuk lokal ini tidak masalah: e-mail (OTP, password sementara, link',
+      '    verifikasi) akan dicetak di console backend, bukan dikirim.',
+      '',
+    ].join('\n'),
+  );
+}
 
 // 3. Database ----------------------------------------------------------------
 // Skipped when the credentials are still placeholders, otherwise Prisma only

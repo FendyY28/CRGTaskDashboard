@@ -78,6 +78,33 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
+  /**
+   * True when SMTP is not configured (MAIL_USER/MAIL_PASS empty or still the
+   * .env.example placeholders). Emails are then logged to the console instead
+   * of being sent, so local dev works without a Gmail app password.
+   */
+  private isMailConfigured(): boolean {
+    const user = process.env.MAIL_USER ?? '';
+    const pass = process.env.MAIL_PASS ?? '';
+    if (!user || !pass) return false;
+    return !user.includes('your_email') && !pass.includes('your_gmail_app_password');
+  }
+
+  /** Sends a mail, or logs it when SMTP is not configured. */
+  private async deliverMail(payload: { to: string; subject: string; html?: string; text?: string }) {
+    if (!this.isMailConfigured()) {
+      console.warn(
+        `[MAIL] SMTP belum dikonfigurasi (MAIL_USER/MAIL_PASS kosong) - email tidak dikirim.\n` +
+          `       to      : ${payload.to}\n` +
+          `       subject : ${payload.subject}\n` +
+          `       body    : ${payload.text ?? String(payload.html ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}`,
+      );
+      return;
+    }
+
+    await this.mailerService.sendMail(payload);
+  }
+
   /** Base URL frontend untuk link di email (fallback ke localhost untuk dev). */
   private getFrontendUrl(): string {
     return (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
@@ -201,9 +228,10 @@ export class AuthService {
       data: { verificationToken: otp, verificationTokenExpiresAt: otpExpires },
     });
 
-    await this.mailerService.sendMail({
+    await this.deliverMail({
       to: user.email,
       subject,
+      text: `Kode OTP Anda: ${otp} (berlaku ${expiryMinutes} menit)`,
       html: this.getPremiumTemplate({
         heading,
         name: user.name,
@@ -315,9 +343,10 @@ export class AuthService {
     const newRawPassword = this.generateRandomPassword(10);
     await this.setNewPassword(user.id, user.email, user.name, newRawPassword);
 
-    await this.mailerService.sendMail({
+    await this.deliverMail({
       to: user.email,
       subject: 'Kredensial Baru Akun BSI CRG',
+      text: `Password sementara Anda: ${newRawPassword}`,
       html: this.getPremiumTemplate({
         heading: 'Kredensial Baru Akun Anda',
         name: user.name,
@@ -371,7 +400,8 @@ export class AuthService {
   }
 
   public async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
-    await this.mailerService.sendMail({
+    await this.deliverMail({
+      text: `Aktifkan akun Anda: ${link}`,
       to: to,
       subject: subject,
       html: this.getPremiumTemplate({
@@ -397,7 +427,8 @@ export class AuthService {
    * temporary password using the same branded shell as the other emails.
    */
   public async sendWelcomeEmail(to: string, name: string, temporaryPassword: string) {
-    await this.mailerService.sendMail({
+    await this.deliverMail({
+      text: `Password sementara Anda: ${temporaryPassword}`,
       to,
       subject: 'Selamat Datang di BSI CRG - Kredensial Akun',
       html: this.getPremiumTemplate({
@@ -422,7 +453,8 @@ export class AuthService {
 
   public async sendPasswordChangedNotification(to: string, name: string) {
     const dateStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-    await this.mailerService.sendMail({
+    await this.deliverMail({
+      text: `Password akun ${to} berhasil diubah pada ${dateStr} WIB.`,
       to: to,
       subject: 'Notifikasi Keamanan: Password Berhasil Diubah',
       html: this.getPremiumTemplate({

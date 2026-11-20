@@ -1,0 +1,49 @@
+name: CI
+
+# Proves the documented setup works from a clean checkout:
+# backend + frontend unit tests, the production build, and the static demo build.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    name: Tests & build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npm install --prefix backend --no-audit --no-fund
+          npm install --prefix frontend --no-audit --no-fund
+
+      - name: Unit tests (backend + frontend)
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Static demo build
+        # Backend-free bundle published on GitHub Pages; needs no database or .env.
+        run: npm run build:demo --prefix frontend
+
+      - name: Upload demo bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-dist
+          path: frontend/dist-demo
+          retention-days: 7

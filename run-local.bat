@@ -105,19 +105,22 @@ REM Cek per variabel kunci: nilainya masih memuat nilai template.
 set "PLACEHOLDER_DATABASE_URL=postgresql://postgres:your_password@localhost:5432/bsi_crg_db?schema=public"
 set "PLACEHOLDER_DATABASE_URL_SHORT=postgresql://postgres:your_password@"
 set "PLACEHOLDER_JWT_SECRET=replace-with-a-long-random-secret"
-set "PLACEHOLDER_MAIL_USER=your_email@gmail.com"
-set "PLACEHOLDER_MAIL_PASS=your_gmail_app_password"
 
 set "ENV_PLACEHOLDER_ERRORS=0"
 call :check_env_value "DATABASE_URL" "PLACEHOLDER_DATABASE_URL"
 call :check_env_value "DATABASE_URL" "PLACEHOLDER_DATABASE_URL_SHORT"
 call :check_env_value "JWT_SECRET" "PLACEHOLDER_JWT_SECRET"
-call :check_env_value "MAIL_USER" "PLACEHOLDER_MAIL_USER"
-call :check_env_value "MAIL_PASS" "PLACEHOLDER_MAIL_PASS"
 
 if not "!ENV_PLACEHOLDER_ERRORS!"=="0" (
     call :fail "backend\.env masih berisi nilai template untuk variabel di atas. Isi dengan nilai sebenarnya (JWT_SECRET bisa dibuat dengan: openssl rand -hex 32)."
 )
+
+REM SMTP tidak wajib: tanpa MAIL_USER/MAIL_PASS aplikasi tetap jalan dan isi
+REM email (termasuk OTP) dicetak ke console backend, bukan dikirim.
+for /f "usebackq tokens=1,* delims==" %%A in (`findstr /R /C:"^[ ]*MAIL_USER=" "backend\.env"`) do set "MAIL_USER_LINE=%%B"
+set "MAIL_USER_LINE=!MAIL_USER_LINE: =!"
+set "MAIL_USER_LINE=!MAIL_USER_LINE:\"=!"
+if "!MAIL_USER_LINE!"=="" echo [WARNING] MAIL_USER kosong - email ^(termasuk OTP^) tidak dikirim, tapi dicetak di jendela backend untuk dipakai saat testing.
 goto :eof
 
 :check_env_value

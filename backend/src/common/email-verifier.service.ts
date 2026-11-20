@@ -15,6 +15,11 @@ export class EmailVerifierService {
 
     const apiKey = this.configService.get<string>('ABSTRACT_API_KEY');
 
+    // No API key configured (the default for local dev): only the format check
+    // above applies. Without this guard the request would be sent with an
+    // empty api_key and always fail.
+    if (!apiKey) return true;
+
     try {
       const response = await axios.get(this.baseUrl, {
         params: {
