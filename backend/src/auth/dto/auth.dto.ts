@@ -62,6 +62,24 @@ export class ResetPasswordDto {
   password!: string;
 }
 
+export class RegisterDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Nama wajib diisi.' })
+  @MaxLength(120)
+  name!: string;
+
+  @IsEmail({}, { message: 'Format email tidak valid.' })
+  @MaxLength(254)
+  email!: string;
+
+  @IsString()
+  @MinLength(PASSWORD_MIN_LENGTH, {
+    message: `Password minimal ${PASSWORD_MIN_LENGTH} karakter.`,
+  })
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  password!: string;
+}
+
 export class ChangePasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'Password saat ini wajib diisi.' })

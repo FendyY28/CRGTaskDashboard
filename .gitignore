@@ -33,6 +33,9 @@ Thumbs.db
 .temp
 .tmp
 
+# Screenshots and one-off QA scripts left at the repo root
+/*.png
+
 # Windows helper scripts keep a backup of this repo from before the second
 # `npm install`; never ship it.
 my-project/

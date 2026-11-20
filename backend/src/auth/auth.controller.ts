@@ -1,7 +1,8 @@
 import { 
   Controller, 
+  Get,
   Post, 
-  Patch, 
+  Patch,  
   Body, 
   Req, 
   Param,
@@ -17,6 +18,7 @@ import {
   ChangePasswordDto,
   ForgotPasswordDto,
   LoginDto,
+  RegisterDto,
   ResetPasswordDto,
   ValidateEmailDto,
   VerifyEmailDto,
@@ -37,10 +39,23 @@ export class AuthController {
     return { success: true };
   }
 
+  // Self-service signup: creates an unverified account and emails a link.
+  @Post('register')
+  async register(@Body() data: RegisterDto) {
+    return this.authService.register(data);
+  }
+
   // Activate an account from the emailed token.
   @Post('verify-email')
   async verifyEmail(@Body() body: VerifyEmailDto) {
     return this.authService.verifyEmail(body.token);
+  }
+
+  // Current user, read from the DB (not from client-cached localStorage).
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@Req() req) {
+    return this.authService.getProfile(req.user.id);
   }
 
   @Post('login')

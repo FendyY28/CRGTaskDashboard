@@ -10,6 +10,10 @@ node_modules
 /dist
 /dist-ssr
 
+# One-off local dev/QA scripts (patch-*.cjs, .qa-*.mjs). Kept on disk, never shipped.
+patch-*.cjs
+.qa-*.mjs
+
 # Environment Variables (PENTING)
 .env
 !.env.example
@@ -17,6 +21,9 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Screenshots captured during local QA runs
+*.png
 
 # Editor & OS
 .vscode/*

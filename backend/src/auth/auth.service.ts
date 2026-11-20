@@ -1,6 +1,7 @@
 import {  
   Injectable, 
-  UnauthorizedException, 
+  ConflictException,
+  UnauthorizedException,  
   NotFoundException, 
   BadRequestException,
   ForbiddenException,
@@ -12,7 +13,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto'; 
 import * as bcrypt from 'bcrypt'; 
-import { ChangePasswordDto, LoginDto, ResetPasswordDto } from './dto/auth.dto'; 
+import { ChangePasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto/auth.dto';  
 
 @Injectable()
 export class AuthService {
@@ -110,6 +111,59 @@ export class AuthService {
     return (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
   }
 
+  // 1. REGISTER (User mendaftar sendiri, akun menunggu verifikasi email)
+  async register(data: RegisterDto) {
+    const email = data.email.trim().toLowerCase();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      // Akun yang belum terverifikasi boleh mendaftar ulang: token baru saja
+      // dikirim, jadi user yang kehilangan email pertama tetap bisa lanjut.
+      // Akun yang sudah terverifikasi tidak boleh ditimpa.
+      if (existing.isVerified) {
+        throw new ConflictException('Email ini sudah terdaftar. Silakan login.');
+      }
+      await this.issueVerificationToken(existing);
+      return { message: 'Email verifikasi telah dikirim ulang. Silakan cek email Anda.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        name: data.name.trim(),
+        email,
+        password: hashedPassword,
+        role: 'OFFICER',
+        isVerified: false,
+      },
+    });
+
+    await this.issueVerificationToken(user);
+
+    return { message: 'Registrasi berhasil. Silakan cek email untuk verifikasi akun.' };
+  }
+
+  /** Generates a 3-minute verification link token and emails it to the user. */
+  private async issueVerificationToken(user: { id: string; email: string; name: string }) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 3);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
+    });
+
+    const verificationLink = `${this.getFrontendUrl()}/verify-email?token=${token}`;
+    await this.sendVerificationEmail(
+      user.email,
+      user.name,
+      verificationLink,
+      'Action Required: Activate Your Account',
+    );
+  }
+
   // 1. VERIFY EMAIL (Aktivasi Akun Baru)
   async verifyEmail(token: string) {
     const user = await this.prisma.user.findFirst({
@@ -154,17 +208,7 @@ export class AuthService {
     this.clearFailedLogins(throttleKey);
 
     if (!user.isVerified) {
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 3);
-
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { verificationToken: token, verificationTokenExpiresAt: expiresAt },
-      });
-
-      const verificationLink = `${this.getFrontendUrl()}/verify-email?token=${token}`;
-      await this.sendVerificationEmail(user.email, user.name, verificationLink, "Action Required: Activate Your Account");
+      await this.issueVerificationToken(user);
 
       throw new UnauthorizedException('Akun belum aktif. Email verifikasi baru telah dikirim.');
     }
