@@ -1,15 +1,46 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { THEME, PHASE_LABELS } from "../constants/projectConstants";
 import type { Project, ProjectIssue, TestCase } from "../types";
 import { normalizeStr } from "../utils/pir";
+import { useApiResource } from "./useApiResource";
+
+interface AnalyticsData {
+  projects: Project[];
+  issues: ProjectIssue[];
+  testCases: TestCase[];
+}
+
+const asList = <T>(raw: unknown): T[] => (Array.isArray(raw) ? (raw as T[]) : []);
+
+/**
+ * Fetch everything the analytics page charts: projects + issues, plus the test
+ * cases of the UAT projects (test cases live per project, so they need the
+ * project list first). Abort/loading/"latest request wins" handling is shared
+ * with the other data hooks through useApiResource.
+ */
+const fetchAnalyticsData = async (signal?: AbortSignal): Promise<AnalyticsData> => {
+  const [prjRes, issRes] = await Promise.all([
+    api.get<Project[]>('/project', { signal }),
+    api.get<ProjectIssue[]>('/project/issue', { signal }),
+  ]);
+
+  const projects = asList<Project>(prjRes);
+  const uatProjects = projects.filter((p) => p.currentPhase === 'UAT');
+  const testCases = (
+    await Promise.all(
+      uatProjects.map((p) => api.get<TestCase[]>(`/project/${p.id}/test-cases`, { signal })),
+    )
+  ).flatMap((tc) => asList<TestCase>(tc));
+
+  return { projects, issues: asList<ProjectIssue>(issRes), testCases };
+};
+
+const EMPTY_ANALYTICS_DATA: AnalyticsData = { projects: [], issues: [], testCases: [] };
 
 export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
-  const [allProjects, setAllProjects] = useState<Project[]>([]);
-  const [allIssues, setAllIssues] = useState<ProjectIssue[]>([]);
-  const [allTestCases, setAllTestCases] = useState<TestCase[]>([]);
 
   // Label Dinamis
   const openLbl = t('pir.tabs.open') || 'Open';
@@ -18,41 +49,14 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const takeoutLbl = t('testing.row.takenOut') || 'Takeout';
 
   // 1. FETCH SEMUA DATA SEKALI SAJA SAAT MOUNT
-  useEffect(() => {
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    const fetchAnalyticsData = async () => {
-      try {
-        const [prjRes, issRes] = await Promise.all([
-          api.get<Project[]>('/project', { signal }),
-          api.get<ProjectIssue[]>('/project/issue', { signal }),
-        ]);
-
-        // Test cases live per project, so they need the project list first.
-        const uatProjects = (Array.isArray(prjRes) ? prjRes : []).filter(
-          (p) => p.currentPhase === 'UAT',
-        );
-        const tcRes = (
-          await Promise.all(
-            uatProjects.map((p) => api.get<TestCase[]>(`/project/${p.id}/test-cases`, { signal })),
-          )
-        ).flat();
-
-        if (signal.aborted) return;
-
-        setAllProjects(Array.isArray(prjRes) ? prjRes : []);
-        setAllIssues(Array.isArray(issRes) ? issRes : []);
-        setAllTestCases(Array.isArray(tcRes) ? tcRes : []);
-      } catch (error) {
-        if (signal.aborted) return;
-        console.error("Failed to fetch analytics data", error);
-      }
-    };
-    fetchAnalyticsData();
-
-    return () => controller.abort();
-  }, []);
+  const { data } = useApiResource<AnalyticsData>(
+    '/project',
+    EMPTY_ANALYTICS_DATA,
+    "Failed to fetch analytics data",
+    undefined,
+    fetchAnalyticsData,
+  );
+  const { projects: allProjects, issues: allIssues, testCases: allTestCases } = data;
 
   const { projects, issues, testCases } = useMemo(() => {
     // Jika tidak ada filter (kosong), kembalikan semua data

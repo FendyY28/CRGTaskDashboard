@@ -9,9 +9,7 @@ import { PasswordWarningModal } from "./components/modals/PasswordWarningModal";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { PublicRoute } from "./components/routes/PublicRoute";
 import { AdminRoute } from "./components/routes/AdminRoute";
-import { TestingConsole } from "./components/features/testing/TestingConsole";
 import { SitProcessConsole } from "./components/features/sit/SitProcessConsole";
-import { SDLC_PHASES } from "./constants/projectConstants";
 
 // LAZY LOADING HALAMAN AUTH
 const LoginPage = lazy(() => import("./pages/auth/LoginPage").then(module => ({ default: module.LoginPage })));

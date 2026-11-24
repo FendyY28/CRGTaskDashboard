@@ -92,17 +92,39 @@ async function fetchWrapper<T = unknown>(
   try {
     return (await response.json()) as T;
   } catch (e) {
-    return {} as T;
+    // A 2xx response with an empty body (e.g. DELETE endpoints that return no
+    // content) is fine; a non-empty body that is not JSON is a real error and
+    // must not be silently turned into `{}`.
+    let rawBody = "";
+    try {
+      rawBody = await response.text();
+    } catch {
+      // Body already consumed or unreadable; treat as empty.
+    }
+    if (!rawBody.trim()) return {} as T;
+
+    console.error(`[api] Respons bukan JSON dari ${endpoint}`, e);
+    throw new ApiError(
+      "Respons server tidak dapat dibaca (bukan JSON yang valid).",
+      { status: response.status, endpoint, body: rawBody },
+    );
   }
 }
 
 // Identitas pelaku TIDAK lagi dikirim dari client. Backend mengambilnya dari
 // JWT, sehingga audit trail tidak bisa dipalsukan lewat body request.
 
+// Request-level options a read-only GET needs. Typed explicitly because the
+// project's DOM lib types `signal` as a nullable `AbortSignal | null`, which
+// does not assign to `RequestInit['signal']` under the current TS config.
+export interface RequestOptions {
+  signal?: AbortSignal;
+}
+
 // Callers can pin the response shape (`api.get<Project[]>(...)`); when they
 // don't, the result is `unknown` and must be narrowed before use.
 export const api = {
-  get: <T = unknown>(endpoint: string, options?: RequestInit) =>
+  get: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     fetchWrapper<T>(endpoint, { ...options, method: "GET" }),
 
   post: <T = unknown>(

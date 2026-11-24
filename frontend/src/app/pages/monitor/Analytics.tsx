@@ -15,22 +15,44 @@ import { useAnalyticsData } from "../../hooks/useAnalyticsData";
 import { useClickOutside } from "../../hooks/useClickOutside";
 
 // --- TOOLTIPS ---
-const CustomPieTooltip = ({ active, payload }: any) => {
+/**
+ * Minimal shapes for the recharts tooltip props we actually read. Declared
+ * locally so the payload fields are type-checked instead of falling back to
+ * `any`.
+ */
+interface ChartTooltipEntry {
+  name?: string;
+  value?: number;
+  color?: string;
+  payload?: {
+    color?: string;
+    Average?: number;
+    projectCount?: number;
+  };
+}
+
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: ChartTooltipEntry[];
+  label?: string;
+}
+
+const CustomPieTooltip = ({ active, payload }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-2.5 rounded-xl shadow-xl border border-gray-100 flex items-center gap-3 text-xs animate-in zoom-in-95 duration-200">
-        <div className="h-3 w-3 rounded-full shadow-sm" style={{ backgroundColor: payload[0].payload.color }}></div>
+        <div className="h-3 w-3 rounded-full shadow-sm" style={{ backgroundColor: payload[0].payload?.color }}></div>
         <p className="font-bold text-gray-700">{payload[0].name}</p>
-        <p className="font-black text-gray-900 bg-gray-50 px-2 py-0.5 rounded-md">{Math.round(payload[0].value)}</p>
+        <p className="font-black text-gray-900 bg-gray-50 px-2 py-0.5 rounded-md">{Math.round(payload[0].value ?? 0)}</p>
       </div>
     );
   }
   return null;
 };
 
-const CustomAvgProgressTooltip = ({ active, payload, label }: any) => {
+const CustomAvgProgressTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
+    const data = payload[0].payload ?? {};
     return (
       <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 text-xs animate-in zoom-in-95 duration-200">
         <p className="font-bold text-gray-800 mb-3 border-b border-gray-50 pb-2 text-sm">Phase: {label}</p>

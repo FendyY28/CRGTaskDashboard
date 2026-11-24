@@ -7,13 +7,12 @@ import { EditProjectSheet } from "../../components/project/edit-project/EditProj
 import { useProjects } from "../../hooks/useProjects";
 import { PageHeader, DashboardKpiCard, DashboardCard, UpcomingDeadlinesCard } from "../../components/dashboard";
 import { PhaseBlock } from "../../components/features/monitor/PhaseBlock";
-import { SDLC_PHASES, PROJECT_STATUS, THEME } from "../../constants/projectConstants";
+import { THEME } from "../../constants/projectConstants";
+import { computeDashboardStats } from "./dashboardStats";
 import { toast } from "sonner";
 import type { Project } from "../../types";
 import { ProtectAction } from "../../components/auth/ProtectAction";
 import { useTranslation } from "react-i18next";
-
-const PHASES_LIST = Object.values(SDLC_PHASES);
 
 export function OverviewDashboard() {
   const { projects, loading, refresh, deleteProject } = useProjects();
@@ -41,52 +40,10 @@ export function OverviewDashboard() {
     }
   };
 
-  const { dashboardStats, phaseBreakdown } = useMemo(() => {
-    const statsCounter = { totalCount: 0, activeCount: 0, completedCount: 0, newThisMonthCount: 0, deliveredThisMonthCount: 0 };
-    const projectsGroupedByPhase: Record<string, Project[]> = {};
-    const currentDate = new Date();
-
-    projects.forEach(project => {
-      statsCounter.totalCount++;
-      const createdDate = new Date(project.createdAt);
-
-      if (createdDate.getMonth() === currentDate.getMonth() && createdDate.getFullYear() === currentDate.getFullYear()) {
-        statsCounter.newThisMonthCount++;
-      }
-
-      const isProjectCompleted = project.currentPhase === SDLC_PHASES.LIVE && Number(project.overallProgress) === 100;
-
-      if (isProjectCompleted) {
-        statsCounter.completedCount++;
-      } else {
-        statsCounter.activeCount++;
-      }
-
-      if (isProjectCompleted && new Date(project.updatedAt).getMonth() === currentDate.getMonth()) {
-        statsCounter.deliveredThisMonthCount++;
-      }
-
-      if (!projectsGroupedByPhase[project.currentPhase]) {
-        projectsGroupedByPhase[project.currentPhase] = [];
-      }
-      projectsGroupedByPhase[project.currentPhase].push(project);
-    });
-
-    const breakdownData = PHASES_LIST.map(phaseName => {
-      const projectsInPhase = projectsGroupedByPhase[phaseName] || [];
-      const phaseProgress = projectsInPhase.length ? Math.round(projectsInPhase.reduce((sum, proj) => sum + Number(proj.overallProgress), 0) / projectsInPhase.length) : 0;
-
-      return {
-        phase: phaseName,
-        progress: phaseProgress,
-        count: projectsInPhase.length,
-        projects: projectsInPhase,
-        status: projectsInPhase.length ? (phaseProgress === 100 ? PROJECT_STATUS.COMPLETED : PROJECT_STATUS.IN_PROGRESS) : PROJECT_STATUS.PENDING
-      };
-    });
-
-    return { dashboardStats: statsCounter, phaseBreakdown: breakdownData };
-  }, [projects]);
+  const { dashboardStats, phaseBreakdown } = useMemo(
+    () => computeDashboardStats(projects, new Date()),
+    [projects],
+  );
 
   if (loading) return <div className="h-screen flex items-center justify-center font-bold animate-pulse text-lg" style={{ color: THEME.TOSCA }}>{t('dashboard.initializing')}</div>;
 

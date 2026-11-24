@@ -1,4 +1,6 @@
 import "@testing-library/jest-dom/vitest";
+// `vi` is a Vitest runtime global (not in tsconfig types), so import it explicitly.
+import { vi } from "vitest";
 
 // Node >= 22 runs jsdom without a storage backend ("ExperimentalWarning:
 // localStorage is not available"), so every touch of localStorage throws.
@@ -18,3 +20,9 @@ if (typeof globalThis.localStorage === "undefined" || globalThis.localStorage ==
   vi.stubGlobal("localStorage", storageStub);
   vi.stubGlobal("sessionStorage", { ...storageStub });
 }
+
+// React 18 (the version this frontend runs) only treats updates as "act"ed
+// when this flag is set. Without it, every render scheduled by React Testing
+// Library logs an "An update to X inside a test was not wrapped in act(...)"
+// warning.
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

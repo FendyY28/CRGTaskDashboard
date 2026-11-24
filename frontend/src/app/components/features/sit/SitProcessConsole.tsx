@@ -20,6 +20,7 @@ import { ProtectAction } from "../../auth/ProtectAction";
 import { api } from "../../../services/api";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import type { Project } from "../../../types";
 
 /**
  * SIT accent — deliberately different from the UAT console's teal/amber.
@@ -93,7 +94,9 @@ const STATUS_META: Record<
   },
 };
 
-function toDisplay(row: SitProcessRecord): SitProcess {
+export type { ProcessStatus, SitProcess, SitProcessRecord };
+
+export function toDisplay(row: SitProcessRecord): SitProcess {
   const isDynamic = !row.key;
   return {
     id: row.id,
@@ -106,7 +109,7 @@ function toDisplay(row: SitProcessRecord): SitProcess {
   };
 }
 
-function toPayload(process: SitProcess, order: number) {
+export function toPayload(process: SitProcess, order: number) {
   return {
     id: process.id,
     key: process.key,
@@ -116,9 +119,29 @@ function toPayload(process: SitProcess, order: number) {
   };
 }
 
+/**
+ * Local representation of a freshly seeded fixed step: the display row
+ * (`toDisplay`) plus the `updatedBy` attribution the backend returns.
+ */
+function fixedSeedProcess(step: (typeof FIXED_SIT_PROCESSES)[number], updatedBy = "System"): SitProcess &
+  Pick<SitProcessRecord, "createdBy"> {
+  return {
+    ...toDisplay({
+      id: `fixed:${step.id}`,
+      key: step.id,
+      name: step.id,
+      status: "pending",
+      order: step.order,
+      createdBy: updatedBy,
+      updatedBy,
+    }),
+    createdBy: updatedBy,
+  };
+}
+
 export function SitProcessConsole() {
   const { projects, loading: isLoading, fetchUatProjects } = useTestCases();
-  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [processes, setProcesses] = useState<SitProcess[]>([]);
   const [isFetchingProcesses, setIsFetchingProcesses] = useState(false);
   const [newProcessName, setNewProcessName] = useState("");
@@ -127,10 +150,21 @@ export function SitProcessConsole() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    fetchUatProjects().then((fetched) => {
-      if (fetched && fetched.length > 0) setSelectedProject(fetched[0]);
-    });
-  }, [fetchUatProjects]);
+    let cancelled = false;
+    fetchUatProjects()
+      .then((fetched) => {
+        if (cancelled) return;
+        if (fetched && fetched.length > 0) setSelectedProject(fetched[0]);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Gagal load SIT projects:", err);
+        toast.error(t("sit.page.toast.saveFailed"));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchUatProjects, t]);
 
   const fetchProcesses = useCallback(async (projectId: string) => {
     setIsFetchingProcesses(true);
@@ -140,24 +174,12 @@ export function SitProcessConsole() {
       if (!Array.isArray(rows) || rows.length === 0) {
         await api.put("/project/sit-processes", {
           projectId,
-          processes: FIXED_SIT_PROCESSES.map((p) => ({
-            id: `fixed:${p.id}`,
-            key: p.id,
-            name: p.id,
-            status: "pending",
-            order: p.order,
-          })),
+          processes: FIXED_SIT_PROCESSES.map((p) => {
+            const seed = fixedSeedProcess(p);
+            return toPayload(seed, seed.order);
+          }),
         });
-        setProcesses(
-          FIXED_SIT_PROCESSES.map((p) => ({
-            id: `fixed:${p.id}`,
-            name: p.id,
-            key: p.id,
-            status: "pending" as ProcessStatus,
-            order: p.order,
-            dynamic: false,
-          })),
-        );
+        setProcesses(FIXED_SIT_PROCESSES.map((p) => fixedSeedProcess(p)));
         return;
       }
       setProcesses(rows.map(toDisplay));

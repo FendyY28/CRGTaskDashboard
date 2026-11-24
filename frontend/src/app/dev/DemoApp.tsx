@@ -23,7 +23,6 @@ import { Loader2 } from "lucide-react";
 import { Header } from "../components/layouts/Header";
 import { Footer } from "../components/layouts/Footer";
 import { PasswordWarningModal } from "../components/modals/PasswordWarningModal";
-import { SDLC_PHASES } from "../constants/projectConstants";
 
 const DEMO_ROLE = "HEAD";
 

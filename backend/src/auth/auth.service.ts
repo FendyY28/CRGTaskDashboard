@@ -187,10 +187,10 @@ export class AuthService {
 
   // 2. LOGIN (DENGAN PENGECEKAN KEDALUWARSA 6 BULAN)
   async login(data: LoginDto) {
-    const throttleKey = (data.email ?? '').trim().toLowerCase();
-    this.assertNotLockedOut(throttleKey);
+    const email = (data.email ?? '').trim().toLowerCase();
+    this.assertNotLockedOut(email);
 
-    const user = await this.prisma.user.findUnique({ where: { email: data.email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
     // Selalu jalankan bcrypt.compare, bahkan ketika email tidak terdaftar.
     // Tanpa ini, respons untuk email yang tidak ada kembali jauh lebih cepat
@@ -201,11 +201,11 @@ export class AuthService {
     );
 
     if (!user || !passwordMatches) {
-      this.recordFailedLogin(throttleKey);
+      this.recordFailedLogin(email);
       throw new UnauthorizedException('Email atau password salah');
     }
 
-    this.clearFailedLogins(throttleKey);
+    this.clearFailedLogins(email);
 
     if (!user.isVerified) {
       await this.issueVerificationToken(user);

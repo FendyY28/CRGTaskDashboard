@@ -33,6 +33,10 @@ Thumbs.db
 .temp
 .tmp
 
+# One-off local QA scripts (playwright checks used during development)
+frontend/.qa-*.mjs
+frontend/patch-*.cjs
+
 # Screenshots and one-off QA scripts left at the repo root
 /*.png
 

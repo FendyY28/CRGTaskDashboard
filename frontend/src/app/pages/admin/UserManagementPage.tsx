@@ -8,7 +8,14 @@ import { useUsers } from "../../hooks/useUsers";
 import { UserTable } from "../../components/features/admin/UserTable";
 import { AddUserModal, EditUserModal, ConfirmActionModal } from "../../components/modals/UserModals";
 
-import { THEME } from "../../constants/projectConstants";
+/** Subset of a user row this page reads; mirrors what GET /users returns. */
+interface ManagedUser {
+  id: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  createdAt?: string;
+}
 
 export function UserManagementPage() {
   const { t } = useTranslation();
@@ -21,13 +28,17 @@ export function UserManagementPage() {
   // STATE UNTUK MODALS FORM
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
 
   // STATE UNTUK MODAL KONFIRMASI
-  const [confirmModal, setConfirmModal] = useState({
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: "DELETE" | "RESET";
+    user: ManagedUser | null;
+  }>({
     isOpen: false,
-    type: "DELETE" as "DELETE" | "RESET", 
-    user: null as any
+    type: "DELETE",
+    user: null
   });
 
   useEffect(() => {
@@ -36,35 +47,36 @@ export function UserManagementPage() {
 
   // 🔥 FILTER DAN SORTING
   const sortedAndFilteredUsers = useMemo(() => {
+    const query = (searchTerm ?? "").toLowerCase();
     return users
       .filter(u => {
-        if (u.role === "ADMIN") return false;
-        if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+        if (u?.role === "ADMIN") return false;
+        if (roleFilter !== "ALL" && (u?.role ?? "") !== roleFilter) return false;
         
-        const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (u?.name ?? "").toLowerCase().includes(query) || 
+                             (u?.email ?? "").toLowerCase().includes(query);
                               
         return matchesSearch;
       })
       .sort((a, b) => {
         const roleOrder = { "HEAD": 1, "OFFICER": 2 };
-        const orderA = roleOrder[a.role as keyof typeof roleOrder] || 99;
-        const orderB = roleOrder[b.role as keyof typeof roleOrder] || 99;
+        const orderA = roleOrder[(a?.role ?? "") as keyof typeof roleOrder] || 99;
+        const orderB = roleOrder[(b?.role ?? "") as keyof typeof roleOrder] || 99;
 
         if (orderA !== orderB) return orderA - orderB;
 
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
+        const dateA = new Date(a?.createdAt || 0).getTime();
+        const dateB = new Date(b?.createdAt || 0).getTime();
         return dateB - dateA;
       });
   }, [users, roleFilter, searchTerm]);
 
-  const handleEditClick = (user: any) => {
+  const handleEditClick = (user: ManagedUser) => {
     setSelectedUser(user);
     setIsEditOpen(true);
   };
 
-  const openConfirmModal = (type: "DELETE" | "RESET", user: any) => {
+  const openConfirmModal = (type: "DELETE" | "RESET", user: ManagedUser) => {
     setConfirmModal({ isOpen: true, type, user });
   };
 
@@ -72,11 +84,17 @@ export function UserManagementPage() {
     const userId = confirmModal.user?.id;
     if (!userId) return;
 
-    if (confirmModal.type === "DELETE") {
-      await deleteUser(userId);
-    } else if (confirmModal.type === "RESET") {
-      // 🔥 Logic Reset Password memanggil fungsi di hook yang sudah kirim email
-      if (resetPassword) await resetPassword(userId); 
+    try {
+      if (confirmModal.type === "DELETE") {
+        await deleteUser(userId);
+      } else if (confirmModal.type === "RESET") {
+        // 🔥 Logic Reset Password memanggil fungsi di hook yang sudah kirim email
+        if (resetPassword) await resetPassword(userId); 
+      }
+    } finally {
+      // Tutup modal dan buang referensi user supaya aksi yang sama tidak bisa
+      // terkirim dua kali (mis. double-click pada tombol konfirmasi).
+      setConfirmModal({ isOpen: false, type: "DELETE", user: null });
     }
   };
 
@@ -111,14 +129,14 @@ export function UserManagementPage() {
             placeholder={t('admin.userManagement.searchPlaceholder', 'Cari nama atau email...')} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`pl-9 h-10 bg-gray-50/50 border-gray-200 focus-visible:bg-white focus-visible:ring-0 focus-visible:border-[${THEME.TOSCA}] rounded-xl transition-all`}
+            className="pl-9 h-10 bg-gray-50/50 border-gray-200 focus-visible:bg-white focus-visible:ring-0 rounded-xl transition-all"
           />
         </div>
         
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4 text-gray-400 hidden sm:block" />
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className={`h-10 w-full sm:w-[150px] bg-gray-50/50 border-gray-100 focus:ring-0 focus:border-[${THEME.TOSCA}] rounded-xl font-semibold text-gray-600`}>
+            <SelectTrigger className="h-10 w-full sm:w-[150px] bg-gray-50/50 border-gray-100 focus:ring-0 rounded-xl font-semibold text-gray-600">
               <SelectValue placeholder="Filter Role" />
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-100 shadow-xl rounded-xl">

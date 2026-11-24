@@ -1,60 +1,59 @@
-import { useState, useCallback, useEffect } from "react";
 import { api } from "../services/api";
 import type { Project, ProjectIssue, ImprovementNote } from "../types";
+import { useApiResource } from "./useApiResource";
+
+interface PirData {
+  liveProjects: Project[];
+  issues: (ProjectIssue & { type: 'issue' } & { projectName?: string })[];
+  improvements: ImprovementNote[];
+}
+
+const EMPTY_PIR_DATA: PirData = { liveProjects: [], issues: [], improvements: [] };
+
+/** Reshape the raw project + issue responses into the PIR view model. */
+const buildPirData = (raw: unknown): PirData => {
+  const [prj, iss] = (Array.isArray(raw) ? raw : []) as [unknown, unknown];
+
+  // Tampilkan semua project, tanpa terikat fase SDLC tertentu.
+  const allProjects = Array.isArray(prj) ? (prj as Project[]) : [];
+
+  // Improvements arrive nested in their project; issues arrive flat and
+  // without a project name, but both views need it to group and label.
+  const projectNameById = new Map(allProjects.map((p) => [String(p.id), p.name]));
+  const projectNameFor = (projectId?: string) =>
+    projectId ? projectNameById.get(String(projectId)) : undefined;
+
+  const improvements: ImprovementNote[] = allProjects.flatMap((p) =>
+    (p.improvements || []).map((imp) => ({
+      ...imp,
+      projectName: p.name,
+      type: 'improvement' as const,
+    })),
+  );
+
+  return {
+    liveProjects: allProjects,
+    issues: Array.isArray(iss)
+      ? (iss as (ProjectIssue & { projectId?: string })[]).map((i) => ({
+          ...i,
+          type: 'issue' as const,
+          projectName: projectNameFor(i.projectId),
+        }))
+      : [],
+    improvements,
+  };
+};
 
 export const usePIR = () => {
-  const [liveProjects, setLiveProjects] = useState<Project[]>([]);
-  const [issues, setIssues] = useState<ProjectIssue[]>([]);
-  const [improvements, setImprovements] = useState<ImprovementNote[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Both responses arrive together: [projects, issues].
+  const { data, loading, reload } = useApiResource<PirData>(
+    ['/project', '/project/issue'],
+    EMPTY_PIR_DATA,
+    "PIR Load Failed",
+    buildPirData,
+  );
 
-  const fetchData = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const [prj, iss] = await Promise.all([
-        api.get('/project', { signal }),
-        api.get('/project/issue', { signal })
-      ]);
-
-      // Tampilkan semua project, tanpa terikat fase SDLC tertentu.
-      const allProjects = Array.isArray(prj) ? (prj as Project[]) : [];
-      
-      // Improvements arrive nested in their project; issues arrive flat and
-      // without a project name, but both views need it to group and label.
-      const projectNameById = new Map(allProjects.map((p) => [String(p.id), p.name]));
-      const projectNameFor = (projectId?: string) =>
-        projectId ? projectNameById.get(String(projectId)) : undefined;
-
-      const imps: ImprovementNote[] = allProjects.flatMap((p) =>
-        (p.improvements || []).map((imp) => ({
-          ...imp,
-          projectName: p.name,
-          type: 'improvement' as const,
-        })),
-      );
-
-      setLiveProjects(allProjects);
-      setIssues(
-        Array.isArray(iss)
-          ? (iss as (ProjectIssue & { projectId?: string })[]).map((i) => ({
-              ...i,
-              type: 'issue' as const,
-              projectName: projectNameFor(i.projectId),
-            }))
-          : [],
-      );
-      setImprovements(imps);
-    } catch (e) {
-      console.error("PIR Load Failed", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchData(controller.signal);
-    return () => controller.abort();
-  }, [fetchData]);
+  const fetchData = reload;
 
   const addIssue = async (data: ProjectIssue) => {
     await api.post('/project/issue', data);
@@ -82,7 +81,10 @@ export const usePIR = () => {
   
 
   return {
-    liveProjects, issues, improvements, loading,
+    liveProjects: data.liveProjects,
+    issues: data.issues,
+    improvements: data.improvements,
+    loading,
     refresh: fetchData,
     addIssue, updateIssueStatus, deleteIssue, addImprovement, deleteImprovement
   };

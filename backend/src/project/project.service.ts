@@ -308,6 +308,37 @@ export class ProjectService {
     return projectUpdateData;
   }
 
+  /** Resolve which phase the request targets, rejecting unknown phases. */
+  private resolveTargetPhase(requestData: UpdateProjectDto, oldProject: { currentPhase: string }): string {
+    const targetPhase: string = requestData.currentPhase ?? oldProject.currentPhase;
+    if (!targetPhase || !this.MASTER_PHASES.includes(targetPhase)) {
+      throw new BadRequestException(`Fase project tidak valid: ${targetPhase ?? '(kosong)'}`);
+    }
+    return targetPhase;
+  }
+
+  /** Pick the audit action/detail that describes what this update changed. */
+  private describeUpdateAction(
+    oldProject: { status: string },
+    updatedProject: { name: string },
+    requestData: UpdateProjectDto,
+    isPhaseChanged: boolean
+  ): { action: string; detail: string } {
+    if (isPhaseChanged) {
+      return {
+        action: "CHANGE_PHASE",
+        detail: `Project ${updatedProject.name} pindah fase ke ${requestData.currentPhase}`
+      };
+    }
+    if (requestData.status && requestData.status !== oldProject.status) {
+      return {
+        action: "UPDATE_STATUS",
+        detail: `Ubah status project ${updatedProject.name} menjadi ${requestData.status}`
+      };
+    }
+    return { action: "UPDATE_PROJECT", detail: `Update detail project ${updatedProject.name}` };
+  }
+
   // 3. UPDATE PROJECT
   async update(id: string, requestData: UpdateProjectDto, userId: string) {
     const oldProject = await this.prisma.project.findUnique({ where: { id }, include: { sdlcPhases: true } });
@@ -315,12 +346,10 @@ export class ProjectService {
 
     // Fall back to the project's current phase when the caller omits it, and
     // reject the request outright if it cannot be resolved to a known phase.
-    const targetPhase: string = requestData.currentPhase ?? oldProject.currentPhase;
-    if (!targetPhase || !this.MASTER_PHASES.includes(targetPhase)) {
-      throw new BadRequestException(`Fase project tidak valid: ${targetPhase ?? '(kosong)'}`);
-    }
+    const targetPhase = this.resolveTargetPhase(requestData, oldProject);
 
-    const isPhaseChanged = requestData.currentPhase && (requestData.currentPhase !== oldProject.currentPhase);
+    const isPhaseChanged =
+      !!requestData.currentPhase && requestData.currentPhase !== oldProject.currentPhase;
     const currentCycle = oldProject.cycle || 1; // PENTING: Hanya modifikasi cycle aktif
 
     const updatedProject = await this.prisma.$transaction(async (tx) => {
@@ -341,17 +370,7 @@ export class ProjectService {
 
     if (!updatedProject) throw new Error("Gagal mengupdate project.");
 
-    let action = "UPDATE_PROJECT";
-    let detail = `Update detail project ${updatedProject.name}`;
-
-    if (isPhaseChanged) {
-        action = "CHANGE_PHASE";
-        detail = `Project ${updatedProject.name} pindah fase ke ${requestData.currentPhase}`;
-    } else if (requestData.status && requestData.status !== oldProject.status) {
-        action = "UPDATE_STATUS";
-        detail = `Ubah status project ${updatedProject.name} menjadi ${requestData.status}`;
-    }
-
+    const { action, detail } = this.describeUpdateAction(oldProject, updatedProject, requestData, isPhaseChanged);
     await this.auditService.log(userId, action, detail, id);
     return updatedProject;
   }
@@ -368,6 +387,8 @@ export class ProjectService {
 
   // 5. ISSUES & IMPROVEMENTS
   async findAllIssues() {
+    // `Issue.projectId` is a required relation with onDelete: Cascade, so an
+    // issue can never exist without its project — no extra filter is needed.
     return this.prisma.issue.findMany({
       include: { project: { select: { name: true } } },
       orderBy: { reportedDate: 'desc' }
@@ -393,6 +414,9 @@ export class ProjectService {
   }
 
   async updateIssue(id: number, data: UpdateIssueDto, userId: string) {
+    const existing = await this.prisma.issue.findUnique({ where: { id: Number(id) } });
+    if (!existing) throw new NotFoundException("Issue not found");
+
     const issue = await this.prisma.issue.update({
       where: { id: Number(id) },
       data: { status: data.status }
@@ -896,6 +920,12 @@ export class ProjectService {
   // UPDATE dengan pencarian User yang lebih standar
   async updateTestCase(id: string, data: UpdateTestCaseDto, userId: string) {
     const { status, notes, defect, takeoutReason, isDeleted } = data;
+
+    // Test case yang di-fail wajib punya defect: tanpa ini status 'fail' bisa
+    // tersimpan tanpa catatan defect sama sekali.
+    if (status === 'fail' && (!defect || !defect.description)) {
+      throw new BadRequestException('Deskripsi defect wajib diisi untuk test case yang gagal.');
+    }
 
     const userName = await this.resolveUserName(userId);
 
