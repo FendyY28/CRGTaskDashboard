@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { Prisma } from '@prisma/client';
@@ -49,12 +49,14 @@ export class ProjectService {
     improvements: { orderBy: { createdDate: 'desc' } }
   } satisfies Prisma.ProjectInclude;
 
+  /** Format a sequential id without needing an instance (uses the same padding rule). */
+  private static formatSequentialId(prefix: string, num: number): string {
+    return num < 1000 ? `${prefix}-${num.toString().padStart(3, '0')}` : `${prefix}-${num}`;
+  }
+
   // Helper Auto Sequential Code: 001 -> 002 -> 003 ... 999 -> 1000, 1001
   private formatSeqId(prefix: string, num: number): string {
-    if (num < 1000) {
-      return `${prefix}-${num.toString().padStart(3, '0')}`;
-    }
-    return `${prefix}-${num}`;
+    return ProjectService.formatSequentialId(prefix, num);
   }
 
   /** Text a task name/description off the wire. */
@@ -90,6 +92,41 @@ export class ProjectService {
     if (!userId) return "Unknown User";
     const user = await this.prisma.user.findFirst({ where: { OR: [{ id: userId }, { email: userId }] } });
     return user?.name ?? "Unknown User";
+  }
+
+  /** Load a record by id, throwing 404 when it does not exist. */
+  private async findOrThrow<T>(load: () => Promise<T | null>, label: string): Promise<T> {
+    const record = await load();
+    if (!record) throw new NotFoundException(`${label} not found`);
+    return record;
+  }
+
+  /**
+   * The find -> delete -> audit pattern shared by every remove* method:
+   * load the row (404 when missing), delete it, then write one audit entry
+   * describing what was removed. `afterRemove` runs between the two so callers
+   * can recalculate parent aggregates before the log is written.
+   */
+  private async deleteAndLog<T>(params: {
+    load: () => Promise<T | null>;
+    remove: () => Promise<unknown>;
+    label: string;
+    userId: string;
+    action: string;
+    details: (record: T) => string;
+    projectId: (record: T) => string | undefined;
+    afterRemove?: (record: T) => Promise<void>;
+  }): Promise<T> {
+    const record = await this.findOrThrow(params.load, params.label);
+    await params.remove();
+    if (params.afterRemove) await params.afterRemove(record);
+    await this.auditService.log(
+      params.userId,
+      params.action,
+      params.details(record),
+      params.projectId(record),
+    );
+    return record;
   }
 
   /** Recompute completed/total/progress on a weekly progress row from its tasks. */
@@ -189,39 +226,53 @@ export class ProjectService {
   async create(data: CreateProjectDto, userId: string) {
     const initialPhase: MasterPhase = data.currentPhase || "Requirement";
 
-    const newProject = await this.insertWithGeneratedId(
-      () => this.nextId('PRJ', 'project'),
-      (generatedId) =>
-        this.prisma.project.create({
-      data: {
-        id: data.code || generatedId,
-        name: data.name,
-        pic: data.pic,
-        currentPhase: initialPhase,
-        status: data.status || "on-track",
-        overallProgress: data.overallProgress ?? 0,
-        projectStartDate: data.startDate ? new Date(data.startDate) : new Date(),
-        projectDeadline: data.deadline ? new Date(data.deadline) : new Date(new Date().setMonth(new Date().getMonth() + 1)),
-        cycle: 1,
-        sdlcPhases: {
-          create: this.MASTER_PHASES.map((phaseName) => {
-            const isCurrent = phaseName === initialPhase;
-            return {
-              phaseName: phaseName,
-              cycle: 1,
-              status: isCurrent ? 'in-progress' : 'pending',
-              startDate: isCurrent ? (data.phaseStartDate ? new Date(data.phaseStartDate) : new Date()) : null,
-              deadline: isCurrent ? (data.phaseDeadline ? new Date(data.phaseDeadline) : new Date(new Date().setDate(new Date().getDate() + 7))) : null
-            };
-          })
-        }
-      },
-        }),
-      'project'
-    );
+    const projectData: Omit<Prisma.ProjectCreateInput, 'id'> = {
+      name: data.name,
+      pic: data.pic,
+      currentPhase: initialPhase,
+      status: data.status || "on-track",
+      overallProgress: data.overallProgress ?? 0,
+      projectStartDate: data.startDate ? new Date(data.startDate) : new Date(),
+      projectDeadline: data.deadline ? new Date(data.deadline) : new Date(new Date().setMonth(new Date().getMonth() + 1)),
+      cycle: 1,
+      sdlcPhases: {
+        create: this.MASTER_PHASES.map((phaseName) => {
+          const isCurrent = phaseName === initialPhase;
+          return {
+            phaseName: phaseName,
+            cycle: 1,
+            status: isCurrent ? 'in-progress' : 'pending',
+            startDate: isCurrent ? (data.phaseStartDate ? new Date(data.phaseStartDate) : new Date()) : null,
+            deadline: isCurrent ? (data.phaseDeadline ? new Date(data.phaseDeadline) : new Date(new Date().setDate(new Date().getDate() + 7))) : null
+          };
+        })
+      }
+    };
+
+    // A client-supplied `code` is a user decision, not a generated id: a unique
+    // violation there is "already taken", not a collision worth retrying.
+    const newProject = data.code
+      ? await this.createProjectWithCode(data.code, projectData)
+      : await this.insertWithGeneratedId(
+          () => this.nextId('PRJ', 'project'),
+          (generatedId) => this.prisma.project.create({ data: { ...projectData, id: generatedId } }),
+          'project'
+        );
     // Audit log mencatat user
     await this.auditService.log(userId, "CREATE_PROJECT", `Membuat project baru: ${newProject.name}`, newProject.id);
     return newProject;
+  }
+
+  /** Insert a project under an explicit client-supplied code, mapping duplicate codes to 409. */
+  private async createProjectWithCode(code: string, data: Omit<Prisma.ProjectCreateInput, 'id'>) {
+    try {
+      return await this.prisma.project.create({ data: { ...data, id: code } });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException(`Kode project "${code}" sudah dipakai. Gunakan kode lain.`);
+      }
+      throw err;
+    }
   }
 
   /**
@@ -395,10 +446,31 @@ export class ProjectService {
     });
   }
 
+  /**
+   * Normalise an optional client-supplied issue id to the canonical `ISS-xxx`
+   * shape. A bare number ("12") becomes "ISS-012" so the value still matches the
+   * sequence regex in nextId(); anything unusable falls back to a generated id.
+   */
+  private static normalizeIssueId(rawIssueId: string | undefined | null): string | null {
+    const raw = (rawIssueId ?? '').trim();
+    if (!raw) return null;
+
+    const suffix = raw.toUpperCase().startsWith('ISS-') ? raw.slice(4) : raw;
+    if (!suffix) return null;
+
+    if (/^\d+$/.test(suffix)) {
+      return ProjectService.formatSequentialId('ISS', parseInt(suffix, 10));
+    }
+
+    // Non-numeric custom codes are rejected so every stored id stays ISS-<digits>.
+    return null;
+  }
+
   async createIssue(data: CreateIssueDto, userId: string) {
+    const requestedIssueId = ProjectService.normalizeIssueId(data.issueId);
     const issue = await this.insertWithGeneratedId(
-      () => (data.issueId && !data.issueId.startsWith('ISS-'))
-        ? Promise.resolve(data.issueId)
+      () => requestedIssueId
+        ? Promise.resolve(requestedIssueId)
         : this.nextId('ISS', 'issue'),
       (issueId) =>
         this.prisma.issue.create({
@@ -426,15 +498,15 @@ export class ProjectService {
   }
 
   async removeIssue(id: number, userId: string) {
-    const issue = await this.prisma.issue.findUnique({ where: { id: Number(id) } });
-
-    if (!issue) {
-      throw new NotFoundException("Issue not found");
-    }
-
-    await this.prisma.issue.delete({ where: { id: Number(id) } });
-    await this.auditService.log(userId, "DELETE_ISSUE", `Menghapus Issue: ${issue.title}`, issue.projectId);
-    return issue;
+    return this.deleteAndLog({
+      load: () => this.prisma.issue.findUnique({ where: { id: Number(id) } }),
+      remove: () => this.prisma.issue.delete({ where: { id: Number(id) } }),
+      label: 'Issue',
+      userId,
+      action: 'DELETE_ISSUE',
+      details: (issue) => `Menghapus Issue: ${issue.title}`,
+      projectId: (issue) => issue.projectId,
+    });
   }
 
   async createImprovement(data: CreateImprovementDto, userId: string) {
@@ -465,29 +537,15 @@ export class ProjectService {
   }
 
   async removeImprovement(id: number, userId: string) {
-    // Cari data aslinya dulu sebelum dihapus (agar kita tahu apa yang dihapus)
-    const imp = await this.prisma.improvement.findUnique({
-      where: { id: Number(id) }
-    });
-
-    if (!imp) {
-      throw new NotFoundException("Improvement not found");
-    }
-
-    // Hapus datanya dari database
-    const deletedImp = await this.prisma.improvement.delete({
-      where: { id: Number(id) }
-    });
-
-    // CATAT KE ACTIVITY LOG (AUDIT LOG)
-    await this.auditService.log(
+    return this.deleteAndLog({
+      load: () => this.prisma.improvement.findUnique({ where: { id: Number(id) } }),
+      remove: () => this.prisma.improvement.delete({ where: { id: Number(id) } }),
+      label: 'Improvement',
       userId,
-      "DELETE_IMPROVEMENT",
-      `Menghapus Ide Optimalisasi: ${imp.title}`,
-      imp.projectId
-    );
-
-    return deletedImp;
+      action: 'DELETE_IMPROVEMENT',
+      details: (improvement) => `Menghapus Ide Optimalisasi: ${improvement.title}`,
+      projectId: (improvement) => improvement.projectId,
+    });
   }
 
   // 6. WEEKLY PROGRESS (TIMELINE)
@@ -614,22 +672,16 @@ export class ProjectService {
   }
 
   async removeLog(id: number, userId: string) {
-    // Cari data dulu untuk keperluan Log Audit (Opsional tapi bagus)
-    const log = await this.prisma.weeklyProgress.findUnique({
-        where: { id: Number(id) }
+    // Task di dalam log ikut terhapus karena Cascade Delete di schema.
+    return this.deleteAndLog({
+      load: () => this.prisma.weeklyProgress.findUnique({ where: { id: Number(id) } }),
+      remove: () => this.prisma.weeklyProgress.delete({ where: { id: Number(id) } }),
+      label: 'Log',
+      userId,
+      action: 'DELETE_WEEKLY_LOG',
+      details: (log) => `Menghapus Weekly Log: ${log.weekRange}`,
+      projectId: (log) => log.projectId,
     });
-
-    if (!log) throw new NotFoundException("Log not found");
-
-    // Hapus data (Task di dalamnya otomatis terhapus karena Cascade Delete di Schema)
-    const deleted = await this.prisma.weeklyProgress.delete({
-        where: { id: Number(id) }
-    });
-
-    // Catat siapa yang menghapus
-    await this.auditService.log(userId, "DELETE_WEEKLY_LOG", `Menghapus Weekly Log: ${log.weekRange}`, log.projectId);
-
-    return deleted;
   }
 
   async updateLog(weeklyId: number, data: UpdateLogDto, userId: string) {
@@ -748,22 +800,18 @@ export class ProjectService {
   }
 
   async removeTask(taskId: number, userId: string) {
-    // Cari Task & Parentnya dulu (sebelum dihapus)
-    const task = await this.prisma.task.findUnique({
-      where: { id: taskId },
-      include: { weeklyProgress: true } // Ambil info induknya
+    await this.deleteAndLog({
+      // Ambil info induknya sekaligus untuk audit log + recalc.
+      load: () => this.prisma.task.findUnique({ where: { id: taskId }, include: { weeklyProgress: true } }),
+      remove: () => this.prisma.task.delete({ where: { id: taskId } }),
+      label: 'Task',
+      userId,
+      action: 'DELETE_TASK',
+      details: (task) => `Menghapus Task: ${task.taskName}`,
+      projectId: (task) => task.weeklyProgress?.projectId ?? undefined,
+      // HITUNG ULANG PROGRESS INDUKNYA (Penting!)
+      afterRemove: (task) => this.recalcWeeklyProgress(task.weeklyProgressId),
     });
-
-    if (!task) throw new NotFoundException("Task not found");
-
-    // Hapus Task
-    await this.prisma.task.delete({ where: { id: taskId } });
-
-    // HITUNG ULANG PROGRESS INDUKNYA (Penting!)
-    await this.recalcWeeklyProgress(task.weeklyProgressId);
-
-    // 4. Audit Log
-    await this.auditService.log(userId, "DELETE_TASK", `Menghapus Task: ${task.taskName}`, task.weeklyProgress?.projectId ?? undefined);
 
     return { status: "deleted", taskId };
   }
@@ -838,8 +886,10 @@ export class ProjectService {
   }
 
   async deleteSitProcess(id: string, projectId: string, userId: string) {
-    const existing = await this.prisma.sitProcess.findFirst({ where: { id, projectId } });
-    if (!existing) throw new NotFoundException('Proses SIT tidak ditemukan.');
+    const existing = await this.findOrThrow(
+      () => this.prisma.sitProcess.findFirst({ where: { id, projectId } }),
+      'Proses SIT',
+    );
     if (existing.key) {
       throw new BadRequestException('Proses standar tidak dapat dihapus.');
     }
@@ -847,7 +897,7 @@ export class ProjectService {
     await this.prisma.sitProcess.delete({ where: { id } });
     await this.auditService.log(
       userId,
-      "DELETE_SIT_PROCESS",
+      'DELETE_SIT_PROCESS',
       `Menghapus proses SIT "${existing.name}"`,
       projectId,
     );

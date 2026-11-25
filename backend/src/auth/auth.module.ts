@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
+import { AuthMailerService } from './auth-mailer.service';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EmailVerifierService } from '../common/email-verifier.service';
@@ -26,6 +27,7 @@ import { RolesGuard } from './roles.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthMailerService,
     EmailVerifierService,
     JwtStrategy,
     RolesGuard

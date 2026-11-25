@@ -58,9 +58,10 @@ export class AuditService {
         },
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Never let audit failures break the main request.
-      console.error("❌ [AUDIT ERROR] Gagal menyimpan log:", error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("❌ [AUDIT ERROR] Gagal menyimpan log:", message);
     }
   }
 

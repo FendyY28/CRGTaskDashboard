@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -69,6 +70,18 @@ describe('AuditService', () => {
       expect(lastWhere().createdAt.lte).toEqual(new Date('2026-01-31T23:59:59.999'));
     });
 
+    it('rejects an unparseable date filter', async () => {
+      await expect(service.getLogs({ startDate: 'not-a-date' })).rejects.toThrow(BadRequestException);
+      expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects a start date after the end date', async () => {
+      await expect(
+        service.getLogs({ startDate: '2026-02-01', endDate: '2026-01-01' }),
+      ).rejects.toThrow('startDate tidak boleh lebih besar dari endDate.');
+      expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+    });
+
     it('uses the same project filter for the CSV export', async () => {
       await service.getLogsForExport({ projectId: 'PRJ-002' });
       expect(lastWhere()).toEqual({
@@ -113,5 +126,106 @@ describe('AuditService', () => {
       });
       expect(args.take).toBe(10);
     });
+  });
+});
+
+describe('AuditService — log()', () => {
+  const makePrismaMock = () => ({
+    auditLog: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+      create: jest.fn().mockResolvedValue({}),
+    },
+    user: { findFirst: jest.fn() },
+    project: { findUnique: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+  });
+
+  let prisma: ReturnType<typeof makePrismaMock>;
+  let service: AuditService;
+  let warnSpy: jest.SpyInstance;
+  let errorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    prisma = makePrismaMock();
+    service = new AuditService(prisma as unknown as PrismaService);
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  it('does nothing when the actor does not exist', async () => {
+    prisma.user.findFirst.mockResolvedValue(null);
+
+    await expect(service.log('ghost', 'CREATE_PROJECT', 'detail', 'PRJ-001')).resolves.toBeUndefined();
+
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+    expect(prisma.project.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('writes the log with the resolved user and a valid project id', async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: 'user-1', name: 'Budi' });
+    prisma.project.findUnique.mockResolvedValue({ id: 'PRJ-001' });
+
+    await service.log('budi@example.com', 'ADD_TASK', 'Menambah task', 'PRJ-001');
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        userName: 'Budi',
+        action: 'ADD_TASK',
+        details: 'Menambah task',
+        projectId: 'PRJ-001',
+      },
+    });
+  });
+
+  it('drops a projectId that no longer exists (FK safety)', async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: 'user-1', name: 'Budi' });
+    prisma.project.findUnique.mockResolvedValue(null);
+
+    await service.log('user-1', 'DELETE_PROJECT', 'Menghapus project', 'PRJ-404');
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ projectId: null }),
+    });
+  });
+
+  it('writes the log without a project id when none is given', async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: 'user-1', name: 'Budi' });
+
+    await service.log('user-1', 'LOGIN', 'Login berhasil');
+
+    expect(prisma.project.findUnique).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ projectId: null }),
+    });
+  });
+
+  it('swallows persistence errors and logs a readable message', async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: 'user-1', name: 'Budi' });
+    prisma.auditLog.create.mockRejectedValue(new Error('db down'));
+
+    await expect(service.log('user-1', 'ADD_TASK', 'detail')).resolves.toBeUndefined();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('AUDIT ERROR'),
+      expect.stringContaining('db down'),
+    );
+  });
+
+  it('handles a thrown non-Error value without crashing', async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: 'user-1', name: 'Budi' });
+    prisma.auditLog.create.mockRejectedValue('boom');
+
+    await expect(service.log('user-1', 'ADD_TASK', 'detail')).resolves.toBeUndefined();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('AUDIT ERROR'),
+      expect.stringContaining('boom'),
+    );
   });
 });
