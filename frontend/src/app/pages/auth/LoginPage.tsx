@@ -7,7 +7,7 @@ import { Label } from "../../components/ui/label";
 
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
-import { api } from "../../services/api"; 
+import { api, getErrorMessage } from "../../services/api";  
 
 const AUTH_KEYS = { 
   TOKEN: "auth_token", 
@@ -92,8 +92,8 @@ export function LoginPage() {
       
       navigate("/dashboard");
 
-    } catch (err: any) {
-      const errorMessage = err.message || t("auth.login.serverError", "Failed to connect to the server.");
+    } catch (err) {
+      const errorMessage = getErrorMessage(err, t("auth.login.serverError", "Failed to connect to the server."));
       const isResendEmail = errorMessage.toLowerCase().includes("email verifikasi") || errorMessage.toLowerCase().includes("akun belum aktif");
 
       setUi(prev => ({ 

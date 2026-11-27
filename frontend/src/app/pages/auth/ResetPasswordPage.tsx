@@ -10,7 +10,7 @@ import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
 
 // Utils & Services
-import { api } from "../../services/api";
+import { api, getErrorMessage } from "../../services/api";
 import { THEME } from "../../constants/projectConstants";
 
 const iconCls = "absolute left-3.5 top-3.5 h-4 w-4 text-gray-400";
@@ -55,10 +55,10 @@ export function ResetPasswordPage() {
 
       // Redirect to login after a short delay.
       setTimeout(() => navigate("/login"), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setUi({
         loading: false,
-        error: err.response?.data?.message || t("auth.resetPassword.updateFailed", "Gagal memperbarui password."),
+        error: getErrorMessage(err, t("auth.resetPassword.updateFailed", "Gagal memperbarui password.")),
         success: false
       });
     }

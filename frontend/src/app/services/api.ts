@@ -36,6 +36,20 @@ function handleUnauthorized(): void {
   }
 }
 
+/**
+ * Human-readable message for anything a request threw.
+ *
+ * The API client throws {@link ApiError} (already carrying the server's
+ * `message`), but a caller may also see a plain Error (network down, aborted
+ * request). Both are handled here so screens never reach into an axios-shaped
+ * `error.response.data` that this client does not produce.
+ */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error) return error;
+  return fallback;
+}
+
 async function fetchWrapper<T = unknown>(
   endpoint: string,
   options: RequestInit = {},

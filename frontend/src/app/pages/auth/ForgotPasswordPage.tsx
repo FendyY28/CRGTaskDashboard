@@ -7,7 +7,7 @@ import { Label } from "../../components/ui/label";
 
 import { AuthLayout } from "../../components/layouts/AuthLayout";
 import { DashboardInput } from "../../components/dashboard";
-import { api } from "../../services/api"; 
+import { api, getErrorMessage } from "../../services/api";  
 import { THEME } from "../../constants/projectConstants"; 
 
 export function ForgotPasswordPage() {
@@ -30,8 +30,8 @@ export function ForgotPasswordPage() {
     try {
       await api.post("/auth/forgot-password", { email: formData.email });
       setStep(2); 
-    } catch (err: any) {
-      setUi({ loading: false, error: err.response?.data?.message || err.message || t("auth.forgotPassword.otpFailed", "Gagal mengirim OTP.") });
+    } catch (err) {
+      setUi({ loading: false, error: getErrorMessage(err, t("auth.forgotPassword.otpFailed", "Gagal mengirim OTP.")) });
     } finally {
       setUi(prev => ({ ...prev, loading: false }));
     }
@@ -66,10 +66,10 @@ export function ForgotPasswordPage() {
         password: formData.newPassword
       });
       setStep(3); 
-    } catch (err: any) {
+    } catch (err) {
       setUi({ 
         loading: false, 
-        error: err.response?.data?.message || t("auth.forgotPassword.otpInvalid", "Kode OTP salah atau kedaluwarsa.") 
+        error: getErrorMessage(err, t("auth.forgotPassword.otpInvalid", "Kode OTP salah atau kedaluwarsa.")) 
       });
     } finally {
       setUi(prev => ({ ...prev, loading: false }));

@@ -2,12 +2,6 @@
 
 export type ChartColorResolver = (name: string) => string;
 
-interface CategoryPieProps {
-  data: { name: string; value: number }[];
-  /** Maps a slice label to its fill colour. */
-  resolveColor: ChartColorResolver;
-}
-
 /**
  * Tooltip payload shape for the pie tooltips we render ourselves.
  * Declared explicitly so the fields are type-checked instead of `any`.

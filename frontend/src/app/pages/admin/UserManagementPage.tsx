@@ -7,15 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useUsers } from "../../hooks/useUsers"; 
 import { UserTable } from "../../components/features/admin/UserTable";
 import { AddUserModal, EditUserModal, ConfirmActionModal } from "../../components/modals/UserModals";
-
-/** Subset of a user row this page reads; mirrors what GET /users returns. */
-interface ManagedUser {
-  id: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  createdAt?: string;
-}
+import type { AppUser } from "../../types";
 
 export function UserManagementPage() {
   const { t } = useTranslation();
@@ -28,13 +20,13 @@ export function UserManagementPage() {
   // STATE UNTUK MODALS FORM
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   // STATE UNTUK MODAL KONFIRMASI
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: "DELETE" | "RESET";
-    user: ManagedUser | null;
+    user: AppUser | null;
   }>({
     isOpen: false,
     type: "DELETE",
@@ -71,12 +63,12 @@ export function UserManagementPage() {
       });
   }, [users, roleFilter, searchTerm]);
 
-  const handleEditClick = (user: ManagedUser) => {
+  const handleEditClick = (user: AppUser) => {
     setSelectedUser(user);
     setIsEditOpen(true);
   };
 
-  const openConfirmModal = (type: "DELETE" | "RESET", user: ManagedUser) => {
+  const openConfirmModal = (type: "DELETE" | "RESET", user: AppUser) => {
     setConfirmModal({ isOpen: true, type, user });
   };
 

@@ -4,7 +4,6 @@ import {
   Post, 
   Patch,  
   Body, 
-  Req, 
   Param,
   UseGuards, 
   BadRequestException 
@@ -14,6 +13,7 @@ import { EmailVerifierService } from '../common/email-verifier.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
+import { CurrentUserId } from './current-user.decorator';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -54,8 +54,8 @@ export class AuthController {
   // Current user, read from the DB (not from client-cached localStorage).
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@Req() req) {
-    return this.authService.getProfile(req.user.id);
+  async me(@CurrentUserId() userId: string) {
+    return this.authService.getProfile(userId);
   }
 
   @Post('login')
@@ -78,16 +78,14 @@ export class AuthController {
   // Authenticated change-password flow, step 1: request the OTP.
   @UseGuards(JwtAuthGuard)
   @Post('request-change-password-otp')
-  async requestChangePasswordOtp(@Req() req) {
-    const userId = req.user.id;
+  async requestChangePasswordOtp(@CurrentUserId() userId: string) {
     return this.authService.sendChangePasswordOTP(userId);
   }
 
   // Step 2: apply the new password with the OTP.
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
-  async changePassword(@Req() req, @Body() body: ChangePasswordDto) {
-    const userId = req.user.id;
+  async changePassword(@CurrentUserId() userId: string, @Body() body: ChangePasswordDto) {
     return this.authService.changePassword(userId, body);
   }
 

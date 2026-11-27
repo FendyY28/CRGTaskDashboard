@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { EmailVerifierService } from '../common/email-verifier.service';
+import { getAuthenticatedUserId, type AuthenticatedRequest } from './current-user.decorator';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -76,7 +77,10 @@ describe('AuthController', () => {
       const req = { user: { id: 'user-1' } };
       const body = { oldPassword: 'a', newPassword: 'b', otp: '123456' };
 
-      await expect(controller.changePassword(req, body)).resolves.toEqual({ success: true });
+      // @CurrentUserId() resolves the id from the verified JWT; the body is
+      // passed through untouched and can never influence who is updated.
+      const userId = getAuthenticatedUserId(req as AuthenticatedRequest);
+      await expect(controller.changePassword(userId, body)).resolves.toEqual({ success: true });
       expect(authServiceMock.changePassword).toHaveBeenCalledWith('user-1', body);
     });
 

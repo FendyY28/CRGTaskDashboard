@@ -1,9 +1,57 @@
 import { BadRequestException, ConflictException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { ProjectService } from './project.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { AuditService } from '../audit/audit.service';
 import type { UpdateProjectDto } from './dto/update-project.dto';
+import { PirService } from './pir.service';
+import { ProjectLifecycleService } from './project-lifecycle.service';
+import { ProjectSupportService } from './project-support.service';
+import { SequentialIdService } from './sequential-id.service';
+import { SitProcessService } from './sit-process.service';
+import { TestingService } from './testing.service';
+import type { ProjectDatabase, AuditLogger } from './project.interfaces';
+
+/**
+ * The project domain used to be one 1000-line service; these tests used to build
+ * it with a cast. They now build the same object graph the module builds, so a
+ * test failure points at the service that actually broke.
+ */
+type ProjectDomain = ProjectLifecycleService &
+  Pick<PirService, 'createIssue'> &
+  Pick<TestingService, 'updateTestCase'> &
+  Pick<SitProcessService, 'replaceSitProcesses'>;
+
+function buildProjectService(prisma: unknown, auditService: unknown): ProjectDomain {
+  const db = prisma as ProjectDatabase;
+  const audit = auditService as AuditLogger;
+  // Mirrors UserNameResolver, but reads through the mocked Prisma client.
+  const users = {
+    async findDisplayName() {
+      const user = await db.user.findFirst();
+      return user?.name ?? null;
+    },
+  };
+
+  const ids = new SequentialIdService(db);
+  const support = new ProjectSupportService(db, audit, users);
+
+  const lifecycle = new ProjectLifecycleService(db, audit, support, ids);
+  const pir = new PirService(db, audit, support, ids);
+  const testing = new TestingService(db, audit, support);
+  const sit = new SitProcessService(db, audit, support);
+
+  const domain = new Proxy(
+    {},
+    {
+      get: (_target, prop) => {
+        const owner = [lifecycle, pir, testing, sit].find(
+          (service) => typeof (service as unknown as Record<PropertyKey, unknown>)[prop] === 'function',
+        );
+        const member = owner && (owner as unknown as Record<PropertyKey, unknown>)[prop];
+        return typeof member === 'function' ? member.bind(owner) : undefined;
+      },
+    },
+  );
+  return domain as ProjectDomain;
+}
 
 /**
  * Focused on the cycle-aware update path: the phase transition helpers, the
@@ -27,7 +75,7 @@ describe('ProjectService — phase transitions', () => {
 
   let prisma: ReturnType<typeof makePrismaMock>;
   let auditLog: jest.Mock;
-  let service: ProjectService;
+  let service: ProjectDomain;
 
   const oldProject = (overrides: Record<string, unknown> = {}) => ({
     id: 'PRJ-001',
@@ -46,10 +94,7 @@ describe('ProjectService — phase transitions', () => {
     // Run the transaction callback against the same mocked client.
     prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
 
-    service = new ProjectService(
-      prisma as unknown as PrismaService,
-      { log: auditLog } as unknown as AuditService,
-    );
+    service = buildProjectService(prisma, { log: auditLog });
   });
 
   it('moves the active cycle phase and closes the old one on a phase change', async () => {
@@ -192,7 +237,7 @@ describe('ProjectService — mutation flows', () => {
 
   let prisma: ReturnType<typeof makePrismaMock>;
   let auditLog: jest.Mock;
-  let service: ProjectService;
+  let service: ProjectDomain;
 
   beforeEach(() => {
     prisma = makePrismaMock();
@@ -201,10 +246,7 @@ describe('ProjectService — mutation flows', () => {
       typeof cb === 'function' ? cb(prisma) : Promise.all(cb),
     );
 
-    service = new ProjectService(
-      prisma as unknown as PrismaService,
-      { log: auditLog } as unknown as AuditService,
-    );
+    service = buildProjectService(prisma, { log: auditLog });
   });
 
   describe('nextCycle', () => {

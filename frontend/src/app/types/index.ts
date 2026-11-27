@@ -134,3 +134,24 @@ export interface Project {
   improvements?: ImprovementNote[];
   cycle?: number;
 }
+// ADMIN USER MANAGEMENT
+/** A user row as returned by GET /users (never includes the password hash). */
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt?: string;
+}
+
+/** Body of POST /users — the backend generates and emails the password. */
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  role?: string;
+}
+
+/** Body of PATCH /users/:id — only the role is mutable. */
+export interface UpdateUserPayload {
+  role: string;
+}

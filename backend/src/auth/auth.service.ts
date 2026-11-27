@@ -401,7 +401,8 @@ export class AuthService {
     return password;
   }
 
-  public async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
+  /** Internal use: the verification link email (see issueVerificationToken). */
+  private async sendVerificationEmail(to: string, name: string, link: string, subject: string) {
     await this.mailer.sendVerificationEmail(to, name, link, subject);
   }
 
@@ -413,7 +414,8 @@ export class AuthService {
     await this.mailer.sendWelcomeEmail(to, name, temporaryPassword);
   }
 
-  public async sendPasswordChangedNotification(to: string, name: string) {
+  /** Internal use: the "your password changed" security notification. */
+  private async sendPasswordChangedNotification(to: string, name: string) {
     await this.mailer.sendPasswordChangedNotification(to, name);
   }
 }

@@ -5,7 +5,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner"; 
-import { api } from "../../services/api";
+import { api, getErrorMessage } from "../../services/api";
 
 import { THEME } from "../../constants/projectConstants";
 
@@ -73,8 +73,8 @@ export function ProfileSettingsPage() {
       localStorage.setItem("user_name", profileForm.name);
       toast.success(t('settings.profile.alerts.successProfile'));
       setTimeout(() => window.location.reload(), 1000); 
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t('settings.profile.alerts.errorUpdate'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('settings.profile.alerts.errorUpdate')));
     } finally {
       setIsSavingProfile(false);
     }
@@ -88,11 +88,11 @@ export function ProfileSettingsPage() {
 
     setIsRequestingOtp(true);
     try {
-      const res: any = await api.post('/auth/request-change-password-otp');
+      const res = await api.post<{ message?: string }>('/auth/request-change-password-otp');
       toast.success(res.message || t('settings.profile.alerts.otpSent'));
       setShowOtpField(true);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t('settings.profile.alerts.otpError'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('settings.profile.alerts.otpError')));
     } finally {
       setIsRequestingOtp(false);
     }
@@ -126,8 +126,8 @@ export function ProfileSettingsPage() {
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "", otp: "" });
       setShowOtpField(false);
       setTimeout(() => window.location.reload(), 1500);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t('settings.profile.alerts.passwordError'));
+    } catch (error) {
+      toast.error(getErrorMessage(error, t('settings.profile.alerts.passwordError')));
     } finally {
       setIsSavingPassword(false);
     }

@@ -3,7 +3,7 @@ import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Filter, CheckSquare, Square, X, Search } from "lucide-react";
+import { Activity, Filter, CheckSquare, Square, X, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { THEME } from "../../constants/projectConstants";

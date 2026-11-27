@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { UserService } from './user.service';
+import { UserCredentialsService } from './user-credentials.service';
 import { UserController } from './user.controller';
 import { AuthModule } from '../auth/auth.module';
 import { RolesGuard } from '../auth/roles.guard';
@@ -9,7 +10,7 @@ import { RolesGuard } from '../auth/roles.guard';
     forwardRef(() => AuthModule),
   ],
   controllers: [UserController],
-  providers: [UserService, RolesGuard],
+  providers: [UserService, UserCredentialsService, RolesGuard],
   exports: [UserService],
 })
 export class UserModule {}

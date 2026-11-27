@@ -7,20 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../ui/label";
 import { useTranslation } from "react-i18next";
 import { THEME } from "../../constants/projectConstants"; 
-import { api } from "../../services/api";
+import { api, getErrorMessage } from "../../services/api";
+import type { AppUser, CreateUserPayload, UpdateUserPayload } from "../../types";
 
 // Interfaces
 interface AddUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmitAction: (payload: any) => Promise<void>;
+  onSubmitAction: (payload: CreateUserPayload) => Promise<unknown>;
 }
 
 interface EditUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userData: any;
-  onSubmitAction: (id: string, payload: any) => Promise<void>;
+  userData: AppUser | null;
+  onSubmitAction: (id: string, payload: UpdateUserPayload) => Promise<unknown>;
 }
 
 interface ConfirmActionModalProps {
@@ -69,15 +70,15 @@ export function AddUserModal({ open, onOpenChange, onSubmitAction }: AddUserModa
       // Validasi email ke backend
       try {
         await api.post("/auth/validate-email", { email: form.email });
-      } catch (apiErr: any) {
-        throw new Error(apiErr.response?.data?.message || t('admin.userManagement.modal.errorEmailTaken', 'Email sudah terdaftar atau tidak valid'));
+      } catch (apiErr) {
+        throw new Error(getErrorMessage(apiErr, t('admin.userManagement.modal.errorEmailTaken', 'Email sudah terdaftar atau tidak valid')));
       }
       // Backend akan men-generate random password dan mengirimnya ke email user.
       await onSubmitAction(form);
       onOpenChange(false);
       
-    } catch (err: any) {
-      setUi({ loading: false, error: err.message || t('admin.userManagement.modal.errorDefault', 'Terjadi kesalahan') });
+    } catch (err) {
+      setUi({ loading: false, error: getErrorMessage(err, t('admin.userManagement.modal.errorDefault', 'Terjadi kesalahan')) });
     }
   };
 
@@ -169,11 +170,15 @@ export function EditUserModal({ open, onOpenChange, userData, onSubmitAction }: 
     e.preventDefault();
     setUi({ loading: true, error: "" });
     
+    if (!userData) {
+      setUi({ loading: false, error: "" });
+      return;
+    }
     try {
       await onSubmitAction(userData.id, { role: form.role });
       onOpenChange(false);
-    } catch (err: any) {
-      setUi({ loading: false, error: err.message || t('admin.userManagement.modal.errorDefault', 'Terjadi kesalahan') });
+    } catch (err) {
+      setUi({ loading: false, error: getErrorMessage(err, t('admin.userManagement.modal.errorDefault', 'Terjadi kesalahan')) });
     }
   };
 

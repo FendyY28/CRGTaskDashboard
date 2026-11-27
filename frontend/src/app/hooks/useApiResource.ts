@@ -9,32 +9,10 @@ export interface ApiResource<T> {
   reload: (signal?: AbortSignal) => Promise<void>;
 }
 
-/**
- * Returns a starter for a "latest request wins" sequence token.
- *
- * Call `startRequest()` at the beginning of an async effect; it returns an
- * `isLatest()` predicate that stays true until a newer request starts or the
- * component unmounts, so a superseded response can never write stale state.
- */
-export function useLatestRequest(): () => () => boolean {
-  const requestIdRef = useRef(0);
-
-  useEffect(() => {
-    // Invalidate any in-flight request when unmounting or re-running the effect.
-    return () => {
-      requestIdRef.current += 1;
-    };
-  }, []);
-
-  return useCallback(() => {
-    const requestId = ++requestIdRef.current;
-    return () => requestId === requestIdRef.current;
-  }, []);
-}
-
 type Endpoint = string | readonly string[];
 
-/** Fetches one endpoint (or a group of them) from the API. */
+/**
+ * Fetches one endpoint (or a group of them) from the API. */
 type Fetcher<T> = (signal?: AbortSignal) => Promise<T>;
 
 /**

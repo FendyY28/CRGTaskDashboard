@@ -1,10 +1,18 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
-import { THEME, PHASE_LABELS } from "../constants/projectConstants";
 import type { Project, ProjectIssue, TestCase } from "../types";
-import { normalizeStr } from "../utils/pir";
 import { useApiResource } from "./useApiResource";
+import {
+  buildAverageProgressData,
+  buildIssueData,
+  buildIssueResolutionData,
+  buildPhaseData,
+  buildStatusData,
+  buildTopDefectsData,
+  buildUatData,
+  type ChartLabels,
+} from "../pages/monitor/analyticsAggregations";
 
 interface AnalyticsData {
   projects: Project[];
@@ -21,12 +29,12 @@ const asList = <T>(raw: unknown): T[] => (Array.isArray(raw) ? (raw as T[]) : []
  * with the other data hooks through useApiResource.
  */
 const fetchAnalyticsData = async (signal?: AbortSignal): Promise<AnalyticsData> => {
-  const [prjRes, issRes] = await Promise.all([
+  const [projectsRes, issuesRes] = await Promise.all([
     api.get<Project[]>('/project', { signal }),
     api.get<ProjectIssue[]>('/project/issue', { signal }),
   ]);
 
-  const projects = asList<Project>(prjRes);
+  const projects = asList<Project>(projectsRes);
   const uatProjects = projects.filter((p) => p.currentPhase === 'UAT');
   const testCases = (
     await Promise.all(
@@ -34,7 +42,7 @@ const fetchAnalyticsData = async (signal?: AbortSignal): Promise<AnalyticsData> 
     )
   ).flatMap((tc) => asList<TestCase>(tc));
 
-  return { projects, issues: asList<ProjectIssue>(issRes), testCases };
+  return { projects, issues: asList<ProjectIssue>(issuesRes), testCases };
 };
 
 const EMPTY_ANALYTICS_DATA: AnalyticsData = { projects: [], issues: [], testCases: [] };
@@ -42,13 +50,22 @@ const EMPTY_ANALYTICS_DATA: AnalyticsData = { projects: [], issues: [], testCase
 export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { t } = useTranslation();
 
-  // Label Dinamis
-  const openLbl = t('pir.tabs.open') || 'Open';
-  const inProgressLbl = t('pir.tabs.in-progress') || 'In Progress';
-  const resolvedLbl = t('pir.tabs.resolved') || 'Resolved';
-  const takeoutLbl = t('testing.row.takenOut') || 'Takeout';
+  const labels: ChartLabels = useMemo(
+    () => ({
+      open: t('pir.tabs.open') || 'Open',
+      inProgress: t('pir.tabs.in-progress') || 'In Progress',
+      resolved: t('pir.tabs.resolved') || 'Resolved',
+      takeout: t('testing.row.takenOut') || 'Takeout',
+      critical: t('pir.priorities.critical'),
+      high: t('pir.priorities.high'),
+      medium: t('pir.priorities.medium'),
+      low: t('pir.priorities.low'),
+      projects: t('analytics.labels.projects'),
+    }),
+    [t],
+  );
 
-  // 1. FETCH SEMUA DATA SEKALI SAJA SAAT MOUNT
+  // Fetch everything once on mount; the filter below is applied client-side.
   const { data } = useApiResource<AnalyticsData>(
     '/project',
     EMPTY_ANALYTICS_DATA,
@@ -59,135 +76,53 @@ export function useAnalyticsData(selectedProjectIds: string[] = []) {
   const { projects: allProjects, issues: allIssues, testCases: allTestCases } = data;
 
   const { projects, issues, testCases } = useMemo(() => {
-    // Jika tidak ada filter (kosong), kembalikan semua data
-    if (!selectedProjectIds || selectedProjectIds.length === 0) {
+    // No filter selected -> the whole dataset.
+    if (selectedProjectIds.length === 0) {
       return { projects: allProjects, issues: allIssues, testCases: allTestCases };
     }
-
-    // Jika ada filter, saring data berdasarkan ID project yang dipilih
+    const isSelected = (projectId?: string) =>
+      !!projectId && selectedProjectIds.includes(projectId);
     return {
-      projects: allProjects.filter(p => selectedProjectIds.includes(p.id)),
-      issues: allIssues.filter(i => i.projectId && selectedProjectIds.includes(i.projectId)),
-      testCases: allTestCases.filter(tc => tc.projectId && selectedProjectIds.includes(tc.projectId)),
+      projects: allProjects.filter((p) => selectedProjectIds.includes(p.id)),
+      issues: allIssues.filter((i) => isSelected(i.projectId)),
+      testCases: allTestCases.filter((tc) => isSelected(tc.projectId)),
     };
   }, [allProjects, allIssues, allTestCases, selectedProjectIds]);
 
-
-  // 3. KALKULASI CHART (Memakai data yang sudah difilter di atas)
-  const statusData = useMemo(() => {
-    const counts = { 'on-track': 0, 'at-risk': 0, 'overdue': 0, 'completed': 0 };
-    projects.forEach(p => {
-      if (counts[p.status as keyof typeof counts] !== undefined) {
-        counts[p.status as keyof typeof counts]++;
-      }
-    });
-    return [
-      { name: 'On Track', value: counts['on-track'], color: THEME.TOSCA },
-      { name: 'At Risk', value: counts['at-risk'], color: THEME.BSI_YELLOW },
-      { name: 'Overdue', value: counts['overdue'], color: '#E11D48' },
-      { name: 'Completed', value: counts['completed'], color: THEME.BSI_GREEN },
-    ].filter(d => d.value > 0);
-  }, [projects]);
-
-  const averageProgressData = useMemo(() => {
-    return PHASE_LABELS.map(({ short, full }) => {
-      const projsInPhase = projects.filter(p => p.currentPhase === full);
-      const avg = projsInPhase.length > 0
-        ? Math.round(projsInPhase.reduce((sum, p) => sum + (p.overallProgress || 0), 0) / projsInPhase.length)
-        : 0;
-      return { name: short, Average: avg, projectCount: projsInPhase.length };
-    });
-  }, [projects]);
-
-  const phaseData = useMemo(() => {
-    return PHASE_LABELS.map(({ short, full }) => ({
-      name: short,
-      [t('analytics.labels.projects')]: projects.filter(p => p.currentPhase === full).length
-    }));
-  }, [projects, t]);
-
-  const uatData = useMemo(() => {
-    const counts = { pass: 0, fail: 0, pending: 0, takeout: 0 };
-    testCases.forEach(tc => {
-      if (tc.isDeleted) counts.takeout++;
-      else if (tc.status === 'pass') counts.pass++;
-      else if (tc.status === 'fail') counts.fail++;
-      else counts.pending++;
-    });
-    return [
-      { name: 'Passed', value: counts.pass, color: THEME.BSI_GREEN },
-      { name: 'Failed', value: counts.fail, color: '#E11D48' },
-      { name: 'Pending', value: counts.pending, color: THEME.BSI_YELLOW },
-      { name: takeoutLbl, value: counts.takeout, color: '#9CA3AF' },
-    ].filter(d => d.value > 0);
-  }, [testCases, takeoutLbl]);
-
-  const issueData = useMemo(() => {
-    type PriorityData = { name: string; [key: string]: number | string };
-    const dataMap: Record<string, PriorityData> = {
-      critical: { name: t('pir.priorities.critical'), [openLbl]: 0, [inProgressLbl]: 0 },
-      high: { name: t('pir.priorities.high'), [openLbl]: 0, [inProgressLbl]: 0 },
-      medium: { name: t('pir.priorities.medium'), [openLbl]: 0, [inProgressLbl]: 0 },
-      low: { name: t('pir.priorities.low'), [openLbl]: 0, [inProgressLbl]: 0 },
-    };
-
-    issues.forEach(i => {
-      const p = i.priority?.toLowerCase();
-      const s = normalizeStr(i.status);
-      const targetPriority = p ? dataMap[p] : undefined;
-      if (targetPriority && s !== 'resolved') {
-        if (s === 'in progress') (targetPriority[inProgressLbl] as number)++;
-        else if (s === 'open') (targetPriority[openLbl] as number)++;
-      }
-    });
-    return [dataMap.critical, dataMap.high, dataMap.medium, dataMap.low];
-  }, [issues, t, openLbl, inProgressLbl]);
-
-  const issueResolutionData = useMemo(() => {
-    const counts = { open: 0, 'in progress': 0, resolved: 0 };
-    issues.forEach(i => {
-      const s = normalizeStr(i.status);
-      if (s === 'open') counts.open++;
-      else if (s === 'in progress') counts['in progress']++;
-      else if (s === 'resolved') counts.resolved++;
-    });
-    return [
-      { name: resolvedLbl, value: counts.resolved, color: THEME.BSI_GREEN },
-      { name: inProgressLbl, value: counts['in progress'], color: '#0284C7' },
-      { name: openLbl, value: counts.open, color: '#E11D48' },
-    ].filter(d => d.value > 0);
-  }, [issues, openLbl, inProgressLbl, resolvedLbl]);
-
-  const topDefectsData = useMemo(() => {
-    const projectFailMap: Record<string, number> = {};
-
-    testCases.forEach(tc => {
-      if (!tc.isDeleted && tc.status === 'fail') {
-        const pId = tc.projectId || 'Unknown';
-        if (!projectFailMap[pId]) projectFailMap[pId] = 0;
-        projectFailMap[pId]++;
-      }
-    });
-
-    const sortedFails = Object.entries(projectFailMap)
-      .map(([id, fails]) => {
-        const projectMatch = allProjects.find(p => String(p.id) === String(id));
-        const projectName = projectMatch ? projectMatch.name : `PRJ-${id}`;
-        
-        const shortName = projectName.length > 15 ? projectName.substring(0, 15) + '...' : projectName;
-        return { name: shortName, Fails: fails };
-      })
-      .sort((a, b) => b.Fails - a.Fails)
-      .slice(0, 5); 
-
-    return sortedFails;
-  }, [testCases, allProjects]);
+  // Chart rows are pure functions of the filtered data (see analyticsAggregations).
+  const statusData = useMemo(
+    () =>
+      buildStatusData(projects, {
+        tr: 'On Track',
+        ar: 'At Risk',
+        ov: 'Overdue',
+        co: 'Completed',
+      }),
+    [projects],
+  );
+  const averageProgressData = useMemo(() => buildAverageProgressData(projects), [projects]);
+  const phaseData = useMemo(() => buildPhaseData(projects, labels.projects), [projects, labels.projects]);
+  const uatData = useMemo(() => buildUatData(testCases, labels.takeout), [testCases, labels.takeout]);
+  const issueData = useMemo(() => buildIssueData(issues, labels), [issues, labels]);
+  const issueResolutionData = useMemo(
+    () => buildIssueResolutionData(issues, labels),
+    [issues, labels],
+  );
+  const topDefectsData = useMemo(
+    () => buildTopDefectsData(testCases, allProjects),
+    [testCases, allProjects],
+  );
 
   return {
-    availableProjects: allProjects.map(p => ({ id: p.id, name: p.name })),
-
-    statusData, averageProgressData, phaseData,
-    uatData, issueData, issueResolutionData,
-    openLbl, inProgressLbl, topDefectsData
+    availableProjects: allProjects.map((p) => ({ id: p.id, name: p.name })),
+    statusData,
+    averageProgressData,
+    phaseData,
+    uatData,
+    issueData,
+    issueResolutionData,
+    openLbl: labels.open,
+    inProgressLbl: labels.inProgress,
+    topDefectsData,
   };
 }

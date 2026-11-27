@@ -1,22 +1,21 @@
-import { 
-  Controller, 
-  Get, 
-  Param, 
-  Post, 
-  Body, 
-  Patch, 
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Put,
   Query,
-  Delete, 
-  BadRequestException, 
-  Request, 
-  UseGuards 
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { EmailVerifierService } from '../common/email-verifier.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; 
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CurrentUserId } from '../auth/current-user.decorator';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import {
@@ -35,25 +34,20 @@ import {
   UpdateTestCaseDto,
 } from './dto/project-payloads.dto';
 
+/** Routes that need a login and an ADMIN/OFFICER role. */
+const AdminOrOfficer = () => UseGuards(JwtAuthGuard, RolesGuard);
+
+/**
+ * Thin HTTP layer for the project domain.
+ *
+ * Every writing route is guarded and takes the actor from the JWT through
+ * @CurrentUserId(); body-supplied identity fields are dropped by the global
+ * ValidationPipe (`whitelist: true`), so the audit trail cannot be forged.
+ * All logic lives in ProjectService and the services behind it.
+ */
 @Controller('project')
 export class ProjectController {
-  constructor(
-    private readonly projectService: ProjectService,
-    private readonly emailService: EmailVerifierService,
-  ) {}
-
-  /**
-   * Identitas pelaku SELALU diambil dari JWT (req.user), tidak pernah dari body.
-   * Body request dikendalikan klien, sehingga menerima userId/performedBy dari
-   * sana membuat audit trail bisa dipalsukan oleh user mana pun.
-   */
-  private getUserId(req: any): string {
-    if (req.user && (req.user.id || req.user.userId)) {
-      return req.user.id || req.user.userId;
-    }
-
-    throw new BadRequestException("Sesi Anda tidak valid. Silakan Logout dan Login ulang.");
-  }
+  constructor(private readonly projectService: ProjectService) {}
 
   // 1. GENERAL & DASHBOARD ENDPOINTS
   @Get()
@@ -62,12 +56,9 @@ export class ProjectController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async create(@Body() data: CreateProjectDto, @Request() req) {
-    // Pelaku selalu dari JWT. Identitas kiriman client (userId/performedBy)
-    // sudah dibuang oleh ValidationPipe `whitelist`, karena tidak ada di DTO.
-    const userId = this.getUserId(req);
+  create(@Body() data: CreateProjectDto, @CurrentUserId() userId: string) {
     return this.projectService.create(data, userId);
   }
 
@@ -83,134 +74,120 @@ export class ProjectController {
   }
 
   @Post('issue')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  createIssue(@Body() data: CreateIssueDto, @Request() req) {
-    const userId = this.getUserId(req);
+  createIssue(@Body() data: CreateIssueDto, @CurrentUserId() userId: string) {
     return this.projectService.createIssue(data, userId);
   }
 
   @Patch('issue/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  updateIssue(@Param('id') id: string, @Body() data: UpdateIssueDto, @Request() req) {
-    const userId = this.getUserId(req);
+  updateIssue(
+    @Param('id') id: string,
+    @Body() data: UpdateIssueDto,
+    @CurrentUserId() userId: string,
+  ) {
     return this.projectService.updateIssue(+id, data, userId);
   }
 
   @Delete('issue/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  removeIssue(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req);
+  removeIssue(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.projectService.removeIssue(+id, userId);
   }
 
   @Post('improvement')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  createImprovement(@Body() data: CreateImprovementDto, @Request() req) {
-    const userId = this.getUserId(req);
+  createImprovement(@Body() data: CreateImprovementDto, @CurrentUserId() userId: string) {
     return this.projectService.createImprovement(data, userId);
   }
 
   @Delete('improvement/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  removeImprovement(@Param('id') id: string, @Request() req: any) {
-     const userId = this.getUserId(req);
+  removeImprovement(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.projectService.removeImprovement(+id, userId);
   }
 
   // 3. LOGS & TASKS ENDPOINTS
   @Post('log')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async addLog(@Body() logData: AddLogDto, @Request() req) {
-    const userId = this.getUserId(req);
+  addLog(@Body() logData: AddLogDto, @CurrentUserId() userId: string) {
     return this.projectService.addLog(logData, userId);
   }
 
   @Delete('log/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async deleteLog(@Param('id') id: string, @Request() req) {
-    // Ambil userId (via token atau body jika dikirim)
-    const userId = this.getUserId(req);
-
-    // Panggil service
+  deleteLog(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.projectService.removeLog(+id, userId);
   }
 
   @Patch('log/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async updateLog(@Param('id') id: string, @Body() updateData: UpdateLogDto, @Request() req) {
-    const userId = this.getUserId(req);
+  updateLog(
+    @Param('id') id: string,
+    @Body() updateData: UpdateLogDto,
+    @CurrentUserId() userId: string,
+  ) {
     return this.projectService.updateLog(+id, updateData, userId);
   }
 
   @Post('log/:id/task')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async addTask(
-    @Param('id') id: string,
-    @Body() body: AddTaskDto,
-    @Request() req
-  ) {
-    const userId = this.getUserId(req);
+  addTask(@Param('id') id: string, @Body() body: AddTaskDto, @CurrentUserId() userId: string) {
     return this.projectService.addTask(+id, body.taskName, userId, body.description);
   }
 
   @Patch('task/:id/toggle')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async toggleTask(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req);
-    // completedBy sengaja TIDAK diterima dari body: service akan mengisinya
-    // dari user yang terautentikasi agar atribusi pekerjaan tidak bisa dipalsukan.
+  toggleTask(@Param('id') id: string, @CurrentUserId() userId: string) {
+    // completedBy sengaja TIDAK diterima dari body: service mengisinya dari user
+    // yang terautentikasi agar atribusi pekerjaan tidak bisa dipalsukan.
     return this.projectService.toggleTask(+id, userId);
   }
 
   @Delete('task/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async removeTask(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req);
+  removeTask(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.projectService.removeTask(+id, userId);
   }
 
   // 4. TEST CASES ENDPOINTS
   @Post('test-cases')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'OFFICER')
-createTestCase(@Body() data: CreateTestCaseDto, @Request() req) {
-  const userId = this.getUserId(req);
-  return this.projectService.createTestCase(data, userId);
-  }
+  @AdminOrOfficer()
+  @Roles('ADMIN', 'OFFICER')
+  createTestCase(@Body() data: CreateTestCaseDto, @CurrentUserId() userId: string) {
+    return this.projectService.createTestCase(data, userId);
+  }
 
   @Patch('test-cases/:testCaseId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  updateTestCase(@Param('testCaseId') testCaseId: string, @Body() data: UpdateTestCaseDto, @Request() req) {
-    const userId = this.getUserId(req);
+  updateTestCase(
+    @Param('testCaseId') testCaseId: string,
+    @Body() data: UpdateTestCaseDto,
+    @CurrentUserId() userId: string,
+  ) {
     return this.projectService.updateTestCase(testCaseId, data, userId);
   }
 
   @Delete('test-cases/:testCaseId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  deleteTestCase(@Param('testCaseId') testCaseId: string, @Request() req) {
-    const userId = this.getUserId(req);
+  deleteTestCase(@Param('testCaseId') testCaseId: string, @CurrentUserId() userId: string) {
     return this.projectService.deleteTestCase(testCaseId, userId);
   }
 
   // 4b. SIT PROCESS PIPELINE ENDPOINTS
-
-  /**
-   * Identitas pelaku selalu dari JWT, sama seperti endpoint lain: audit trail
-   * SIT tidak bisa dipalsukan oleh client.
-   */
   @Get(':id/sit-processes')
   @UseGuards(JwtAuthGuard)
   getSitProcesses(@Param('id') projectId: string) {
@@ -218,41 +195,45 @@ createTestCase(@Body() data: CreateTestCaseDto, @Request() req) {
   }
 
   @Post('sit-processes')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  createSitProcess(@Body() data: CreateSitProcessDto, @Request() req) {
-    const userId = this.getUserId(req);
+  createSitProcess(@Body() data: CreateSitProcessDto, @CurrentUserId() userId: string) {
     return this.projectService.createSitProcess(data, userId);
   }
 
   @Patch('sit-processes/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  updateSitProcess(@Param('id') id: string, @Body() data: UpdateSitProcessDto, @Query('projectId') projectId: string, @Request() req) {
+  updateSitProcess(
+    @Param('id') id: string,
+    @Body() data: UpdateSitProcessDto,
+    @Query('projectId') projectId: string,
+    @CurrentUserId() userId: string,
+  ) {
     if (!projectId) throw new BadRequestException('Query projectId wajib diisi.');
-    const userId = this.getUserId(req);
     return this.projectService.updateSitProcess(id, data, projectId, userId);
   }
 
   @Delete('sit-processes/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  deleteSitProcess(@Param('id') id: string, @Query('projectId') projectId: string, @Request() req) {
+  deleteSitProcess(
+    @Param('id') id: string,
+    @Query('projectId') projectId: string,
+    @CurrentUserId() userId: string,
+  ) {
     if (!projectId) throw new BadRequestException('Query projectId wajib diisi.');
-    const userId = this.getUserId(req);
     return this.projectService.deleteSitProcess(id, projectId, userId);
   }
 
   @Put('sit-processes')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  replaceSitProcesses(@Body() data: ReplaceSitProcessesDto, @Request() req) {
-    const userId = this.getUserId(req);
+  replaceSitProcesses(@Body() data: ReplaceSitProcessesDto, @CurrentUserId() userId: string) {
     return this.projectService.replaceSitProcesses(data, userId);
   }
 
   // 5. PARAMETERIZED ROUTES
-
   @Get(':id/test-cases')
   getTestCases(@Param('id') projectId: string) {
     return this.projectService.getTestCases(projectId);
@@ -264,59 +245,57 @@ createTestCase(@Body() data: CreateTestCaseDto, @Request() req) {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async update(@Param('id') id: string, @Body() data: UpdateProjectDto, @Request() req) {
-    const userId = this.getUserId(req);
+  update(
+    @Param('id') id: string,
+    @Body() data: UpdateProjectDto,
+    @CurrentUserId() userId: string,
+  ) {
     return this.projectService.update(id, data, userId);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  remove(@Param('id') id: string, @Request() req) {
-    const userId = this.getUserId(req);
+  remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.projectService.remove(id, userId);
   }
 
   // 6. CYCLE MANAGEMENT
-
   @Post(':id/next-cycle')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN')
-    async nextCycle(
-      @Param('id') id: string,
-      @Request() req,
-      @Body() body: NextCycleDto
-    ) {
-      const userId = this.getUserId(req);
-      return this.projectService.nextCycle(id, userId, body);
-    }
+  nextCycle(
+    @Param('id') id: string,
+    @Body() body: NextCycleDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.projectService.nextCycle(id, userId, body);
+  }
 
   // 7. PHASE NOTES ENDPOINTS
   @Post('phase/:phaseId/note')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async addPhaseNote(
+  addPhaseNote(
     @Param('phaseId') phaseId: string,
     @Body() body: AddPhaseNoteDto,
-    @Request() req,
+    @CurrentUserId() userId: string,
   ) {
-    const userId = this.getUserId(req);
-    return this.projectService.addPhaseNote(parseInt(phaseId), body.content, userId);
+    return this.projectService.addPhaseNote(parseInt(phaseId, 10), body.content, userId);
   }
 
   @Get('phase/:phaseId/notes')
   @UseGuards(JwtAuthGuard)
-  async getPhaseNotes(@Param('phaseId') phaseId: string) {
-    return this.projectService.getPhaseNotes(parseInt(phaseId));
+  getPhaseNotes(@Param('phaseId') phaseId: string) {
+    return this.projectService.getPhaseNotes(parseInt(phaseId, 10));
   }
 
   @Delete('phase/note/:noteId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @AdminOrOfficer()
   @Roles('ADMIN', 'OFFICER')
-  async deletePhaseNote(@Param('noteId') noteId: string, @Request() req) {
-    const userId = this.getUserId(req);
-    return this.projectService.deletePhaseNote(parseInt(noteId), userId);
+  deletePhaseNote(@Param('noteId') noteId: string, @CurrentUserId() userId: string) {
+    return this.projectService.deletePhaseNote(parseInt(noteId, 10), userId);
   }
 }

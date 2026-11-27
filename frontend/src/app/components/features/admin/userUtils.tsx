@@ -2,18 +2,21 @@ import { ShieldAlert, ShieldCheck, Briefcase } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { THEME } from "../../../constants/projectConstants"; 
 
-export const formatDate = (isoString: string, locale: string = 'id-ID') => {
+/** Dates arrive from the API and may be absent on optimistic/local rows. */
+type OptionalDate = string | null | undefined;
+
+export const formatDate = (isoString: OptionalDate, locale: string = 'id-ID') => {
   if (!isoString) return "-";
   return new Date(isoString).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-export const isNewUser = (isoString: string) => {
+export const isNewUser = (isoString: OptionalDate) => {
   if (!isoString) return false;
   const diffTime = Math.abs(new Date().getTime() - new Date(isoString).getTime());
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) <= 7;
 };
 
-export const RoleBadge = ({ role }: { role: string }) => {
+export const RoleBadge = ({ role }: { role?: string | null }) => {
   switch (role?.toUpperCase()) {
     case 'ADMIN': 
       return (

@@ -3,13 +3,14 @@ import { Badge } from "../../ui/badge";
 import { useTranslation } from "react-i18next";
 import { formatDate, isNewUser, RoleBadge } from "./userUtils";
 import { THEME } from "../../../constants/projectConstants"; 
+import type { AppUser } from "../../../types";
 
 interface UserTableProps {
-  users: any[];
+  users: AppUser[];
   isLoading: boolean;
-  onDelete?: (user: any) => void;
-  onEdit?: (user: any) => void;
-  onResetPassword?: (user: any) => void;
+  onDelete?: (user: AppUser) => void;
+  onEdit?: (user: AppUser) => void;
+  onResetPassword?: (user: AppUser) => void;
 }
 
 export function UserTable({ users, isLoading, onDelete, onEdit, onResetPassword }: UserTableProps) {
